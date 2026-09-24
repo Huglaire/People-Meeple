@@ -32,6 +32,7 @@ class GameRequest
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $processedAt = null;
 
+    // Utilisateur qui a créé la demande
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(
         name: 'idUser',
@@ -40,11 +41,13 @@ class GameRequest
     )]
     private ?User $user = null;
 
+    // Administrateur qui traite la demande
+    // Cette relation reste vide tant que la demande est en attente
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(
         name: 'idUser_1',
         referencedColumnName: 'idUser',
-        nullable: false
+        nullable: true
     )]
     private ?User $user1 = null;
 
