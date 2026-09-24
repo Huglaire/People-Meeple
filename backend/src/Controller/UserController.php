@@ -32,7 +32,7 @@ final class UserController extends AbstractController
         response: 401,
         description: 'Authentification requise.'
     )]
-    #[OA\SecurityRequirement(name: 'bearerAuth')]
+    #[OA\SecurityRequirement(name: 'Bearer')]
     public function me(
         #[CurrentUser] User $user
     ): JsonResponse {
@@ -124,7 +124,7 @@ final class UserController extends AbstractController
         response: 409,
         description: 'Cette adresse email est déjà utilisée.'
     )]
-    #[OA\SecurityRequirement(name: 'bearerAuth')]
+    #[OA\SecurityRequirement(name: 'Bearer')]
     public function update(
         Request $request,
         #[CurrentUser] User $user,
@@ -291,7 +291,7 @@ final class UserController extends AbstractController
         response: 401,
         description: 'Authentification requise.'
     )]
-    #[OA\SecurityRequirement(name: 'bearerAuth')]
+    #[OA\SecurityRequirement(name: 'Bearer')]
     public function delete(
         #[CurrentUser] User $user,
         EntityManagerInterface $entityManager

@@ -57,11 +57,11 @@ final class AdminGameRequestController extends AbstractController
                 'processedAt' => $gameRequest->getProcessedAt()?->format('Y-m-d H:i:s'),
                 'requester' => [
                     'id' => $gameRequest->getUser()?->getId(),
-                    'pseudo' => $gameRequest->getUser()?->getUserIdentifier(),
+                    'pseudo' => $gameRequest->getUser()?->getPseudo(),
                 ],
                 'processor' => [
                     'id' => $gameRequest->getUser1()?->getId(),
-                    'pseudo' => $gameRequest->getUser1()?->getUserIdentifier(),
+                    'pseudo' => $gameRequest->getUser1()?->getPseudo(),
                 ],
             ];
         }

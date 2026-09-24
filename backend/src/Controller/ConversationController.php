@@ -57,9 +57,14 @@ class ConversationController extends AbstractController
         response: 404,
         description: 'Utilisateur destinataire introuvable'
     )]
+    #[OA\Response(
+        response: 409,
+        description: 'Une conversation existe déjà entre ces deux utilisateurs'
+    )]
     public function create(
         Request $request,
         UserRepository $userRepository,
+        ConversationRepository $conversationRepository,
         EntityManagerInterface $entityManager
     ): JsonResponse {
         /** @var User $currentUser */
@@ -97,6 +102,28 @@ class ConversationController extends AbstractController
             return $this->json([
                 'message' => 'Vous ne pouvez pas créer une conversation avec vous-même.',
             ], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Vérifie si une conversation existe déjà entre ces deux utilisateurs,
+        // quel que soit l'ordre dans lequel ils apparaissent.
+        $existingConversation = $conversationRepository
+            ->createQueryBuilder('c')
+            ->where(
+                '(c.user = :currentUser AND c.user1 = :otherUser)'
+                . ' OR '
+                . '(c.user = :otherUser AND c.user1 = :currentUser)'
+            )
+            ->setParameter('currentUser', $currentUser)
+            ->setParameter('otherUser', $otherUser)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if ($existingConversation instanceof Conversation) {
+            return $this->json([
+                'message' => 'Une conversation existe déjà entre ces deux utilisateurs.',
+                'conversationId' => $existingConversation->getId(),
+            ], Response::HTTP_CONFLICT);
         }
 
         $conversation = new Conversation();
