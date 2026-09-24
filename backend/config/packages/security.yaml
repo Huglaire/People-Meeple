@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=../vendor/symfony/security-bundle/Resources/config/schema/security.schema.json
+
 security:
     # Configuration du hashage des mots de passe
     password_hashers:
@@ -20,6 +22,7 @@ security:
         login:
             pattern: ^/api/login
             stateless: true
+            user_checker: App\Security\UserChecker
 
             # Récupération de l'email et du mot de passe envoyés en JSON
             json_login:
@@ -37,6 +40,7 @@ security:
         api:
             pattern: ^/api
             stateless: true
+            user_checker: App\Security\UserChecker
             jwt: ~
 
         # Firewall principal de Symfony
@@ -51,6 +55,9 @@ security:
 
         # Connexion publique
         - { path: ^/api/login$, roles: PUBLIC_ACCESS }
+
+        # Réactivation publique
+        - { path: ^/api/reactivate$, roles: PUBLIC_ACCESS }
 
         # Toutes les autres routes API nécessitent une authentification
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

@@ -1,0 +1,35 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: 'People Meeple API'
+            description: 'API de l''application People Meeple'
+            version: '1.0.0'
+
+    areas:
+        default:
+            path_patterns:
+                - '^/api(?!/doc$)'
+            host_patterns: { }
+            name_patterns: { }
+            security: { }
+            with_attribute: true
+            disable_default_routes: false
+            documentation: { }
+
+    type_info: true
+    use_validation_groups: false
+    operation_id_generation: !php/enum Nelmio\ApiDocBundle\Describer\OperationIdGeneration::ALWAYS_PREPEND
+
+    media_types:
+        - json
+
+    html_config:
+        assets_mode: cdn
+        swagger_ui_config: { }
+        redocly_config: { }
+        scalar_config: { }
+        stoplight_config: { }
+
+    models:
+        use_jms: false
+        names: { }

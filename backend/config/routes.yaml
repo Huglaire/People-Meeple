@@ -1,11 +1,13 @@
 # yaml-language-server: $schema=../vendor/symfony/routing/Loader/schema/routing.schema.json
 
-# This file is the entry point to configure the routes of your app.
-# Methods with the #[Route] attribute are automatically imported.
-# See also https://symfony.com/doc/current/routing.html
-
-# To list all registered routes, run the following command:
-#   bin/console debug:router
+# Fichier principal de déclaration des routes de l'application.
+# Les routes utilisant l'attribut #[Route] sont importées automatiquement.
 
 controllers:
     resource: routing.controllers
+
+# Route technique utilisée par Symfony Security pour traiter la connexion JWT.
+# Cette route est interceptée par le firewall "login" avant d'atteindre un contrôleur.
+api_login:
+    path: /api/login
+    methods: [POST]
