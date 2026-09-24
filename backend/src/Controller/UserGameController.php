@@ -23,7 +23,7 @@ final class UserGameController extends AbstractController
     #[Route('', name: 'api_me_games_list', methods: ['GET'])]
     #[OA\Get(
         summary: 'Lister ma ludothèque',
-        description: 'Retourne les jeux associés au compte de l’utilisateur connecté.'
+        description: 'Retourne les jeux associés au compte de l’utilisateur connecté, triés par ordre alphabétique.'
     )]
     #[OA\Response(
         response: 200,
@@ -45,13 +45,16 @@ final class UserGameController extends AbstractController
             ], 401);
         }
 
-        // Récupération des associations de l'utilisateur connecté
+        // Récupération des associations triées par nom de jeu
         $userGames = $entityManager
             ->getRepository(UserGame::class)
-            ->findBy(
-                ['user' => $user],
-                ['createdAt' => 'DESC']
-            );
+            ->createQueryBuilder('userGame')
+            ->join('userGame.game', 'game')
+            ->where('userGame.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('game.name', 'ASC')
+            ->getQuery()
+            ->getResult();
 
         // Préparation de la réponse
         $result = [];
@@ -173,6 +176,13 @@ final class UserGameController extends AbstractController
         if (!is_bool($data['knowsRules'])) {
             return new JsonResponse([
                 'message' => 'Le champ "knowsRules" doit être un booléen.'
+            ], 400);
+        }
+
+        // Un jeu doit être possédé ou ses règles doivent être connues
+        if (!$data['owns'] && !$data['knowsRules']) {
+            return new JsonResponse([
+                'message' => 'Un jeu doit être possédé ou ses règles doivent être connues.'
             ], 400);
         }
 
@@ -315,25 +325,42 @@ final class UserGameController extends AbstractController
             ], 400);
         }
 
+        // Vérification des types avant modification
+        if (array_key_exists('owns', $data) && !is_bool($data['owns'])) {
+            return new JsonResponse([
+                'message' => 'Le champ "owns" doit être un booléen.'
+            ], 400);
+        }
+
+        if (array_key_exists('knowsRules', $data) && !is_bool($data['knowsRules'])) {
+            return new JsonResponse([
+                'message' => 'Le champ "knowsRules" doit être un booléen.'
+            ], 400);
+        }
+
+        // Détermination des nouvelles valeurs
+        $owns = array_key_exists('owns', $data)
+            ? $data['owns']
+            : $userGame->isOwns();
+
+        $knowsRules = array_key_exists('knowsRules', $data)
+            ? $data['knowsRules']
+            : $userGame->isKnowsRules();
+
+        // Un jeu doit rester possédé ou avoir ses règles connues
+        if (!$owns && !$knowsRules) {
+            return new JsonResponse([
+                'message' => 'Un jeu doit être possédé ou ses règles doivent être connues.'
+            ], 400);
+        }
+
         // Modification de owns
         if (array_key_exists('owns', $data)) {
-            if (!is_bool($data['owns'])) {
-                return new JsonResponse([
-                    'message' => 'Le champ "owns" doit être un booléen.'
-                ], 400);
-            }
-
             $userGame->setOwns($data['owns']);
         }
 
         // Modification de knowsRules
         if (array_key_exists('knowsRules', $data)) {
-            if (!is_bool($data['knowsRules'])) {
-                return new JsonResponse([
-                    'message' => 'Le champ "knowsRules" doit être un booléen.'
-                ], 400);
-            }
-
             $userGame->setKnowsRules($data['knowsRules']);
         }
 

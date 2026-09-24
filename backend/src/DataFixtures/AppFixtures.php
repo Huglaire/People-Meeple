@@ -4,6 +4,7 @@ namespace App\DataFixtures;
 
 use App\Entity\Game;
 use App\Entity\User;
+use App\Entity\UserGame;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Faker\Factory;
@@ -27,6 +28,9 @@ final class AppFixtures extends Fixture
         $faker = Factory::create('fr_FR');
         $now = new \DateTimeImmutable();
 
+        // Tableau permettant de conserver tous les utilisateurs créés
+        $users = [];
+
         // Création du compte administrateur fixe
         $admin = new User();
         $admin
@@ -44,6 +48,7 @@ final class AppFixtures extends Fixture
             ->setUpdatedAt(null);
 
         $manager->persist($admin);
+        $users[] = $admin;
 
         // Création du premier compte utilisateur fixe pour les tests
         $testUser = new User();
@@ -62,6 +67,7 @@ final class AppFixtures extends Fixture
             ->setUpdatedAt(null);
 
         $manager->persist($testUser);
+        $users[] = $testUser;
 
         // Création du deuxième compte utilisateur fixe pour les tests
         $testUser2 = new User();
@@ -80,6 +86,7 @@ final class AppFixtures extends Fixture
             ->setUpdatedAt(null);
 
         $manager->persist($testUser2);
+        $users[] = $testUser2;
 
         // Liste de départements utilisée pour les utilisateurs de test
         $departments = [
@@ -128,6 +135,7 @@ final class AppFixtures extends Fixture
                 ->setUpdatedAt(null);
 
             $manager->persist($user);
+            $users[] = $user;
         }
 
         // Données fixes des jeux de la plateforme
@@ -314,6 +322,9 @@ final class AppFixtures extends Fixture
             ],
         ];
 
+        // Tableau permettant de conserver tous les jeux créés
+        $gameEntities = [];
+
         // Création des jeux fixes
         foreach ($games as $gameData) {
             $game = new Game();
@@ -332,9 +343,47 @@ final class AppFixtures extends Fixture
                 ->setUpdatedAt(null);
 
             $manager->persist($game);
+            $gameEntities[] = $game;
         }
 
-        // Enregistrement de toutes les fixtures
+        // Enregistrement des utilisateurs et des jeux avant de créer les associations
+        $manager->flush();
+
+        // Création d'une ludothèque aléatoire pour chaque utilisateur
+        foreach ($users as $user) {
+            // Chaque utilisateur reçoit entre 6 et 12 jeux différents
+            $numberOfGames = random_int(6, 12);
+
+            // Mélange des jeux afin d'obtenir une sélection aléatoire
+            $selectedGames = $gameEntities;
+            shuffle($selectedGames);
+
+            // Création des associations USER_GAME
+            foreach (array_slice($selectedGames, 0, $numberOfGames) as $game) {
+                // Un jeu doit être possédé ou avoir ses règles connues
+                $owns = $faker->boolean();
+                $knowsRules = $faker->boolean();
+
+                // Une association avec les deux valeurs à false n'a pas de sens
+                if (!$owns && !$knowsRules) {
+                    $owns = true;
+                }
+
+                $userGame = new UserGame();
+
+                $userGame
+                    ->setUser($user)
+                    ->setGame($game)
+                    ->setOwns($owns)
+                    ->setKnowsRules($knowsRules)
+                    ->setCreatedAt($now)
+                    ->setUpdatedAt($now);
+
+                $manager->persist($userGame);
+            }
+        }
+
+        // Enregistrement des associations USER_GAME
         $manager->flush();
     }
 

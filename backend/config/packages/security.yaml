@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../vendor/symfony/security-bundle/Resources/config/schema/security.schema.json
+# yaml-language-server: $schema=../vendor/symfony/security-bundle/Resources/config/security.schema.json
 
 security:
     # Configuration du hashage des mots de passe
@@ -23,17 +23,11 @@ security:
             pattern: ^/api/login
             stateless: true
             user_checker: App\Security\UserChecker
-
-            # Récupération de l'email et du mot de passe envoyés en JSON
             json_login:
                 check_path: /api/login
                 username_path: email
                 password_path: password
-
-                # Génération du JWT après une authentification réussie
                 success_handler: lexik_jwt_authentication.handler.authentication_success
-
-                # Réponse envoyée en cas d'échec d'authentification
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
         # Firewall protégeant les routes de l'API avec un JWT
@@ -48,16 +42,15 @@ security:
             lazy: true
             provider: app_user_provider
 
-    # Définit les routes accessibles sans authentification
     access_control:
-        # Inscription publique
+        # Documentation Swagger accessible sans authentification
+        - { path: ^/api/doc$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/doc\.json$, roles: PUBLIC_ACCESS }
+
+        # Routes publiques de l'API
         - { path: ^/api/register$, roles: PUBLIC_ACCESS }
-
-        # Connexion publique
         - { path: ^/api/login$, roles: PUBLIC_ACCESS }
-
-        # Réactivation publique
         - { path: ^/api/reactivate$, roles: PUBLIC_ACCESS }
 
-        # Toutes les autres routes API nécessitent une authentification
+        # Toutes les autres routes de l'API nécessitent une authentification
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
