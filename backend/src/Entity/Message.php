@@ -20,6 +20,7 @@ class Message
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
+    // Utilisateur qui a envoyé le message
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(
         name: 'idUser',
@@ -28,6 +29,7 @@ class Message
     )]
     private ?User $user = null;
 
+    // Conversation à laquelle appartient le message
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(
         name: 'idConversation',

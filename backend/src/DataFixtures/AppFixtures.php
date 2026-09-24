@@ -45,6 +45,42 @@ final class AppFixtures extends Fixture
 
         $manager->persist($admin);
 
+        // Création du premier compte utilisateur fixe pour les tests
+        $testUser = new User();
+        $testUser
+            ->setEmail('test@mail.fr')
+            ->setRoles(['ROLE_USER'])
+            ->setPassword($this->passwordHasher->hashPassword($testUser, 'password'))
+            ->setPseudo('TestMeeple')
+            ->setDateOfBirth(new \DateTimeImmutable('1990-05-10'))
+            ->setDepartment('75')
+            ->setCity('Paris')
+            ->setCityVisible(true)
+            ->setIsActive(true)
+            ->setRole('USER')
+            ->setCreatedAt($now)
+            ->setUpdatedAt(null);
+
+        $manager->persist($testUser);
+
+        // Création du deuxième compte utilisateur fixe pour les tests
+        $testUser2 = new User();
+        $testUser2
+            ->setEmail('test2@mail.fr')
+            ->setRoles(['ROLE_USER'])
+            ->setPassword($this->passwordHasher->hashPassword($testUser2, 'password'))
+            ->setPseudo('TestMeeple2')
+            ->setDateOfBirth(new \DateTimeImmutable('1992-08-20'))
+            ->setDepartment('92')
+            ->setCity('Clamart')
+            ->setCityVisible(true)
+            ->setIsActive(true)
+            ->setRole('USER')
+            ->setCreatedAt($now)
+            ->setUpdatedAt(null);
+
+        $manager->persist($testUser2);
+
         // Liste de départements utilisée pour les utilisateurs de test
         $departments = [
             '01',

@@ -19,6 +19,7 @@ class Conversation
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    // Premier utilisateur de la conversation
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(
         name: 'idUser',
@@ -27,6 +28,7 @@ class Conversation
     )]
     private ?User $user = null;
 
+    // Deuxième utilisateur de la conversation
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(
         name: 'idUser_1',
