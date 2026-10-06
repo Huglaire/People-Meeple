@@ -1,62 +1,28 @@
 // Routeur principal de l'application People Meeple
 
+import { createHomePage } from '../pages/Home.js';
+import { createLoginPage } from '../pages/Login.js';
+import { createRegisterPage } from '../pages/Register.js';
+import { createLayout } from '../components/Layout.js';
+
 const routes = {
     '/': createHomePage,
     '/connexion': createLoginPage,
     '/inscription': createRegisterPage
 };
 
-// Crée une page d'accueil temporaire
-function createHomePage() {
-    const page = document.createElement('main');
-    page.classList.add('container', 'py-5');
-
-    const title = document.createElement('h1');
-    title.textContent = 'Accueil';
-
-    page.append(title);
-
-    return page;
-}
-
-// Crée une page de connexion temporaire
-function createLoginPage() {
-    const page = document.createElement('main');
-    page.classList.add('container', 'py-5');
-
-    const title = document.createElement('h1');
-    title.textContent = 'Connexion';
-
-    page.append(title);
-
-    return page;
-}
-
-// Crée une page d'inscription temporaire
-function createRegisterPage() {
-    const page = document.createElement('main');
-    page.classList.add('container', 'py-5');
-
-    const title = document.createElement('h1');
-    title.textContent = 'Inscription';
-
-    page.append(title);
-
-    return page;
-}
-
 // Affiche la page correspondant à l'URL actuelle
 export function router() {
     const path = window.location.pathname;
     const app = document.querySelector('#app');
 
-    const page = routes[path];
-
-    // Vide le conteneur sans utiliser innerHTML
+    // Vide le contenu actuel sans utiliser innerHTML
     app.replaceChildren();
 
+    const page = routes[path];
+
     if (page) {
-        app.append(page());
+        app.append(createLayout(page()));
         return;
     }
 
@@ -68,7 +34,8 @@ export function router() {
     title.textContent = 'Page introuvable';
 
     errorPage.append(title);
-    app.append(errorPage);
+
+    app.append(createLayout(errorPage));
 }
 
 // Change l'URL sans recharger la page
