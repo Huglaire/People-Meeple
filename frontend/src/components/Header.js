@@ -27,8 +27,24 @@ export function createHeader() {
 
     logoLink.append(logo, lettrage);
 
+    // Bouton du menu mobile
+    const menuButton = document.createElement('button');
+    menuButton.type = 'button';
+    menuButton.classList.add('mobile-menu-button');
+    menuButton.setAttribute('aria-label', 'Ouvrir le menu');
+    menuButton.setAttribute('aria-expanded', 'false');
+    menuButton.setAttribute('aria-controls', 'main-navigation');
+
+    const menuIcon = document.createElement('span');
+    menuIcon.classList.add('mobile-menu-icon');
+    menuIcon.setAttribute('aria-hidden', 'true');
+    menuIcon.textContent = '☰';
+
+    menuButton.append(menuIcon);
+
     // Navigation principale
     const navigation = document.createElement('nav');
+    navigation.id = 'main-navigation';
     navigation.classList.add('header-navigation');
     navigation.setAttribute('aria-label', 'Navigation principale');
 
@@ -66,9 +82,23 @@ export function createHeader() {
 
     userActions.append(loginLink, registerLink);
 
+    // Ouvre et ferme le menu mobile
+    menuButton.addEventListener('click', () => {
+        const menuIsOpen = menuButton.getAttribute('aria-expanded') === 'true';
+
+        menuButton.setAttribute('aria-expanded', String(!menuIsOpen));
+        menuButton.setAttribute(
+            'aria-label',
+            menuIsOpen ? 'Ouvrir le menu' : 'Fermer le menu'
+        );
+
+        navigation.classList.toggle('is-open', !menuIsOpen);
+    });
+
     container.append(
         logoLink,
         navigation,
+        menuButton,
         userActions
     );
 
