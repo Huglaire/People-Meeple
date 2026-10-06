@@ -1,12 +1,31 @@
 /* ========================================
-   Base de l'application
+   Polices
+   ======================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Lato:wght@400;500;700&family=Raleway:wght@400;500;600;700&display=swap');
+
+
+/* ========================================
+   Variables de la charte graphique
    ======================================== */
 
 :root {
-    font-family: Arial, sans-serif;
-    color: #222;
-    background-color: #f8f5ef;
+    --couleur-camel: #B8956D;
+    --couleur-bleu: #1F3556;
+    --couleur-bordeaux: #7A1F2B;
+    --couleur-creme: #E7E1D8;
+    --couleur-blanc: #FFFFFF;
+    --couleur-texte: #1F3556;
+
+    --police-titre: 'Abril Fatface', serif;
+    --police-navigation: 'Raleway', sans-serif;
+    --police-texte: 'Lato', sans-serif;
 }
+
+
+/* ========================================
+   Base de l'application
+   ======================================== */
 
 * {
     box-sizing: border-box;
@@ -20,6 +39,11 @@ body {
     margin: 0;
     min-width: 320px;
     min-height: 100vh;
+
+    color: var(--couleur-texte);
+    background-color: var(--couleur-creme);
+
+    font-family: var(--police-texte);
 }
 
 a {
@@ -30,6 +54,13 @@ a {
 img {
     display: block;
     max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
 }
 
 #app {
@@ -50,7 +81,7 @@ img {
 }
 
 .footer-container {
-    width: min(1200px, calc(100% - 40px));
+    width: calc(100% - 40px);
     margin: 0 auto;
 }
 
@@ -61,97 +92,235 @@ img {
 
 .site-header {
     width: 100%;
-    background-color: #ffffff;
-    border-bottom: 1px solid #e5e5e5;
+
+    background-color: var(--couleur-blanc);
+
+    border-bottom: 1px solid rgba(31, 53, 86, 0.12);
 }
 
 .header-container {
-    width: min(1200px, calc(100% - 40px));
-    min-height: 80px;
-    margin: 0 auto;
+    width: 100%;
+    min-height: 88px;
+
+    padding: 0 30px;
 
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 30px;
+
+    gap: 35px;
 }
 
 
-/* Logo */
+/* ========================================
+   Logo
+   ======================================== */
 
 .header-logo {
     display: flex;
     align-items: center;
+
     flex-shrink: 0;
+
+    gap: 8px;
 }
 
-.header-logo img {
-    width: 170px;
+.header-logo img:first-child {
+    width: 65px;
+    height: auto;
+}
+
+.header-lettering {
+    width: 125px;
     height: auto;
 }
 
 
-/* Navigation */
+/* ========================================
+   Navigation principale
+   ======================================== */
 
 .header-navigation {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 30px;
+
+    gap: 34px;
+
+    /* La navigation occupe l'espace central */
+    flex: 1;
 }
 
-.header-navigation a {
-    font-size: 16px;
-    font-weight: 500;
-    transition: opacity 0.2s ease;
-}
+.header-navigation-link {
+    position: relative;
 
-.header-navigation a:hover {
-    opacity: 0.7;
-}
+    padding: 8px 0;
 
+    color: var(--couleur-bleu);
 
-/* Actions utilisateur */
-
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.header-actions a {
+    font-family: var(--police-navigation);
     font-size: 15px;
+    font-weight: 600;
+
+    transition:
+        color 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.header-navigation-link::after {
+    content: '';
+
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    height: 2px;
+
+    background-color: var(--couleur-bordeaux);
+
+    transform: scaleX(0);
+    transform-origin: center;
+
+    transition: transform 0.2s ease;
+}
+
+.header-navigation-link:hover {
+    color: var(--couleur-bordeaux);
+}
+
+.header-navigation-link:hover::after {
+    transform: scaleX(1);
 }
 
 
 /* ========================================
-   Header responsive
+   Actions utilisateur
+   ======================================== */
+
+.header-actions {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    flex-shrink: 0;
+}
+
+.header-login,
+.header-register {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 40px;
+
+    padding: 8px 18px;
+
+    border-radius: 5px;
+
+    font-family: var(--police-navigation);
+    font-size: 14px;
+    font-weight: 600;
+
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+
+/* Bouton secondaire */
+
+.header-login {
+    color: var(--couleur-bleu);
+
+    background-color: var(--couleur-creme);
+
+    border: 1px solid var(--couleur-creme);
+}
+
+.header-login:hover {
+    background-color: var(--couleur-camel);
+}
+
+
+/* Bouton principal */
+
+.header-register {
+    color: var(--couleur-blanc);
+
+    background-color: var(--couleur-bordeaux);
+
+    border: 1px solid var(--couleur-bordeaux);
+}
+
+.header-register:hover {
+    background-color: var(--couleur-bleu);
+    border-color: var(--couleur-bleu);
+}
+
+
+/* ========================================
+   Responsive tablette
+   ======================================== */
+
+@media (max-width: 1000px) {
+    .header-container {
+        padding: 0 20px;
+        gap: 20px;
+    }
+
+    .header-navigation {
+        gap: 20px;
+    }
+
+    .header-navigation-link {
+        font-size: 14px;
+    }
+
+    .header-login,
+    .header-register {
+        padding: 8px 13px;
+    }
+}
+
+
+/* ========================================
+   Responsive mobile
    ======================================== */
 
 @media (max-width: 768px) {
     .header-container {
         min-height: 70px;
-        width: min(100% - 30px, 600px);
+        padding: 0 15px;
+
         gap: 15px;
     }
 
-    .header-logo img {
-        width: 130px;
+    .header-logo img:first-child {
+        width: 48px;
+    }
+
+    .header-lettering {
+        width: 95px;
     }
 
     .header-navigation {
-        gap: 15px;
-    }
-
-    .header-navigation a {
-        font-size: 14px;
+        display: none;
     }
 
     .header-actions {
-        gap: 10px;
+        gap: 8px;
     }
 
-    .header-actions a {
-        font-size: 14px;
+    .header-login,
+    .header-register {
+        min-height: 36px;
+
+        padding: 7px 11px;
+
+        font-size: 12px;
     }
 }
