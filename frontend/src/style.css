@@ -205,7 +205,6 @@ button {
 
 .mobile-menu-icon {
     font-size: 22px;
-    line-height: 1;
 }
 
 
@@ -378,6 +377,7 @@ button {
 
 .home-search-input i {
     position: absolute;
+
     left: 13px;
 
     color: #8A8A8A;
@@ -512,82 +512,71 @@ button {
 .games-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-
-    gap: 8%;
+    gap: 24px;
 }
 
 .game-card {
-    min-width: 0;
-
     overflow: hidden;
 
-    background-color: var(--couleur-creme);
+    background-color: #ffffff;
 
-    border-radius: 4px;
+    border-radius: 12px;
 
-    box-shadow: 0 3px 5px rgba(31, 53, 86, 0.20);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }
 
 .game-card-image {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 100%;
 
-    height: 165px;
+    aspect-ratio: 1 / 1;
 
-    padding: 12px;
-
-    background-color: var(--couleur-creme);
+    overflow: hidden;
 }
 
 .game-card-image img {
+    display: block;
+
     width: 100%;
     height: 100%;
 
-    object-fit: contain;
-
-    background-color: var(--couleur-blanc);
-
-    border-radius: 3px;
-
-    box-shadow: 0 2px 4px rgba(31, 53, 86, 0.20);
+    object-fit: cover;
 }
 
 .game-card-content {
-    padding: 10px 12px 12px;
+    padding: 16px 18px 18px;
 }
 
-.game-card h3 {
-    margin: 0 0 13px;
+.game-card-content h3 {
+    margin: 0 0 12px;
 
-    color: var(--couleur-bleu);
+    font-size: 1.2rem;
+    font-weight: 700;
 
-    font-family: var(--police-texte);
-    font-size: 18px;
-    font-weight: 500;
+    color: var(--couleur-texte);
 }
 
 .game-card-information {
     display: flex;
     align-items: center;
-    justify-content: space-between;
 
-    gap: 8px;
+    gap: 18px;
 
-    color: var(--couleur-bleu);
+    margin: 0;
 
-    font-size: 12px;
+    color: #666666;
+
+    font-size: 0.9rem;
 }
 
 .game-card-information span {
     display: inline-flex;
     align-items: center;
 
-    gap: 5px;
+    gap: 6px;
 }
 
 .game-card-information i {
-    font-size: 14px;
+    font-size: 1rem;
 }
 
 
@@ -805,7 +794,6 @@ button {
 
     .home-hero-content {
         width: 68%;
-
         padding-left: 6%;
     }
 
@@ -888,6 +876,7 @@ button {
         right: 0;
 
         display: none;
+
         flex-direction: column;
         align-items: stretch;
 
@@ -938,6 +927,7 @@ button {
 
     .home-hero-image {
         position: relative;
+
         order: 1;
 
         width: 100%;
@@ -1051,8 +1041,6 @@ button {
 
     .game-card-image {
         height: 98px;
-
-        padding: 7px;
     }
 
     .game-card-content {
@@ -1262,5 +1250,71 @@ button {
 
     .footer-navigation {
         gap: 30px;
+    }
+}
+
+/* ========================================
+   Navigation mobile
+   ======================================== */
+
+.mobile-navigation {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 64px;
+    }
+
+    .mobile-navigation {
+        position: fixed;
+        z-index: 1100;
+
+        left: 0;
+        right: 0;
+        bottom: 0;
+
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+
+        height: 64px;
+
+        background-color: var(--couleur-blanc);
+
+        border-top: 1px solid rgba(31, 53, 86, 0.15);
+
+        box-shadow: 0 -3px 10px rgba(31, 53, 86, 0.08);
+    }
+
+    .mobile-navigation-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        gap: 3px;
+
+        color: var(--couleur-bleu);
+
+        font-family: var(--police-navigation);
+        font-size: 9px;
+        font-weight: 600;
+
+        transition:
+            color 0.2s ease,
+            background-color 0.2s ease;
+    }
+
+    .mobile-navigation-icon {
+        font-size: 19px;
+        line-height: 1;
+    }
+
+    .mobile-navigation-link.is-active {
+        color: var(--couleur-bordeaux);
+    }
+
+    .mobile-navigation-link:hover {
+        color: var(--couleur-bordeaux);
     }
 }
