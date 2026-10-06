@@ -1,0 +1,20 @@
+/* Styles de base de l'application People Meeple */
+
+:root {
+    font-family: Arial, sans-serif;
+    color: #222;
+    background-color: #f8f5ef;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+}
+
+#app {
+    min-height: 100vh;
+}
