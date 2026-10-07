@@ -627,8 +627,13 @@
         border-bottom-right-radius: 4px;
     }
 
+    /* Les résultats mobiles restent tous visuellement identiques */
+    .player-result.is-selected {
+        background-color: var(--couleur-blanc);
+    }
+
     .player-result.is-selected::before {
-        width: 4px;
+        display: none;
     }
 
     .player-result-image {
@@ -666,7 +671,7 @@
     }
 
     .player-profile-page .player-profile {
-        padding: 0;
+        padding: 10px;
         border: 0;
         box-shadow: none;
     }
