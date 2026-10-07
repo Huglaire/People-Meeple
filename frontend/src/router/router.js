@@ -3,12 +3,25 @@
 import { createHomePage } from '../pages/Home.js';
 import { createLoginPage } from '../pages/Login.js';
 import { createRegisterPage } from '../pages/Register.js';
+import {
+    createPlayersPage,
+    createPlayerProfilePage
+} from '../pages/Players.js';
 import { createLayout } from '../components/Layout.js';
 
 const routes = {
     '/': createHomePage,
     '/connexion': createLoginPage,
-    '/inscription': createRegisterPage
+    '/inscription': createRegisterPage,
+
+    '/joueurs': createPlayersPage,
+
+    '/joueurs/marion': () => createPlayerProfilePage('marion'),
+    '/joueurs/aurel': () => createPlayerProfilePage('aurel'),
+    '/joueurs/jean': () => createPlayerProfilePage('jean'),
+    '/joueurs/charlotte': () => createPlayerProfilePage('charlotte'),
+    '/joueurs/caroline': () => createPlayerProfilePage('caroline'),
+    '/joueurs/mickael': () => createPlayerProfilePage('mickael')
 };
 
 // Affiche la page correspondant à l'URL actuelle

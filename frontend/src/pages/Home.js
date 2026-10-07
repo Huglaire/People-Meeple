@@ -12,7 +12,7 @@ import rootImage from '../assets/images/games/root.jpeg';
 
 import profilFemmeImage from '../assets/images/profiles/Profil femme.jpg';
 import profilHommeImage from '../assets/images/profiles/profil homme.jpg';
-import profilHomme2Image from '../assets/images/profiles/profile homme 2.jpg';
+import profilHomme2Image from '../assets/images/profiles/profil homme 2.jpg';
 import profilFemme2Image from '../assets/images/profiles/profil femme 2.jpg';
 
 export function createHomePage() {
