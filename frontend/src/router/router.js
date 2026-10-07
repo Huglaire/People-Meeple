@@ -8,6 +8,7 @@ import {
     createPlayerProfilePage
 } from '../pages/Players.js';
 import { createLayout } from '../components/Layout.js';
+import { createGamesPage } from '../pages/Games.js';
 
 const routes = {
     '/': createHomePage,
@@ -21,7 +22,8 @@ const routes = {
     '/joueurs/jean': () => createPlayerProfilePage('jean'),
     '/joueurs/charlotte': () => createPlayerProfilePage('charlotte'),
     '/joueurs/caroline': () => createPlayerProfilePage('caroline'),
-    '/joueurs/mickael': () => createPlayerProfilePage('mickael')
+    '/joueurs/mickael': () => createPlayerProfilePage('mickael'),
+    '/jeux': createGamesPage,
 };
 
 // Affiche la page correspondant à l'URL actuelle
