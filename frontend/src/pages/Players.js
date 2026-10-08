@@ -2,13 +2,7 @@
 
 import { createPlayerResult } from '../components/PlayerResult.js';
 import { navigateTo } from '../router/router.js';
-
-import azulImage from '../assets/images/games/Azul.jpg';
-import challengersImage from '../assets/images/games/challengers.jpg';
-import fiveTribesImage from '../assets/images/games/five tribes.jpg';
-import rootImage from '../assets/images/games/root.jpeg';
-import orichalqueImage from '../assets/images/games/orichalque.png';
-import orleansImage from '../assets/images/games/orleans.webp';
+import { getGames } from '../api/gamesApi.js';
 
 import ludothequeImage from '../assets/images/backgrounds/ludotheque.jpg';
 
@@ -20,6 +14,9 @@ import profilHomme2Image from '../assets/images/profiles/profil homme 2.jpg';
 import profilHomme3Image from '../assets/images/profiles/profil homme 3.jpg';
 
 import '../css/players.css';
+
+// Mémorise la récupération des jeux pour éviter plusieurs appels à l'API
+let gamesPromise = null;
 
 const players = [
     {
@@ -33,12 +30,12 @@ const players = [
         memberSince: 'juin 2025',
         description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
         library: [
-            { name: 'Azul', image: azulImage },
-            { name: 'Challengers !', image: challengersImage },
-            { name: 'Five Tribes', image: fiveTribesImage },
-            { name: 'Orléans', image: orleansImage },
-            { name: 'Root', image: rootImage },
-            { name: 'Orichalque', image: orichalqueImage }
+            { name: 'Azul' },
+            { name: 'Challengers' },
+            { name: 'Five Tribes' },
+            { name: 'Orléans' },
+            { name: 'Root' },
+            { name: 'Orichalque' }
         ]
     },
     {
@@ -112,6 +109,9 @@ export function createPlayersPage() {
 
     page.append(hero, content);
 
+    // Charge les images des jeux depuis l'API
+    loadPlayerLibraryImages(page);
+
     return page;
 }
 
@@ -139,8 +139,62 @@ export function createPlayerProfilePage(slug) {
 
     page.append(backLink, profile);
 
+    // Charge les images des jeux depuis l'API
+    loadPlayerLibraryImages(page);
+
     return page;
 }
+
+
+/* ========================================
+   Images des jeux
+   ======================================== */
+
+/**
+ * Récupère les jeux de l'API une seule fois.
+ */
+function getAvailableGames() {
+    if (!gamesPromise) {
+        gamesPromise = getGames();
+    }
+
+    return gamesPromise;
+}
+
+/**
+ * Remplace les images des jeux de la ludothèque
+ * par les images fournies par l'API.
+ */
+async function loadPlayerLibraryImages(page) {
+    const images = page.querySelectorAll('[data-game-name]');
+
+    if (images.length === 0) {
+        return;
+    }
+
+    try {
+        const games = await getAvailableGames();
+
+        images.forEach((image) => {
+            const gameName = image.dataset.gameName;
+
+            const game = games.find(
+                (item) => item.name.toLowerCase() === gameName.toLowerCase()
+            );
+
+            if (game) {
+                image.src = game.image;
+            }
+        });
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+
+/* ========================================
+   Hero
+   ======================================== */
 
 function createPlayersHero() {
     const section = document.createElement('section');
@@ -161,7 +215,8 @@ function createPlayersHero() {
     title.append(firstLine, secondLine);
 
     const description = document.createElement('p');
-    description.textContent = 'Trouve des joueurs qui possèdent ou connaissent les règles du jeu que tu aimes';
+    description.textContent =
+        'Trouve des joueurs qui possèdent ou connaissent les règles du jeu que tu aimes';
 
     content.append(title, description);
 
@@ -180,6 +235,11 @@ function createPlayersHero() {
     return section;
 }
 
+
+/* ========================================
+   Contenu de la recherche
+   ======================================== */
+
 function createPlayersContent() {
     const section = document.createElement('section');
     section.classList.add('players-content');
@@ -191,6 +251,11 @@ function createPlayersContent() {
 
     return section;
 }
+
+
+/* ========================================
+   Recherche
+   ======================================== */
 
 function createSearchPanel() {
     const panel = document.createElement('div');
@@ -251,6 +316,11 @@ function createSearchPanel() {
     return panel;
 }
 
+
+/* ========================================
+   Résultats
+   ======================================== */
+
 function createResultsPanel() {
     const container = document.createElement('div');
     container.classList.add('players-results');
@@ -282,6 +352,11 @@ function createResultsPanel() {
 
     return container;
 }
+
+
+/* ========================================
+   Profil joueur
+   ======================================== */
 
 function createPlayerProfile(player) {
     const profile = document.createElement('article');
@@ -342,6 +417,11 @@ function createPlayerProfile(player) {
     return profile;
 }
 
+
+/* ========================================
+   À propos
+   ======================================== */
+
 function createAboutSection(player) {
     const section = document.createElement('section');
     section.classList.add('player-profile-about');
@@ -356,6 +436,11 @@ function createAboutSection(player) {
 
     return section;
 }
+
+
+/* ========================================
+   Ludothèque
+   ======================================== */
 
 function createLibrarySection(player) {
     const section = document.createElement('section');
@@ -393,8 +478,8 @@ function createLibrarySection(player) {
         imageContainer.classList.add('player-profile-game-image');
 
         const image = document.createElement('img');
-        image.src = game.image;
         image.alt = `Boîte du jeu ${game.name}`;
+        image.dataset.gameName = game.name;
 
         imageContainer.append(image);
 
@@ -409,6 +494,11 @@ function createLibrarySection(player) {
 
     return section;
 }
+
+
+/* ========================================
+   Statistiques du profil
+   ======================================== */
 
 function createProfileStatistics(player) {
     const statistics = document.createElement('div');
@@ -429,6 +519,11 @@ function createProfileStatistics(player) {
 
     return statistics;
 }
+
+
+/* ========================================
+   Éléments d'information
+   ======================================== */
 
 function createStatistic(iconName, text) {
     const statistic = document.createElement('p');
@@ -460,6 +555,11 @@ function createProfileInformation(iconName, text) {
     return information;
 }
 
+
+/* ========================================
+   Joueur introuvable
+   ======================================== */
+
 function createPlayerNotFoundPage() {
     const page = document.createElement('main');
     page.classList.add('player-not-found');
@@ -480,6 +580,11 @@ function createPlayerNotFoundPage() {
 
     return page;
 }
+
+
+/* ========================================
+   Filtre des joueurs
+   ======================================== */
 
 function filterPlayers(gameSearch, department) {
     const list = document.querySelector('[data-results-list]');
@@ -506,4 +611,7 @@ function filterPlayers(gameSearch, department) {
     filteredPlayers.forEach((player) => {
         list.append(createPlayerResult(player));
     });
+
+    // Recharge les images des jeux après le filtrage
+    loadPlayerLibraryImages(document);
 }

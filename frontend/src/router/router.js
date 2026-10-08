@@ -7,8 +7,9 @@ import {
     createPlayersPage,
     createPlayerProfilePage
 } from '../pages/Players.js';
-import { createLayout } from '../components/Layout.js';
 import { createGamesPage } from '../pages/Games.js';
+import { createGameDetailPage } from '../pages/GameDetail.js';
+import { createLayout } from '../components/Layout.js';
 
 const routes = {
     '/': createHomePage,
@@ -23,7 +24,8 @@ const routes = {
     '/joueurs/charlotte': () => createPlayerProfilePage('charlotte'),
     '/joueurs/caroline': () => createPlayerProfilePage('caroline'),
     '/joueurs/mickael': () => createPlayerProfilePage('mickael'),
-    '/jeux': createGamesPage,
+
+    '/jeux': createGamesPage
 };
 
 // Affiche la page correspondant à l'URL actuelle
@@ -34,10 +36,17 @@ export function router() {
     // Vide le contenu actuel sans utiliser innerHTML
     app.replaceChildren();
 
-    const page = routes[path];
+    let page;
+
+    if (routes[path]) {
+        page = routes[path]();
+    } else if (path.startsWith('/jeux/')) {
+        const slug = path.split('/')[2];
+        page = createGameDetailPage(slug);
+    }
 
     if (page) {
-        app.append(createLayout(page()));
+        app.append(createLayout(page));
         return;
     }
 

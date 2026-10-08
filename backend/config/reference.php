@@ -1583,6 +1583,34 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         }>,
  *     },
  * }
+ * @psalm-type NelmioCorsConfig = array{
+ *     defaults?: array{
+ *         allow_credentials?: bool|Param, // Default: false
+ *         allow_origin?: list<scalar|Param|null>,
+ *         allow_headers?: list<scalar|Param|null>,
+ *         allow_methods?: list<scalar|Param|null>,
+ *         allow_private_network?: bool|Param, // Default: false
+ *         expose_headers?: list<scalar|Param|null>,
+ *         max_age?: scalar|Param|null, // Default: 0
+ *         hosts?: list<scalar|Param|null>,
+ *         origin_regex?: bool|Param, // Default: false
+ *         forced_allow_origin_value?: scalar|Param|null, // Default: null
+ *         skip_same_as_origin?: bool|Param, // Default: true
+ *     },
+ *     paths?: array<string, array{ // Default: []
+ *         allow_credentials?: bool|Param,
+ *         allow_origin?: list<scalar|Param|null>,
+ *         allow_headers?: list<scalar|Param|null>,
+ *         allow_methods?: list<scalar|Param|null>,
+ *         allow_private_network?: bool|Param,
+ *         expose_headers?: list<scalar|Param|null>,
+ *         max_age?: scalar|Param|null, // Default: 0
+ *         hosts?: list<scalar|Param|null>,
+ *         origin_regex?: bool|Param,
+ *         forced_allow_origin_value?: scalar|Param|null, // Default: null
+ *         skip_same_as_origin?: bool|Param,
+ *     }>,
+ * }
  * @psalm-type LexikJwtAuthenticationConfig = array{
  *     public_key?: scalar|Param|null, // The key used to sign tokens (useless for HMAC). If not set, the key will be automatically computed from the secret key. // Default: null
  *     additional_public_keys?: list<scalar|Param|null>,
@@ -1682,6 +1710,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     security?: SecurityConfig,
  *     monolog?: MonologConfig,
  *     nelmio_api_doc?: NelmioApiDocConfig,
+ *     nelmio_cors?: NelmioCorsConfig,
  *     lexik_jwt_authentication?: LexikJwtAuthenticationConfig,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
@@ -1700,6 +1729,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         monolog?: MonologConfig,
  *         maker?: MakerConfig,
  *         nelmio_api_doc?: NelmioApiDocConfig,
+ *         nelmio_cors?: NelmioCorsConfig,
  *         lexik_jwt_authentication?: LexikJwtAuthenticationConfig,
  *     },
  *     "when@prod"?: array{
@@ -1716,6 +1746,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         security?: SecurityConfig,
  *         monolog?: MonologConfig,
  *         nelmio_api_doc?: NelmioApiDocConfig,
+ *         nelmio_cors?: NelmioCorsConfig,
  *         lexik_jwt_authentication?: LexikJwtAuthenticationConfig,
  *     },
  *     "when@test"?: array{
@@ -1733,6 +1764,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         security?: SecurityConfig,
  *         monolog?: MonologConfig,
  *         nelmio_api_doc?: NelmioApiDocConfig,
+ *         nelmio_cors?: NelmioCorsConfig,
  *         lexik_jwt_authentication?: LexikJwtAuthenticationConfig,
  *     },
  *     ...<string, ExtensionType|array{ // extra keys must follow the when@%env% pattern or match an extension alias

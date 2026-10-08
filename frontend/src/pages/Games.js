@@ -1,16 +1,9 @@
 // Crée la page de présentation des jeux
 
 import { createGameCard } from '../components/GameCard.js';
+import { getGames } from '../api/gamesApi.js';
 
 import ludothequeImage from '../assets/images/backgrounds/ludotheque.jpg';
-
-import azulImage from '../assets/images/games/Azul.jpg';
-import challengersImage from '../assets/images/games/challengers.jpg';
-import fiveTribesImage from '../assets/images/games/five tribes.jpg';
-import rootImage from '../assets/images/games/root.jpeg';
-import orichalqueImage from '../assets/images/games/orichalque.png';
-import orleansImage from '../assets/images/games/orleans.webp';
-import sagradaImage from '../assets/images/games/Sagrada.jpeg';
 
 import '../css/games.css';
 
@@ -22,6 +15,8 @@ export function createGamesPage() {
     const gamesSection = createGamesSection();
 
     page.append(hero, gamesSection);
+
+    loadGames(gamesSection);
 
     return page;
 }
@@ -115,7 +110,6 @@ function createGamesSection() {
     title.textContent = 'Tous les jeux';
 
     const count = document.createElement('span');
-    count.textContent = '(7 jeux)';
     count.classList.add('games-count');
 
     title.append(document.createTextNode(' '), count);
@@ -124,57 +118,51 @@ function createGamesSection() {
     const gamesGrid = document.createElement('div');
     gamesGrid.classList.add('games-grid');
 
-    const games = [
-        {
-            name: 'Azul',
-            image: azulImage,
-            players: '2-4 joueurs',
-            duration: '45 min'
-        },
-        {
-            name: 'Challengers!',
-            image: challengersImage,
-            players: '1-8 joueurs',
-            duration: '45 min'
-        },
-        {
-            name: 'Five Tribes',
-            image: fiveTribesImage,
-            players: '2-4 joueurs',
-            duration: '60 min'
-        },
-        {
-            name: 'Root',
-            image: rootImage,
-            players: '1-4 joueurs',
-            duration: '80 min'
-        },
-        {
-            name: 'Orichalque',
-            image: orichalqueImage,
-            players: '2-4 joueurs',
-            duration: '60 min'
-        },
-        {
-            name: 'Orléans',
-            image: orleansImage,
-            players: '2-4 joueurs',
-            duration: '90 min'
-        },
-        {
-            name: 'Sagrada',
-            image: sagradaImage,
-            players: '1-4 joueurs',
-            duration: '45 min'
-        }
-    ];
+    const loading = document.createElement('p');
+    loading.classList.add('games-loading');
+    loading.textContent = 'Chargement des jeux...';
 
-    games.forEach((game) => {
-        gamesGrid.append(createGameCard(game));
-    });
+    gamesGrid.append(loading);
 
     container.append(heading, gamesGrid);
     section.append(container);
 
+    section.gamesGrid = gamesGrid;
+    section.gamesCount = count;
+
     return section;
+}
+
+// Récupère les jeux depuis l'API et les affiche
+async function loadGames(section) {
+    try {
+        const games = await getGames();
+
+        section.gamesGrid.replaceChildren();
+
+        section.gamesCount.textContent = `(${games.length} jeux)`;
+
+        if (games.length === 0) {
+            const message = document.createElement('p');
+            message.textContent = 'Aucun jeu disponible pour le moment.';
+
+            section.gamesGrid.append(message);
+
+            return;
+        }
+
+        games.forEach((game) => {
+            section.gamesGrid.append(createGameCard(game));
+        });
+    } catch (error) {
+        section.gamesGrid.replaceChildren();
+
+        const errorMessage = document.createElement('p');
+        errorMessage.textContent =
+            'Impossible de charger les jeux pour le moment.';
+
+        section.gamesGrid.append(errorMessage);
+
+        console.error(error);
+    }
 }

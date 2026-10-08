@@ -2,13 +2,9 @@
 
 import { createGameCard } from '../components/GameCard.js';
 import { createPlayerCard } from '../components/PlayerCard.js';
+import { getGames } from '../api/gamesApi.js';
 
 import ludothequeImage from '../assets/images/backgrounds/ludotheque.jpg';
-
-import azulImage from '../assets/images/games/Azul.jpg';
-import challengersImage from '../assets/images/games/challengers.jpg';
-import fiveTribesImage from '../assets/images/games/five tribes.jpg';
-import rootImage from '../assets/images/games/root.jpeg';
 
 import profilFemmeImage from '../assets/images/profiles/Profil femme.jpg';
 import profilHommeImage from '../assets/images/profiles/profil homme.jpg';
@@ -139,41 +135,46 @@ function createGamesSection() {
     const gamesGrid = document.createElement('div');
     gamesGrid.classList.add('games-grid');
 
-    const games = [
-        {
-            name: 'Azul',
-            image: azulImage,
-            players: '2-4 joueurs',
-            duration: '45 min'
-        },
-        {
-            name: 'Challengers!',
-            image: challengersImage,
-            players: '1-8 joueurs',
-            duration: '45 min'
-        },
-        {
-            name: 'Five Tribes',
-            image: fiveTribesImage,
-            players: '2-4 joueurs',
-            duration: '60 min'
-        },
-        {
-            name: 'Root',
-            image: rootImage,
-            players: '1-4 joueurs',
-            duration: '80 min'
-        }
-    ];
+    const loading = document.createElement('p');
+    loading.textContent = 'Chargement des jeux...';
 
-    games.forEach((game) => {
-        gamesGrid.append(createGameCard(game));
-    });
+    gamesGrid.append(loading);
 
     container.append(heading, gamesGrid);
     section.append(container);
 
+    // Conserve la grille pour pouvoir la remplir après l'appel API
+    section.gamesGrid = gamesGrid;
+
+    loadHomeGames(section);
+
     return section;
+}
+
+
+/**
+ * Récupère les jeux depuis l'API et affiche les quatre premiers.
+ */
+async function loadHomeGames(section) {
+    try {
+        const games = await getGames();
+
+        section.gamesGrid.replaceChildren();
+
+        games.slice(0, 4).forEach((game) => {
+            section.gamesGrid.append(createGameCard(game));
+        });
+    } catch (error) {
+        section.gamesGrid.replaceChildren();
+
+        const errorMessage = document.createElement('p');
+        errorMessage.textContent =
+            'Impossible de charger les jeux pour le moment.';
+
+        section.gamesGrid.append(errorMessage);
+
+        console.error(error);
+    }
 }
 
 

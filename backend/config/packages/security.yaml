@@ -52,5 +52,9 @@ security:
         - { path: ^/api/login$, roles: PUBLIC_ACCESS }
         - { path: ^/api/reactivate$, roles: PUBLIC_ACCESS }
 
+        # Consultation publique des jeux
+        - { path: ^/api/games$, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/games/\d+$, roles: PUBLIC_ACCESS, methods: [GET] }
+
         # Toutes les autres routes de l'API nécessitent une authentification
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

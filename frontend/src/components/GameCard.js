@@ -1,10 +1,17 @@
 // Crée une carte présentant un jeu
 
+import { navigateTo } from '../router/router.js';
+
 export function createGameCard(game) {
-    const card = document.createElement('article');
+    const card = document.createElement('a');
+    card.href = `/jeux/${game.slug}`;
     card.classList.add('game-card');
 
-    // Image du jeu
+    card.addEventListener('click', (event) => {
+        event.preventDefault();
+        navigateTo(`/jeux/${game.slug}`);
+    });
+
     const imageContainer = document.createElement('div');
     imageContainer.classList.add('game-card-image');
 
@@ -14,7 +21,6 @@ export function createGameCard(game) {
 
     imageContainer.append(image);
 
-    // Informations du jeu
     const content = document.createElement('div');
     content.classList.add('game-card-content');
 
@@ -24,7 +30,6 @@ export function createGameCard(game) {
     const information = document.createElement('div');
     information.classList.add('game-card-information');
 
-    // Nombre de joueurs
     const players = document.createElement('span');
 
     const playersIcon = document.createElement('i');
@@ -36,7 +41,6 @@ export function createGameCard(game) {
 
     players.append(playersIcon, playersText);
 
-    // Durée
     const duration = document.createElement('span');
 
     const durationIcon = document.createElement('i');
@@ -49,9 +53,7 @@ export function createGameCard(game) {
     duration.append(durationIcon, durationText);
 
     information.append(players, duration);
-
     content.append(name, information);
-
     card.append(imageContainer, content);
 
     return card;
