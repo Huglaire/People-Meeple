@@ -9,6 +9,7 @@ import {
 } from '../pages/Players.js';
 import { createGamesPage } from '../pages/Games.js';
 import { createGameDetailPage } from '../pages/GameDetail.js';
+import { createProfilePage } from '../pages/Profile.js';
 import { createLayout } from '../components/Layout.js';
 
 const routes = {
@@ -25,15 +26,14 @@ const routes = {
     '/joueurs/caroline': () => createPlayerProfilePage('caroline'),
     '/joueurs/mickael': () => createPlayerProfilePage('mickael'),
 
-    '/jeux': createGamesPage
+    '/jeux': createGamesPage,
+    '/profil': createProfilePage
 };
 
-// Affiche la page correspondant à l'URL actuelle
 export function router() {
     const path = window.location.pathname;
     const app = document.querySelector('#app');
 
-    // Vide le contenu actuel sans utiliser innerHTML
     app.replaceChildren();
 
     let page;
@@ -50,7 +50,6 @@ export function router() {
         return;
     }
 
-    // Crée la page 404
     const errorPage = document.createElement('main');
     errorPage.classList.add('container', 'py-5');
 
@@ -62,11 +61,9 @@ export function router() {
     app.append(createLayout(errorPage));
 }
 
-// Change l'URL sans recharger la page
 export function navigateTo(path) {
     window.history.pushState({}, '', path);
     router();
 }
 
-// Réagit aux boutons précédent/suivant du navigateur
 window.addEventListener('popstate', router);

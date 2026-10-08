@@ -3,6 +3,13 @@
 import logoPath from '../assets/logos/logo.svg';
 import lettragePath from '../assets/logos/lettrage.svg';
 
+import {
+    isAuthenticated,
+    logout
+} from '../services/authService.js';
+
+import { navigateTo } from '../router/router.js';
+
 export function createHeader() {
     const header = document.createElement('header');
     header.classList.add('site-header');
@@ -70,23 +77,66 @@ export function createHeader() {
     const userActions = document.createElement('div');
     userActions.classList.add('header-actions');
 
-    const loginLink = document.createElement('a');
-    loginLink.href = '/connexion';
-    loginLink.textContent = 'Connexion';
-    loginLink.classList.add('header-login');
+    if (isAuthenticated()) {
+        // Lien vers le profil de l'utilisateur connecté
+        const profileLink = document.createElement('a');
+        profileLink.href = '/profil';
+        profileLink.textContent = 'Profil';
+        profileLink.classList.add('header-login');
 
-    const registerLink = document.createElement('a');
-    registerLink.href = '/inscription';
-    registerLink.textContent = 'Inscription';
-    registerLink.classList.add('header-register');
+        profileLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            navigateTo('/profil');
+        });
 
-    userActions.append(loginLink, registerLink);
+        // Bouton de déconnexion
+        const logoutButton = document.createElement('button');
+        logoutButton.type = 'button';
+        logoutButton.textContent = 'Déconnexion';
+        logoutButton.classList.add('header-register');
+
+        logoutButton.addEventListener('click', () => {
+            logout();
+            navigateTo('/');
+        });
+
+        userActions.append(profileLink, logoutButton);
+    } else {
+        // Lien vers la connexion
+        const loginLink = document.createElement('a');
+        loginLink.href = '/connexion';
+        loginLink.textContent = 'Connexion';
+        loginLink.classList.add('header-login');
+
+        loginLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            navigateTo('/connexion');
+        });
+
+        // Lien vers l'inscription
+        const registerLink = document.createElement('a');
+        registerLink.href = '/inscription';
+        registerLink.textContent = 'Inscription';
+        registerLink.classList.add('header-register');
+
+        registerLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            navigateTo('/inscription');
+        });
+
+        userActions.append(loginLink, registerLink);
+    }
 
     // Ouvre et ferme le menu mobile
     menuButton.addEventListener('click', () => {
-        const menuIsOpen = menuButton.getAttribute('aria-expanded') === 'true';
+        const menuIsOpen =
+            menuButton.getAttribute('aria-expanded') === 'true';
 
-        menuButton.setAttribute('aria-expanded', String(!menuIsOpen));
+        menuButton.setAttribute(
+            'aria-expanded',
+            String(!menuIsOpen)
+        );
+
         menuButton.setAttribute(
             'aria-label',
             menuIsOpen ? 'Ouvrir le menu' : 'Fermer le menu'

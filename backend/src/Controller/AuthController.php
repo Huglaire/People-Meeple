@@ -174,6 +174,7 @@ final class AuthController
 
         // Valeurs définies automatiquement par le serveur
         $user->setIsActive(true);
+        $user->setRoles(['ROLE_USER']);
         $user->setRole('USER');
         $user->setCreatedAt(new \DateTimeImmutable());
 

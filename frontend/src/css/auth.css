@@ -1,0 +1,217 @@
+/* ========================================
+   AUTHENTIFICATION
+   ======================================== */
+
+.auth-page {
+    min-height: 600px;
+    padding: 55px 20px 70px;
+
+    background-color: var(--couleur-creme);
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 520px;
+
+    margin: 0 auto;
+    padding: 38px 42px;
+
+    background-color: var(--couleur-blanc);
+
+    border-radius: 8px;
+
+    box-shadow: 0 4px 16px rgba(31, 53, 86, 0.12);
+}
+
+.auth-container h1 {
+    margin: 0 0 10px;
+
+    color: var(--couleur-bleu);
+
+    font-family: var(--police-titre);
+    font-size: 42px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.auth-introduction {
+    margin: 0 0 30px;
+
+    color: var(--couleur-bleu);
+
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+/* Formulaire */
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+
+    gap: 18px;
+}
+
+.auth-field {
+    display: flex;
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+.auth-field label {
+    color: var(--couleur-bleu);
+
+    font-family: var(--police-navigation);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.auth-field input {
+    width: 100%;
+    min-height: 42px;
+
+    padding: 9px 12px;
+
+    color: var(--couleur-bleu);
+    background-color: var(--couleur-blanc);
+
+    border: 1px solid #d8d8d8;
+    border-radius: 4px;
+
+    outline: none;
+
+    font-family: var(--police-texte);
+    font-size: 14px;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.auth-field input:focus {
+    border-color: var(--couleur-camel);
+
+    box-shadow: 0 0 0 2px rgba(193, 158, 111, 0.15);
+}
+
+.auth-field input::placeholder {
+    color: #999999;
+}
+
+/* Case à cocher */
+
+.auth-checkbox {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+}
+
+.auth-checkbox input {
+    width: 16px;
+    height: 16px;
+
+    accent-color: var(--couleur-bordeaux);
+}
+
+.auth-checkbox label {
+    color: var(--couleur-bleu);
+
+    font-size: 14px;
+}
+
+/* Messages */
+
+.auth-message {
+    margin: 0;
+
+    padding: 10px 12px;
+
+    border-radius: 4px;
+
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.auth-message-error {
+    color: #8a1f1f;
+
+    background-color: #f9e5e5;
+
+    border: 1px solid #e5bcbc;
+}
+
+/* Bouton */
+
+.auth-submit {
+    width: 100%;
+    min-height: 44px;
+
+    padding: 10px 18px;
+
+    color: var(--couleur-blanc);
+    background-color: var(--couleur-bordeaux);
+
+    border: 1px solid var(--couleur-bordeaux);
+    border-radius: 4px;
+
+    font-family: var(--police-navigation);
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.auth-submit:hover:not(:disabled) {
+    background-color: var(--couleur-bleu);
+
+    border-color: var(--couleur-bleu);
+}
+
+.auth-submit:disabled {
+    opacity: 0.65;
+
+    cursor: wait;
+}
+
+/* Lien vers l'autre page */
+
+.auth-switch {
+    margin: 2px 0 0;
+
+    color: #666666;
+
+    text-align: center;
+    font-size: 14px;
+}
+
+.auth-switch a {
+    color: var(--couleur-bordeaux);
+
+    font-weight: 600;
+}
+
+.auth-switch a:hover {
+    color: var(--couleur-bleu);
+}
+
+/* Responsive */
+
+@media (max-width: 600px) {
+    .auth-page {
+        padding: 35px 15px 50px;
+    }
+
+    .auth-container {
+        padding: 30px 22px;
+    }
+
+    .auth-container h1 {
+        font-size: 36px;
+    }
+}

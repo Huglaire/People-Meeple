@@ -1,0 +1,297 @@
+/* Mise en forme de la page du profil */
+
+.profile-page {
+    min-height: calc(100vh - 180px);
+    padding: 60px 20px 80px;
+    background-color: var(--couleur-creme);
+}
+
+.profile-container {
+    width: min(100%, 900px);
+    margin: 0 auto;
+}
+
+.profile-container h1 {
+    margin: 0;
+    color: var(--couleur-bleu);
+    font-family: var(--police-titre);
+    font-size: 42px;
+    text-align: center;
+    font-weight: 400;
+}
+
+.profile-introduction {
+    margin: 15px auto 40px;
+    color: var(--couleur-bleu);
+    font-size: 17px;
+    text-align: center;
+}
+
+.profile-content {
+    width: 100%;
+}
+
+.profile-information-wrapper {
+    width: 100%;
+}
+
+.profile-information {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 25px;
+}
+
+.profile-section {
+    padding: 30px;
+    background-color: var(--couleur-blanc);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.profile-section h2 {
+    margin: 0 0 25px;
+    color: var(--couleur-bleu);
+    font-size: 22px;
+}
+
+.profile-list {
+    margin: 0;
+}
+
+.profile-row {
+    padding: 14px 0;
+    border-bottom: 1px solid #e7e1d8;
+}
+
+.profile-row:first-child {
+    padding-top: 0;
+}
+
+.profile-row:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.profile-row dt {
+    margin-bottom: 5px;
+    color: #6c7a80;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.profile-row dd {
+    margin: 0;
+    color: var(--couleur-bleu);
+    font-size: 16px;
+}
+
+/* Actions du profil */
+
+.profile-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.profile-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 42px;
+    padding: 10px 22px;
+
+    color: var(--couleur-blanc);
+    background-color: var(--couleur-bordeaux);
+
+    border: 1px solid var(--couleur-bordeaux);
+    border-radius: 5px;
+
+    font-family: var(--police-navigation);
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.profile-button:hover {
+    background-color: var(--couleur-bleu);
+    border-color: var(--couleur-bleu);
+}
+
+.profile-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.profile-button-secondary {
+    color: var(--couleur-bleu);
+    background-color: var(--couleur-creme);
+    border-color: var(--couleur-creme);
+}
+
+.profile-button-secondary:hover {
+    background-color: var(--couleur-camel);
+    border-color: var(--couleur-camel);
+}
+
+/* Formulaire */
+
+.profile-form {
+    padding: 35px;
+    background-color: var(--couleur-blanc);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.profile-form h2 {
+    margin: 0 0 30px;
+    color: var(--couleur-bleu);
+    font-size: 24px;
+}
+
+.profile-form-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 25px;
+}
+
+.profile-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.profile-form-group label {
+    color: var(--couleur-bleu);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.profile-form-group input {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 12px;
+
+    color: var(--couleur-bleu);
+    background-color: var(--couleur-blanc);
+
+    border: 1px solid #d8d2c9;
+    border-radius: 5px;
+
+    font-family: var(--police-texte);
+    font-size: 15px;
+
+    outline: none;
+
+    transition: border-color 0.2s ease;
+}
+
+.profile-form-group input:focus {
+    border-color: var(--couleur-bleu);
+}
+
+.profile-form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    grid-column: 1 / -1;
+}
+
+.profile-form-checkbox input {
+    width: 17px;
+    height: 17px;
+    margin: 0;
+    accent-color: var(--couleur-bordeaux);
+}
+
+.profile-form-checkbox label {
+    color: var(--couleur-bleu);
+    font-size: 14px;
+}
+
+.profile-form-message {
+    min-height: 20px;
+    margin: 22px 0 0;
+    font-size: 14px;
+}
+
+.profile-form-message-error {
+    color: #a94442;
+}
+
+.profile-form-message-success {
+    color: #47734f;
+}
+
+.profile-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+/* Messages */
+
+.profile-message {
+    margin: 0;
+    padding: 30px;
+    background-color: var(--couleur-blanc);
+    border-radius: 12px;
+    color: #5f6f75;
+    text-align: center;
+}
+
+.profile-message-error {
+    color: #a94442;
+}
+
+/* Adaptation mobile */
+
+@media (max-width: 768px) {
+    .profile-page {
+        padding: 40px 20px 60px;
+    }
+
+    .profile-container h1 {
+        font-size: 34px;
+    }
+
+    .profile-introduction {
+        font-size: 16px;
+    }
+
+    .profile-information {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-section {
+        padding: 25px 20px;
+    }
+
+    .profile-form {
+        padding: 25px 20px;
+    }
+
+    .profile-form-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-form-checkbox {
+        grid-column: auto;
+    }
+
+    .profile-form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .profile-form-actions .profile-button {
+        width: 100%;
+    }
+}
