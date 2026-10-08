@@ -1,59 +1,198 @@
-// Crée la page du profil de l'utilisateur connecté
+// Crée la page profil de l'utilisateur connecté
 
-import {
-    getCurrentUser,
-    updateCurrentUser
-} from '../api/authApi.js';
-
-import {
-    getToken,
-    getStoredUser
-} from '../services/authService.js';
-
+import { getCurrentUser, updateCurrentUser } from '../api/authApi.js';
+import { getMyGames } from '../api/userGamesApi.js';
+import { getToken } from '../services/authService.js';
 import { navigateTo } from '../router/router.js';
 
+import ludothequeImage from '../assets/images/backgrounds/ludotheque.jpg';
+
 import '../css/profile.css';
+
+
+/* ========================================
+   Départements français
+   ======================================== */
+
+const DEPARTMENTS = [
+    { code: '01', name: 'Ain' },
+    { code: '02', name: 'Aisne' },
+    { code: '03', name: 'Allier' },
+    { code: '04', name: 'Alpes-de-Haute-Provence' },
+    { code: '05', name: 'Hautes-Alpes' },
+    { code: '06', name: 'Alpes-Maritimes' },
+    { code: '07', name: 'Ardèche' },
+    { code: '08', name: 'Ardennes' },
+    { code: '09', name: 'Ariège' },
+    { code: '10', name: 'Aube' },
+    { code: '11', name: 'Aude' },
+    { code: '12', name: 'Aveyron' },
+    { code: '13', name: 'Bouches-du-Rhône' },
+    { code: '14', name: 'Calvados' },
+    { code: '15', name: 'Cantal' },
+    { code: '16', name: 'Charente' },
+    { code: '17', name: 'Charente-Maritime' },
+    { code: '18', name: 'Cher' },
+    { code: '19', name: 'Corrèze' },
+    { code: '2A', name: 'Corse-du-Sud' },
+    { code: '2B', name: 'Haute-Corse' },
+    { code: '21', name: "Côte-d'Or" },
+    { code: '22', name: "Côtes-d'Armor" },
+    { code: '23', name: 'Creuse' },
+    { code: '24', name: 'Dordogne' },
+    { code: '25', name: 'Doubs' },
+    { code: '26', name: 'Drôme' },
+    { code: '27', name: 'Eure' },
+    { code: '28', name: 'Eure-et-Loir' },
+    { code: '29', name: 'Finistère' },
+    { code: '30', name: 'Gard' },
+    { code: '31', name: 'Haute-Garonne' },
+    { code: '32', name: 'Gers' },
+    { code: '33', name: 'Gironde' },
+    { code: '34', name: 'Hérault' },
+    { code: '35', name: 'Ille-et-Vilaine' },
+    { code: '36', name: 'Indre' },
+    { code: '37', name: 'Indre-et-Loire' },
+    { code: '38', name: 'Isère' },
+    { code: '39', name: 'Jura' },
+    { code: '40', name: 'Landes' },
+    { code: '41', name: 'Loir-et-Cher' },
+    { code: '42', name: 'Loire' },
+    { code: '43', name: 'Haute-Loire' },
+    { code: '44', name: 'Loire-Atlantique' },
+    { code: '45', name: 'Loiret' },
+    { code: '46', name: 'Lot' },
+    { code: '47', name: 'Lot-et-Garonne' },
+    { code: '48', name: 'Lozère' },
+    { code: '49', name: 'Maine-et-Loire' },
+    { code: '50', name: 'Manche' },
+    { code: '51', name: 'Marne' },
+    { code: '52', name: 'Haute-Marne' },
+    { code: '53', name: 'Mayenne' },
+    { code: '54', name: 'Meurthe-et-Moselle' },
+    { code: '55', name: 'Meuse' },
+    { code: '56', name: 'Morbihan' },
+    { code: '57', name: 'Moselle' },
+    { code: '58', name: 'Nièvre' },
+    { code: '59', name: 'Nord' },
+    { code: '60', name: "Oise" },
+    { code: '61', name: 'Orne' },
+    { code: '62', name: 'Pas-de-Calais' },
+    { code: '63', name: 'Puy-de-Dôme' },
+    { code: '64', name: 'Pyrénées-Atlantiques' },
+    { code: '65', name: 'Hautes-Pyrénées' },
+    { code: '66', name: 'Pyrénées-Orientales' },
+    { code: '67', name: 'Bas-Rhin' },
+    { code: '68', name: 'Haut-Rhin' },
+    { code: '69', name: 'Rhône' },
+    { code: '70', name: 'Haute-Saône' },
+    { code: '71', name: 'Saône-et-Loire' },
+    { code: '72', name: 'Sarthe' },
+    { code: '73', name: 'Savoie' },
+    { code: '74', name: 'Haute-Savoie' },
+    { code: '75', name: 'Paris' },
+    { code: '76', name: 'Seine-Maritime' },
+    { code: '77', name: 'Seine-et-Marne' },
+    { code: '78', name: 'Yvelines' },
+    { code: '79', name: 'Deux-Sèvres' },
+    { code: '80', name: 'Somme' },
+    { code: '81', name: 'Tarn' },
+    { code: '82', name: 'Tarn-et-Garonne' },
+    { code: '83', name: 'Var' },
+    { code: '84', name: 'Vaucluse' },
+    { code: '85', name: 'Vendée' },
+    { code: '86', name: 'Vienne' },
+    { code: '87', name: 'Haute-Vienne' },
+    { code: '88', name: 'Vosges' },
+    { code: '89', name: 'Yonne' },
+    { code: '90', name: 'Territoire de Belfort' },
+    { code: '91', name: 'Essonne' },
+    { code: '92', name: 'Hauts-de-Seine' },
+    { code: '93', name: 'Seine-Saint-Denis' },
+    { code: '94', name: 'Val-de-Marne' },
+    { code: '95', name: "Val-d'Oise" },
+    { code: '971', name: 'Guadeloupe' },
+    { code: '972', name: 'Martinique' },
+    { code: '973', name: 'Guyane' },
+    { code: '974', name: 'La Réunion' },
+    { code: '976', name: 'Mayotte' }
+];
+
+
+/* ========================================
+   Création de la page
+   ======================================== */
 
 export function createProfilePage() {
     const page = document.createElement('main');
     page.classList.add('profile-page');
 
+    const hero = createProfileHero();
+
     const container = document.createElement('div');
     container.classList.add('profile-container');
-
-    const title = document.createElement('h1');
-    title.textContent = 'Mon profil';
-
-    const introduction = document.createElement('p');
-    introduction.classList.add('profile-introduction');
-    introduction.textContent =
-        'Retrouvez ici les informations de votre compte.';
 
     const content = document.createElement('div');
     content.classList.add('profile-content');
 
-    const loadingMessage = document.createElement('p');
-    loadingMessage.classList.add('profile-message');
-    loadingMessage.textContent = 'Chargement de votre profil...';
+    const loading = document.createElement('p');
+    loading.classList.add('profile-loading');
+    loading.textContent = 'Chargement de votre profil...';
 
-    content.append(loadingMessage);
+    content.append(loading);
+    container.append(content);
 
-    container.append(
-        title,
-        introduction,
-        content
-    );
-
-    page.append(container);
+    page.append(hero, container);
 
     loadProfile(content);
 
     return page;
 }
 
-/**
- * Récupère les informations du profil depuis l'API.
- */
+
+/* ========================================
+   Hero
+   ======================================== */
+
+function createProfileHero() {
+    const section = document.createElement('section');
+    section.classList.add('home-hero');
+
+    const content = document.createElement('div');
+    content.classList.add('home-hero-content');
+
+    const title = document.createElement('h1');
+
+    const firstWord = document.createElement('span');
+    firstWord.textContent = 'Mon';
+
+    const secondWord = document.createElement('span');
+    secondWord.classList.add('heading-highlight');
+    secondWord.textContent = 'profil';
+
+    title.append(firstWord, secondWord);
+
+    content.append(title);
+
+    const imageContainer = document.createElement('div');
+    imageContainer.classList.add('home-hero-image');
+
+    const image = document.createElement('img');
+    image.src = ludothequeImage;
+    image.alt = 'Ludothèque contenant des jeux de société';
+
+    imageContainer.append(image);
+
+    section.append(content, imageContainer);
+
+    return section;
+}
+
+
+/* ========================================
+   Chargement du profil
+   ======================================== */
+
 async function loadProfile(content) {
     const token = getToken();
 
@@ -63,260 +202,474 @@ async function loadProfile(content) {
     }
 
     try {
-        const user = await getCurrentUser(token);
+        const [user, games] = await Promise.all([
+            getCurrentUser(token),
+            getMyGames(token)
+        ]);
 
-        // Met à jour les informations stockées localement
-        localStorage.setItem('user', JSON.stringify(user));
-
-        displayProfile(content, user);
+        content.replaceChildren(
+            createProfileInformation(user),
+            createLibraryPreview(games),
+            createProfileActions(user)
+        );
     } catch (error) {
         console.error(error);
 
         content.replaceChildren();
 
         const errorMessage = document.createElement('p');
-        errorMessage.classList.add(
-            'profile-message',
-            'profile-message-error'
-        );
+        errorMessage.classList.add('profile-error');
         errorMessage.textContent =
-            'Impossible de récupérer les informations de votre profil.';
+            'Impossible de charger votre profil pour le moment.';
 
         content.append(errorMessage);
-
-        // Si la session locale existe, elle est supprimée
-        if (getStoredUser()) {
-            localStorage.removeItem('user');
-        }
-
-        if (error.message) {
-            localStorage.removeItem('token');
-        }
     }
 }
 
-/**
- * Affiche les informations du profil.
- */
-function displayProfile(content, user) {
-    content.replaceChildren(
-        createProfileInformation(user)
+
+/* ========================================
+   Mes informations
+   ======================================== */
+
+function createProfileInformation(user) {
+    const section = document.createElement('section');
+    section.classList.add('profile-section');
+
+    const title = document.createElement('h2');
+    title.textContent = 'Mes informations';
+
+    const pseudoField = createProfileField(
+        'Pseudo',
+        user.pseudo || 'Non renseigné'
     );
+
+    const emailField = createProfileField(
+        'Email',
+        user.email || 'Non renseigné'
+    );
+
+    const dateField = createProfileField(
+        'Date de naissance',
+        formatDate(user.dateOfBirth)
+    );
+
+    const departmentField = createProfileField(
+        'Département',
+        user.department || 'Non renseigné'
+    );
+
+    const cityField = createProfileField(
+        'Ville',
+        user.city || 'Non renseignée'
+    );
+
+    const visibilityField = createProfileField(
+        'Ville visible',
+        user.cityVisible === true ? 'Oui' : 'Non'
+    );
+
+    section.append(
+        title,
+        pseudoField,
+        emailField,
+        dateField,
+        departmentField,
+        cityField,
+        visibilityField
+    );
+
+    return section;
 }
 
-/**
- * Crée le contenu présentant les informations du profil.
- */
-function createProfileInformation(user) {
-    const wrapper = document.createElement('div');
-    wrapper.classList.add('profile-information-wrapper');
 
-    const information = document.createElement('div');
-    information.classList.add('profile-information');
+/* ========================================
+   Champ d'information
+   ======================================== */
 
-    const accountSection = document.createElement('section');
-    accountSection.classList.add('profile-section');
+function createProfileField(labelText, valueText) {
+    const field = document.createElement('div');
+    field.classList.add('profile-field');
 
-    const accountTitle = document.createElement('h2');
-    accountTitle.textContent = 'Informations du compte';
+    const label = document.createElement('span');
+    label.classList.add('profile-field-label');
+    label.textContent = labelText;
 
-    const accountList = document.createElement('dl');
-    accountList.classList.add('profile-list');
+    const value = document.createElement('span');
+    value.classList.add('profile-field-value');
+    value.textContent = valueText;
 
-    accountList.append(
-        createProfileRow('Pseudo', user.pseudo),
-        createProfileRow('Adresse e-mail', user.email),
-        createProfileRow('Membre depuis', formatDate(user.createdAt))
-    );
+    field.append(label, value);
 
-    accountSection.append(
-        accountTitle,
-        accountList
-    );
+    return field;
+}
 
-    const personalSection = document.createElement('section');
-    personalSection.classList.add('profile-section');
 
-    const personalTitle = document.createElement('h2');
-    personalTitle.textContent = 'Informations personnelles';
+/* ========================================
+   Aperçu de la ludothèque
+   ======================================== */
 
-    const personalList = document.createElement('dl');
-    personalList.classList.add('profile-list');
+function createLibraryPreview(games) {
+    const section = document.createElement('section');
+    section.classList.add('profile-section');
 
-    personalList.append(
-        createProfileRow(
-            'Date de naissance',
-            formatDate(user.dateOfBirth)
-        ),
-        createProfileRow('Département', user.department),
-        createProfileRow(
-            'Ville',
-            user.cityVisible ? user.city : 'Ville masquée'
-        )
-    );
+    const header = document.createElement('div');
+    header.classList.add('profile-section-header');
 
-    personalSection.append(
-        personalTitle,
-        personalList
-    );
+    const titleContainer = document.createElement('div');
 
-    information.append(
-        accountSection,
-        personalSection
-    );
+    const title = document.createElement('h2');
+    title.textContent = 'Ma ludothèque';
 
-    // Bouton permettant d'ouvrir le formulaire de modification
-    const actions = document.createElement('div');
-    actions.classList.add('profile-actions');
+    const count = document.createElement('span');
+    count.classList.add('profile-library-count');
+    count.textContent =
+        `${games.length} jeu${games.length > 1 ? 'x' : ''}`;
 
-    const editButton = document.createElement('button');
-    editButton.type = 'button';
-    editButton.classList.add('profile-button');
-    editButton.textContent = 'Modifier mes informations';
+    titleContainer.append(title, count);
 
-    editButton.addEventListener('click', () => {
-        const content = wrapper.parentElement;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.classList.add('profile-library-button');
+    button.textContent = 'Gérer ma ludothèque';
 
-        if (content) {
-            content.replaceChildren(
-                createProfileForm(user)
-            );
-        }
+    button.addEventListener('click', () => {
+        navigateTo('/ludotheque');
     });
 
-    actions.append(editButton);
+    header.append(titleContainer, button);
 
-    wrapper.append(
-        information,
-        actions
-    );
+    const grid = document.createElement('div');
+    grid.classList.add('profile-library-grid');
 
-    return wrapper;
+    if (games.length === 0) {
+        const emptyMessage = document.createElement('p');
+        emptyMessage.classList.add('profile-empty-message');
+        emptyMessage.textContent =
+            'Votre ludothèque est actuellement vide.';
+
+        grid.append(emptyMessage);
+    } else {
+        games.slice(0, 3).forEach((userGame) => {
+            grid.append(createLibraryGameCard(userGame));
+        });
+    }
+
+    section.append(header, grid);
+
+    if (games.length > 3) {
+        const more = document.createElement('p');
+        more.classList.add('profile-library-more');
+        more.textContent =
+            `Et ${games.length - 3} autre${games.length - 3 > 1 ? 's' : ''} jeu${games.length - 3 > 1 ? 'x' : ''}...`;
+
+        section.append(more);
+    }
+
+    return section;
 }
 
-/**
- * Crée le formulaire de modification du profil.
- */
-function createProfileForm(user) {
+
+/* ========================================
+   Carte d'un jeu de la ludothèque
+   ======================================== */
+
+function createLibraryGameCard(userGame) {
+    const card = document.createElement('article');
+    card.classList.add('profile-library-card');
+
+    const imageContainer = document.createElement('div');
+    imageContainer.classList.add('profile-library-card-image');
+
+    const image = document.createElement('img');
+
+    const game = userGame.game || userGame;
+
+    image.src = getGameImage(game);
+    image.alt = game.name || 'Jeu de société';
+
+    imageContainer.append(image);
+
+    const content = document.createElement('div');
+    content.classList.add('profile-library-card-content');
+
+    const title = document.createElement('h3');
+    title.textContent = game.name || 'Jeu';
+
+    const status = document.createElement('p');
+    status.classList.add('profile-library-card-status');
+
+    const ownership = userGame.owns
+        ? 'Je possède ce jeu'
+        : 'Je connais ce jeu';
+
+    const rules = userGame.knowsRules
+        ? 'Règles maîtrisées'
+        : 'Règles à apprendre';
+
+    status.textContent = `${ownership} • ${rules}`;
+
+    content.append(title, status);
+    card.append(imageContainer, content);
+
+    return card;
+}
+
+
+/* ========================================
+   Image d'un jeu
+   ======================================== */
+
+function getGameImage(game) {
+    if (game.image) {
+        if (game.image.startsWith('http')) {
+            return game.image;
+        }
+
+        return `http://127.0.0.1:8000${game.image}`;
+    }
+
+    return '';
+}
+
+
+/* ========================================
+   Actions du profil
+   ======================================== */
+
+function createProfileActions(user) {
+    const section = document.createElement('section');
+    section.classList.add('profile-actions');
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.classList.add('profile-edit-button');
+    button.textContent = 'Modifier mon profil';
+
+    button.addEventListener('click', () => {
+        openProfileEditForm(user);
+    });
+
+    section.append(button);
+
+    return section;
+}
+
+
+/* ========================================
+   Formulaire de modification
+   ======================================== */
+
+function openProfileEditForm(user) {
+    const profileContent = document.querySelector('.profile-content');
+
+    if (!profileContent) {
+        return;
+    }
+
+    const section = document.createElement('section');
+    section.classList.add('profile-section');
+
+    const title = document.createElement('h2');
+    title.textContent = 'Modifier mon profil';
+
     const form = document.createElement('form');
     form.classList.add('profile-form');
 
-    const title = document.createElement('h2');
-    title.textContent = 'Modifier mes informations';
+    /* ---------- Email ---------- */
 
-    const fields = document.createElement('div');
-    fields.classList.add('profile-form-fields');
+    const emailGroup = document.createElement('div');
+    emailGroup.classList.add('profile-form-group');
 
-    const pseudoGroup = createFormField(
-        'Pseudo',
-        'pseudo',
-        'text',
-        user.pseudo,
-        true
+    const emailLabel = document.createElement('label');
+    emailLabel.setAttribute('for', 'profile-email');
+    emailLabel.textContent = 'Email';
+
+    const emailInput = document.createElement('input');
+    emailInput.type = 'email';
+    emailInput.id = 'profile-email';
+    emailInput.name = 'email';
+    emailInput.value = user.email || '';
+
+    emailGroup.append(emailLabel, emailInput);
+
+
+    /* ---------- Pseudo ---------- */
+
+    const pseudoGroup = document.createElement('div');
+    pseudoGroup.classList.add('profile-form-group');
+
+    const pseudoLabel = document.createElement('label');
+    pseudoLabel.setAttribute('for', 'profile-pseudo');
+    pseudoLabel.textContent = 'Pseudo';
+
+    const pseudoInput = document.createElement('input');
+    pseudoInput.type = 'text';
+    pseudoInput.id = 'profile-pseudo';
+    pseudoInput.name = 'pseudo';
+    pseudoInput.value = user.pseudo || '';
+
+    pseudoGroup.append(pseudoLabel, pseudoInput);
+
+
+    /* ---------- Date de naissance ---------- */
+
+    const dateOfBirthGroup = document.createElement('div');
+    dateOfBirthGroup.classList.add('profile-form-group');
+
+    const dateOfBirthLabel = document.createElement('label');
+    dateOfBirthLabel.setAttribute(
+        'for',
+        'profile-date-of-birth'
+    );
+    dateOfBirthLabel.textContent = 'Date de naissance';
+
+    const dateOfBirthInput = document.createElement('input');
+    dateOfBirthInput.type = 'date';
+    dateOfBirthInput.id = 'profile-date-of-birth';
+    dateOfBirthInput.name = 'dateOfBirth';
+    dateOfBirthInput.value = user.dateOfBirth || '';
+
+    dateOfBirthGroup.append(
+        dateOfBirthLabel,
+        dateOfBirthInput
     );
 
-    const emailGroup = createFormField(
-        'Adresse e-mail',
-        'email',
-        'email',
-        user.email,
-        true
+
+    /* ---------- Département ---------- */
+
+    const departmentGroup = document.createElement('div');
+    departmentGroup.classList.add('profile-form-group');
+
+    const departmentLabel = document.createElement('label');
+    departmentLabel.setAttribute(
+        'for',
+        'profile-department'
+    );
+    departmentLabel.textContent = 'Département';
+
+    const departmentSelect = document.createElement('select');
+    departmentSelect.id = 'profile-department';
+    departmentSelect.name = 'department';
+
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Sélectionnez votre département';
+
+    departmentSelect.append(defaultOption);
+
+    DEPARTMENTS.forEach((department) => {
+        const option = document.createElement('option');
+
+        option.value = department.code;
+        option.textContent =
+            `${department.code} — ${department.name}`;
+
+        if (department.code === user.department) {
+            option.selected = true;
+        }
+
+        departmentSelect.append(option);
+    });
+
+    departmentGroup.append(
+        departmentLabel,
+        departmentSelect
     );
 
-    const dateGroup = createFormField(
-        'Date de naissance',
-        'dateOfBirth',
-        'date',
-        user.dateOfBirth,
-        true
-    );
 
-    const departmentGroup = createFormField(
-        'Département',
-        'department',
-        'text',
-        user.department,
-        true
-    );
+    /* ---------- Ville ---------- */
 
-    const cityGroup = createFormField(
-        'Ville',
-        'city',
-        'text',
-        user.city || '',
-        false
-    );
+    const cityGroup = document.createElement('div');
+    cityGroup.classList.add('profile-form-group');
+
+    const cityLabel = document.createElement('label');
+    cityLabel.setAttribute('for', 'profile-city');
+    cityLabel.textContent = 'Ville';
+
+    const cityInput = document.createElement('input');
+    cityInput.type = 'text';
+    cityInput.id = 'profile-city';
+    cityInput.name = 'city';
+    cityInput.value = user.city || '';
+    cityInput.placeholder = 'Votre ville';
+
+    cityGroup.append(cityLabel, cityInput);
+
+
+    /* ---------- Visibilité de la ville ---------- */
 
     const visibilityGroup = document.createElement('div');
     visibilityGroup.classList.add('profile-form-checkbox');
 
     const visibilityInput = document.createElement('input');
     visibilityInput.type = 'checkbox';
-    visibilityInput.id = 'cityVisible';
+    visibilityInput.id = 'city-visible';
     visibilityInput.name = 'cityVisible';
-    visibilityInput.checked = user.cityVisible;
+    visibilityInput.checked = user.cityVisible === true;
 
     const visibilityLabel = document.createElement('label');
-    visibilityLabel.setAttribute('for', 'cityVisible');
-    visibilityLabel.textContent = 'Afficher ma ville aux autres joueurs';
+    visibilityLabel.setAttribute(
+        'for',
+        'city-visible'
+    );
+    visibilityLabel.textContent =
+        'Afficher ma ville aux autres utilisateurs';
 
     visibilityGroup.append(
         visibilityInput,
         visibilityLabel
     );
 
-    fields.append(
-        pseudoGroup,
-        emailGroup,
-        dateGroup,
-        departmentGroup,
-        cityGroup,
-        visibilityGroup
-    );
 
-    const message = document.createElement('p');
-    message.classList.add('profile-form-message');
+    /* ---------- Message d'erreur ---------- */
+
+    const formError = document.createElement('p');
+    formError.classList.add('profile-form-error');
+    formError.hidden = true;
+
+
+    /* ---------- Actions ---------- */
 
     const actions = document.createElement('div');
     actions.classList.add('profile-form-actions');
 
     const cancelButton = document.createElement('button');
     cancelButton.type = 'button';
-    cancelButton.classList.add(
-        'profile-button',
-        'profile-button-secondary'
-    );
+    cancelButton.classList.add('profile-cancel-button');
     cancelButton.textContent = 'Annuler';
 
     cancelButton.addEventListener('click', () => {
-        const content = form.parentElement;
-
-        if (content) {
-            content.replaceChildren(
-                createProfileInformation(user)
-            );
-        }
+        loadProfile(profileContent);
     });
 
-    const submitButton = document.createElement('button');
-    submitButton.type = 'submit';
-    submitButton.classList.add('profile-button');
-    submitButton.textContent = 'Enregistrer les modifications';
+    const saveButton = document.createElement('button');
+    saveButton.type = 'submit';
+    saveButton.classList.add('profile-save-button');
+    saveButton.textContent = 'Enregistrer';
 
     actions.append(
         cancelButton,
-        submitButton
+        saveButton
     );
 
-    form.append(
-        title,
-        fields,
-        message,
-        actions
-    );
+
+    /* ---------- Envoi du formulaire ---------- */
 
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
+
+        formError.hidden = true;
+        formError.textContent = '';
+
+        const department = departmentSelect.value;
+
+        if (department === '') {
+            formError.textContent =
+                'Veuillez sélectionner votre département.';
+            formError.hidden = false;
+
+            return;
+        }
 
         const token = getToken();
 
@@ -325,137 +678,78 @@ function createProfileForm(user) {
             return;
         }
 
-        message.textContent = '';
-        message.classList.remove(
-            'profile-form-message-error',
-            'profile-form-message-success'
-        );
+        saveButton.disabled = true;
+        saveButton.textContent = 'Enregistrement...';
 
-        submitButton.disabled = true;
-        submitButton.textContent = 'Enregistrement...';
-
-        const userData = {
-            pseudo: pseudoGroup.input.value.trim(),
-            email: emailGroup.input.value.trim(),
-            dateOfBirth: dateGroup.input.value,
-            department: departmentGroup.input.value.trim(),
-            city: cityGroup.input.value.trim() || null,
+        const data = {
+            email: emailInput.value.trim(),
+            pseudo: pseudoInput.value.trim(),
+            dateOfBirth: dateOfBirthInput.value,
+            department,
+            city: cityInput.value.trim() || null,
             cityVisible: visibilityInput.checked
         };
 
         try {
-            await updateCurrentUser(token, userData);
+            await updateCurrentUser(token, data);
 
-            // Récupère les données actualisées depuis l'API
-            const updatedUser = await getCurrentUser(token);
+            // Recharge les données depuis l'API après modification
+            const [updatedUser, updatedGames] = await Promise.all([
+                getCurrentUser(token),
+                getMyGames(token)
+            ]);
 
-            // Met à jour les informations locales
-            localStorage.setItem(
-                'user',
-                JSON.stringify(updatedUser)
+            profileContent.replaceChildren(
+                createProfileInformation(updatedUser),
+                createLibraryPreview(updatedGames),
+                createProfileActions(updatedUser)
             );
-
-            message.textContent =
-                'Vos informations ont bien été modifiées.';
-            message.classList.add(
-                'profile-form-message-success'
-            );
-
-            // Affiche le profil actualisé
-            const content = form.parentElement;
-
-            if (content) {
-                content.replaceChildren(
-                    createProfileInformation(updatedUser)
-                );
-            }
         } catch (error) {
             console.error(error);
 
-            message.textContent =
+            formError.textContent =
                 error.message ||
                 'Impossible de modifier votre profil.';
-            message.classList.add(
-                'profile-form-message-error'
-            );
 
-            submitButton.disabled = false;
-            submitButton.textContent =
-                'Enregistrer les modifications';
+            formError.hidden = false;
+
+            saveButton.disabled = false;
+            saveButton.textContent = 'Enregistrer';
         }
     });
 
-    return form;
-}
 
-/**
- * Crée un champ du formulaire.
- */
-function createFormField(
-    labelText,
-    name,
-    type,
-    value,
-    required
-) {
-    const group = document.createElement('div');
-    group.classList.add('profile-form-group');
-
-    const label = document.createElement('label');
-    label.setAttribute('for', name);
-    label.textContent = labelText;
-
-    const input = document.createElement('input');
-    input.type = type;
-    input.id = name;
-    input.name = name;
-    input.value = value || '';
-    input.required = required;
-
-    group.append(
-        label,
-        input
+    form.append(
+        emailGroup,
+        pseudoGroup,
+        dateOfBirthGroup,
+        departmentGroup,
+        cityGroup,
+        visibilityGroup,
+        formError,
+        actions
     );
 
-    group.input = input;
+    section.append(title, form);
 
-    return group;
+    profileContent.replaceChildren(section);
 }
 
-/**
- * Crée une ligne d'information du profil.
- */
-function createProfileRow(labelText, value) {
-    const row = document.createElement('div');
-    row.classList.add('profile-row');
 
-    const label = document.createElement('dt');
-    label.textContent = labelText;
+/* ========================================
+   Formatage de la date
+   ======================================== */
 
-    const information = document.createElement('dd');
-    information.textContent = value || 'Non renseigné';
-
-    row.append(
-        label,
-        information
-    );
-
-    return row;
-}
-
-/**
- * Formate une date reçue depuis l'API.
- */
 function formatDate(date) {
     if (!date) {
         return 'Non renseignée';
     }
 
-    const formattedDate = new Date(date);
+    const parts = date.split('-');
 
-    if (Number.isNaN(formattedDate.getTime())) {
+    if (parts.length !== 3) {
         return date;
     }
 
-    return formattedDate.toLocaleDateString('fr-FR');
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
