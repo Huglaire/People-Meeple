@@ -11,11 +11,13 @@ import { createGamesPage } from '../pages/Games.js';
 import { createGameDetailPage } from '../pages/GameDetail.js';
 import { createProfilePage } from '../pages/Profile.js';
 import { createLayout } from '../components/Layout.js';
+import { createLudothequePage } from '../pages/Ludotheque.js';
 
 const routes = {
     '/': createHomePage,
     '/connexion': createLoginPage,
     '/inscription': createRegisterPage,
+    '/ludotheque': createLudothequePage,
 
     '/joueurs': createPlayersPage,
 

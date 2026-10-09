@@ -1,0 +1,464 @@
+/* ========================================
+   PAGE LUDOTHÈQUE
+   ======================================== */
+
+.ludotheque-page {
+    width: 100%;
+
+    min-height: 100vh;
+
+    padding: 45px 0 60px;
+
+    background-color: var(--couleur-creme);
+}
+
+.ludotheque-container {
+    width: calc(100% - 11%);
+
+    max-width: 1260px;
+
+    margin: 0 auto;
+}
+
+.ludotheque-container > h1 {
+    margin: 0 0 30px;
+
+    color: var(--couleur-bleu);
+
+    font-family: var(--police-titre);
+
+    font-size: clamp(38px, 4vw, 54px);
+
+    font-weight: 400;
+
+    line-height: 1;
+}
+
+
+/* ========================================
+   SECTIONS
+   ======================================== */
+
+.ludotheque-section {
+    margin-bottom: 35px;
+
+    padding: 28px;
+
+    background-color: var(--couleur-blanc);
+
+    border-radius: 8px;
+
+    box-shadow:
+        0 3px 10px rgba(31, 53, 86, 0.10);
+}
+
+.ludotheque-section-header {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    margin-bottom: 22px;
+}
+
+.ludotheque-section h2 {
+    margin: 0 0 22px;
+
+    color: var(--couleur-bleu);
+
+    font-family: var(--police-titre);
+
+    font-size: 32px;
+
+    font-weight: 400;
+}
+
+.ludotheque-section-header h2 {
+    margin: 0;
+}
+
+.ludotheque-count {
+    display: inline-block;
+
+    margin-left: 12px;
+
+    color: var(--couleur-bordeaux);
+
+    font-family: var(--police-navigation);
+
+    font-size: 14px;
+}
+
+
+/* ========================================
+   CARTES DE LA LUDOTHÈQUE
+   ======================================== */
+
+/*
+ * Le format visuel de base des cartes est
+ * maintenant fourni par games.css.
+ *
+ * Les classes ludotheque-card et
+ * ludotheque-add-card servent uniquement
+ * à ajouter les fonctionnalités propres
+ * à la ludothèque.
+ */
+
+.ludotheque-card,
+.ludotheque-add-card {
+    min-width: 0;
+}
+
+
+/* ========================================
+   FONCTIONNALITÉS DE "MES JEUX"
+   ======================================== */
+
+.ludotheque-card-status {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+
+    margin-bottom: 15px;
+}
+
+.ludotheque-checkbox {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    color: var(--couleur-bleu);
+
+    font-size: 13px;
+
+    cursor: pointer;
+}
+
+.ludotheque-checkbox input {
+    width: 16px;
+
+    height: 16px;
+
+    margin: 0;
+
+    accent-color: var(--couleur-bordeaux);
+
+    cursor: pointer;
+}
+
+.ludotheque-delete-button {
+    width: 100%;
+
+    min-height: 34px;
+
+    padding: 7px 10px;
+
+    color: var(--couleur-bordeaux);
+
+    background-color: transparent;
+
+    border: 1px solid var(--couleur-bordeaux);
+
+    border-radius: 4px;
+
+    font-family: var(--police-navigation);
+
+    font-size: 12px;
+
+    cursor: pointer;
+
+    transition:
+        color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.ludotheque-delete-button:hover {
+    color: var(--couleur-blanc);
+
+    background-color: var(--couleur-bordeaux);
+}
+
+.ludotheque-delete-button:disabled {
+    opacity: 0.6;
+
+    cursor: wait;
+}
+
+.ludotheque-card-error {
+    margin: 0 0 12px;
+
+    color: var(--couleur-bordeaux);
+
+    font-size: 12px;
+
+    line-height: 1.3;
+}
+
+
+/* ========================================
+   AJOUT D'UN JEU
+   ======================================== */
+
+.ludotheque-add-section {
+    background-color: var(--couleur-blanc);
+}
+
+.ludotheque-search {
+    position: relative;
+
+    width: 100%;
+
+    max-width: 500px;
+
+    margin-bottom: 25px;
+}
+
+.ludotheque-search i {
+    position: absolute;
+
+    top: 50%;
+
+    left: 13px;
+
+    color: #777777;
+
+    font-size: 16px;
+
+    transform: translateY(-50%);
+}
+
+.ludotheque-search input {
+    width: 100%;
+
+    height: 42px;
+
+    padding: 0 15px 0 40px;
+
+    color: var(--couleur-bleu);
+
+    background-color: var(--couleur-blanc);
+
+    border: 1px solid rgba(31, 53, 86, 0.25);
+
+    border-radius: 4px;
+
+    font-family: var(--police-texte);
+
+    font-size: 14px;
+
+    outline: none;
+}
+
+.ludotheque-search input:focus {
+    border-color: var(--couleur-camel);
+}
+
+
+/* ========================================
+   MENU D'AJOUT
+   ======================================== */
+
+.ludotheque-add-dropdown {
+    position: relative;
+
+    width: 100%;
+}
+
+.ludotheque-add-button {
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 10px;
+
+    width: 100%;
+
+    min-height: 34px;
+
+    padding: 0 12px;
+
+    color: var(--couleur-blanc);
+
+    background-color: var(--couleur-bordeaux);
+
+    border: 1px solid var(--couleur-bordeaux);
+
+    border-radius: 4px;
+
+    font-family: var(--police-navigation);
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.ludotheque-add-button:hover,
+.ludotheque-add-dropdown.is-open .ludotheque-add-button {
+    background-color: var(--couleur-bleu);
+
+    border-color: var(--couleur-bleu);
+}
+
+.ludotheque-add-button > i {
+    font-size: 10px;
+
+    transition:
+        transform 0.2s ease;
+}
+
+.ludotheque-add-dropdown.is-open
+.ludotheque-add-button > i {
+    transform: rotate(180deg);
+}
+
+.ludotheque-add-button:disabled {
+    opacity: 0.7;
+
+    cursor: wait;
+}
+
+.ludotheque-add-button.is-added {
+    background-color: var(--couleur-bleu);
+
+    border-color: var(--couleur-bleu);
+
+    cursor: default;
+}
+
+.ludotheque-add-options {
+    position: absolute;
+
+    z-index: 10;
+
+    bottom: calc(100% + 7px);
+
+    left: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    width: 100%;
+
+    overflow: hidden;
+
+    background-color: var(--couleur-blanc);
+
+    border: 1px solid #ded9d2;
+
+    border-radius: 5px;
+
+    box-shadow:
+        0 4px 12px rgba(31, 53, 86, 0.15);
+}
+
+.ludotheque-add-option {
+    padding: 11px 13px;
+
+    color: var(--couleur-bleu);
+
+    font-family: var(--police-texte);
+
+    font-size: 11px;
+
+    text-align: left;
+
+    background-color: var(--couleur-blanc);
+
+    border: 0;
+
+    border-bottom: 1px solid #e8e3dc;
+
+    cursor: pointer;
+}
+
+.ludotheque-add-option:last-child {
+    border-bottom: 0;
+}
+
+.ludotheque-add-option:hover {
+    color: var(--couleur-bordeaux);
+
+    background-color: var(--couleur-creme);
+}
+
+
+/* ========================================
+   MESSAGES
+   ======================================== */
+
+.ludotheque-loading,
+.ludotheque-error,
+.ludotheque-empty {
+    margin: 0;
+
+    color: var(--couleur-bleu);
+
+    font-size: 14px;
+}
+
+.ludotheque-error {
+    color: var(--couleur-bordeaux);
+}
+
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 1000px) {
+    .ludotheque-section {
+        padding: 24px;
+    }
+}
+
+@media (max-width: 700px) {
+    .ludotheque-page {
+        padding: 30px 0 45px;
+    }
+
+    .ludotheque-container {
+        width: calc(100% - 30px);
+    }
+
+    .ludotheque-section {
+        padding: 20px;
+    }
+
+    .ludotheque-section h2 {
+        font-size: 28px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ludotheque-container {
+        width: calc(100% - 24px);
+    }
+
+    .ludotheque-container > h1 {
+        font-size: 38px;
+    }
+
+    .ludotheque-section {
+        padding: 16px;
+    }
+
+    .ludotheque-add-options {
+        bottom: auto;
+
+        top: calc(100% + 7px);
+    }
+}

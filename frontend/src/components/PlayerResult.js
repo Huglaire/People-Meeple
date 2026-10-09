@@ -2,7 +2,11 @@
 
 import { navigateTo } from '../router/router.js';
 
-export function createPlayerResult(player, isSelected = false) {
+export function createPlayerResult(
+    player,
+    isSelected = false,
+    onSelect = null
+) {
     const link = document.createElement('a');
     link.href = `/joueurs/${player.slug}`;
     link.classList.add('player-result');
@@ -13,6 +17,14 @@ export function createPlayerResult(player, isSelected = false) {
 
     link.addEventListener('click', (event) => {
         event.preventDefault();
+
+        // Utilise le comportement fourni par la page si nécessaire
+        if (onSelect) {
+            onSelect(player);
+            return;
+        }
+
+        // Sinon, conserve la navigation vers le profil
         navigateTo(`/joueurs/${player.slug}`);
     });
 
@@ -53,7 +65,11 @@ export function createPlayerResult(player, isSelected = false) {
     games.append(gamesIcon, gamesCount);
 
     const arrow = document.createElement('i');
-    arrow.classList.add('bi', 'bi-chevron-right', 'player-result-arrow');
+    arrow.classList.add(
+        'bi',
+        'bi-chevron-right',
+        'player-result-arrow'
+    );
     arrow.setAttribute('aria-hidden', 'true');
 
     link.append(

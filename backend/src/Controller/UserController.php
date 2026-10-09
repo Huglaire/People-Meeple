@@ -52,6 +52,69 @@ final class UserController extends AbstractController
     }
 
     /**
+     * Retourne les ludothèques des joueurs actifs.
+     */
+    #[Route('/api/players/libraries', name: 'api_players_libraries', methods: ['GET'])]
+    #[OA\Get(
+        summary: 'Récupérer les ludothèques des joueurs',
+        description: 'Retourne les jeux possédés par les joueurs actifs.'
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Ludothèques des joueurs.'
+    )]
+    #[OA\Response(
+        response: 401,
+        description: 'Authentification requise.'
+    )]
+    #[OA\SecurityRequirement(name: 'Bearer')]
+    public function playerLibraries(
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        // Récupère uniquement les utilisateurs actifs
+        $users = $entityManager
+            ->getRepository(User::class)
+            ->findBy([
+                'isActive' => true,
+            ]);
+
+        $players = [];
+
+        foreach ($users as $user) {
+            $library = [];
+
+            // Parcourt les associations entre l'utilisateur et ses jeux
+            foreach ($user->getUserGames() as $userGame) {
+                // Seuls les jeux réellement possédés sont affichés
+                if (!$userGame->isOwns()) {
+                    continue;
+                }
+
+                $game = $userGame->getGame();
+
+                if ($game === null || !$game->isActive()) {
+                    continue;
+                }
+
+                $library[] = [
+                    'name' => $game->getName(),
+                    'image' => $game->getImage(),
+                    'minPlayers' => $game->getMinPlayers(),
+                    'maxPlayers' => $game->getMaxPlayers(),
+                    'duration' => $game->getDuration(),
+                ];
+            }
+
+            $players[] = [
+                'pseudo' => $user->getPseudo(),
+                'library' => $library,
+            ];
+        }
+
+        return new JsonResponse($players);
+    }
+
+    /**
      * Modifie les informations du profil de l'utilisateur connecté.
      */
     #[Route('/api/me', name: 'api_me_update', methods: ['PATCH'])]

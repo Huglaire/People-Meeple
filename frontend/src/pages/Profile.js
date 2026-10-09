@@ -4,9 +4,7 @@ import { getCurrentUser, updateCurrentUser } from '../api/authApi.js';
 import { getMyGames } from '../api/userGamesApi.js';
 import { getToken } from '../services/authService.js';
 import { navigateTo } from '../router/router.js';
-
 import ludothequeImage from '../assets/images/backgrounds/ludotheque.jpg';
-
 import '../css/profile.css';
 
 
@@ -75,7 +73,7 @@ const DEPARTMENTS = [
     { code: '57', name: 'Moselle' },
     { code: '58', name: 'Nièvre' },
     { code: '59', name: 'Nord' },
-    { code: '60', name: "Oise" },
+    { code: '60', name: 'Oise' },
     { code: '61', name: 'Orne' },
     { code: '62', name: 'Pas-de-Calais' },
     { code: '63', name: 'Puy-de-Dôme' },
@@ -171,7 +169,6 @@ function createProfileHero() {
     secondWord.textContent = 'profil';
 
     title.append(firstWord, secondWord);
-
     content.append(title);
 
     const imageContainer = document.createElement('div');
@@ -182,7 +179,6 @@ function createProfileHero() {
     image.alt = 'Ludothèque contenant des jeux de société';
 
     imageContainer.append(image);
-
     section.append(content, imageContainer);
 
     return section;
@@ -208,13 +204,12 @@ async function loadProfile(content) {
         ]);
 
         content.replaceChildren(
-            createProfileInformation(user),
             createLibraryPreview(games),
+            createProfileInformation(user),
             createProfileActions(user)
         );
     } catch (error) {
         console.error(error);
-
         content.replaceChildren();
 
         const errorMessage = document.createElement('p');
@@ -349,18 +344,18 @@ function createLibraryPreview(games) {
 
         grid.append(emptyMessage);
     } else {
-        games.slice(0, 3).forEach((userGame) => {
+        games.slice(0, 6).forEach((userGame) => {
             grid.append(createLibraryGameCard(userGame));
         });
     }
 
     section.append(header, grid);
 
-    if (games.length > 3) {
+    if (games.length > 6) {
         const more = document.createElement('p');
         more.classList.add('profile-library-more');
         more.textContent =
-            `Et ${games.length - 3} autre${games.length - 3 > 1 ? 's' : ''} jeu${games.length - 3 > 1 ? 'x' : ''}...`;
+            `Et ${games.length - 6} autre${games.length - 6 > 1 ? 's' : ''} jeu${games.length - 6 > 1 ? 'x' : ''}...`;
 
         section.append(more);
     }
@@ -474,6 +469,7 @@ function openProfileEditForm(user) {
 
     const form = document.createElement('form');
     form.classList.add('profile-form');
+
 
     /* ---------- Email ---------- */
 
@@ -666,6 +662,7 @@ function openProfileEditForm(user) {
         if (department === '') {
             formError.textContent =
                 'Veuillez sélectionner votre département.';
+
             formError.hidden = false;
 
             return;
@@ -675,6 +672,7 @@ function openProfileEditForm(user) {
 
         if (!token) {
             navigateTo('/connexion');
+
             return;
         }
 
@@ -700,8 +698,8 @@ function openProfileEditForm(user) {
             ]);
 
             profileContent.replaceChildren(
-                createProfileInformation(updatedUser),
                 createLibraryPreview(updatedGames),
+                createProfileInformation(updatedUser),
                 createProfileActions(updatedUser)
             );
         } catch (error) {

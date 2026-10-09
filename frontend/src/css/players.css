@@ -395,7 +395,7 @@
     font-weight: 700;
 }
 
-.player-profile-about p {
+.player-profile-about > p {
     margin: 0;
     color: #666;
     font-family: var(--police-texte);
@@ -423,39 +423,77 @@
     font-size: 12px;
 }
 
+/* Cartes de jeux réutilisables */
+
 .player-profile-games {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 20px 22px;
 }
 
-.player-profile-game {
+/* Réutilise le composant GameCard de la page Jeux */
+
+.player-profile-games .game-card {
+    min-width: 0;
     overflow: hidden;
-    background-color: var(--couleur-creme);
-    border-radius: 4px;
+    color: inherit;
+    text-decoration: none;
+    background-color: var(--couleur-blanc);
+    border-radius: 6px;
     box-shadow: 0 3px 5px rgba(31, 53, 86, 0.2);
 }
 
-.player-profile-game-image {
-    height: 66px;
-    padding: 5px;
-    background-color: var(--couleur-creme);
+.player-profile-games .game-card-image {
+    height: 105px;
+    aspect-ratio: auto;
+    overflow: hidden;
 }
 
-.player-profile-game img {
+.player-profile-games .game-card-image img {
+    display: block;
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    background-color: var(--couleur-blanc);
-    border-radius: 3px;
+    object-fit: cover;
 }
 
-.player-profile-game span {
-    display: block;
-    padding: 3px 5px 5px;
+.player-profile-games .game-card-content {
+    padding: 7px 9px 9px;
+}
+
+.player-profile-games .game-card-content h3 {
+    margin: 0 0 7px;
     color: var(--couleur-bleu);
     font-family: var(--police-texte);
-    font-size: 11px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.player-profile-games .game-card-information {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: #666;
+    font-family: var(--police-texte);
+    font-size: 9px;
+}
+
+.player-profile-games .game-card-information span {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.player-profile-games .game-card-information i {
+    font-size: 10px;
+}
+
+.player-profile-games-loading {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: #666;
+    font-family: var(--police-texte);
+    font-size: 12px;
 }
 
 .player-profile-statistics {
@@ -479,6 +517,7 @@
     width: 34px;
     font-size: 25px;
 }
+
 
 /* ========================================
    Retour profil mobile
@@ -628,6 +667,7 @@
     }
 
     /* Les résultats mobiles restent tous visuellement identiques */
+
     .player-result.is-selected {
         background-color: var(--couleur-blanc);
     }
@@ -743,21 +783,43 @@
     }
 
     .player-profile-games {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 18px 22px;
     }
 
-    .player-profile-game-image {
+    .player-profile-games .game-card-image {
         height: 66px;
     }
 
-    .player-profile-game span {
+    .player-profile-games .game-card-content {
+        padding: 5px 6px 7px;
+    }
+
+    .player-profile-games .game-card-content h3 {
+        margin-bottom: 5px;
         font-size: 10px;
+    }
+
+    .player-profile-games .game-card-information {
+        gap: 5px;
+        font-size: 8px;
+    }
+
+    .player-profile-games .game-card-information i {
+        font-size: 9px;
+    }
+
+    .player-profile-games .game-card-information span {
+        gap: 2px;
+    }
+
+    .player-profile-games-loading {
+        font-size: 11px;
     }
 
     .player-profile-statistics {
         gap: 7px;
-        margin-top: 4px;
+        margin-top: 25px;
     }
 
     .player-profile-statistics p {
