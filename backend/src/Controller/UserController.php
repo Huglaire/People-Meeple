@@ -57,7 +57,7 @@ final class UserController extends AbstractController
     #[Route('/api/players/libraries', name: 'api_players_libraries', methods: ['GET'])]
     #[OA\Get(
         summary: 'Récupérer les ludothèques des joueurs',
-        description: 'Retourne les jeux possédés par les joueurs actifs.'
+        description: 'Retourne les jeux possédés ou connus des joueurs actifs.'
     )]
     #[OA\Response(
         response: 200,
@@ -85,23 +85,28 @@ final class UserController extends AbstractController
 
             // Parcourt les associations entre l'utilisateur et ses jeux
             foreach ($user->getUserGames() as $userGame) {
-                // Seuls les jeux réellement possédés sont affichés
-                if (!$userGame->isOwns()) {
-                    continue;
-                }
-
                 $game = $userGame->getGame();
 
+                // Ignore les jeux inexistants ou inactifs
                 if ($game === null || !$game->isActive()) {
                     continue;
                 }
 
+                // Ignore les associations sans possession ni connaissance des règles
+                if (!$userGame->isOwns() && !$userGame->isKnowsRules()) {
+                    continue;
+                }
+
+                // Retourne les informations du jeu et le statut du joueur
                 $library[] = [
+                    'id' => $game->getId(),
                     'name' => $game->getName(),
                     'image' => $game->getImage(),
                     'minPlayers' => $game->getMinPlayers(),
                     'maxPlayers' => $game->getMaxPlayers(),
                     'duration' => $game->getDuration(),
+                    'owns' => $userGame->isOwns(),
+                    'knowsRules' => $userGame->isKnowsRules(),
                 ];
             }
 

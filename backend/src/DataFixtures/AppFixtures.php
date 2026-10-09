@@ -474,19 +474,36 @@ class AppFixtures extends Fixture
 
         /*
          * Création des associations UserGame des six profils.
+         * Les statuts varient pour représenter des situations réalistes.
          */
         foreach ($demoLibraries as $pseudo => $library) {
-            foreach ($library as $gameName) {
+            foreach ($library as $index => $gameName) {
                 if (!isset($games[$gameName])) {
                     continue;
                 }
+
+                /*
+                 * Répartition déterministe des statuts :
+                 * possédé et connu, possédé seulement, connu seulement.
+                 */
+                $owns = match ($index % 3) {
+                    0 => true,
+                    1 => true,
+                    2 => false,
+                };
+
+                $knowsRules = match ($index % 3) {
+                    0 => true,
+                    1 => false,
+                    2 => true,
+                };
 
                 $userGame = new UserGame();
 
                 $userGame->setUser($demoUsers[$pseudo]);
                 $userGame->setGame($games[$gameName]);
-                $userGame->setOwns(true);
-                $userGame->setKnowsRules(true);
+                $userGame->setOwns($owns);
+                $userGame->setKnowsRules($knowsRules);
                 $userGame->setCreatedAt($now);
                 $userGame->setUpdatedAt($now);
 
