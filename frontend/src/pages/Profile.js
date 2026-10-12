@@ -485,6 +485,7 @@ function openProfileEditForm(user) {
     emailInput.id = 'profile-email';
     emailInput.name = 'email';
     emailInput.value = user.email || '';
+    emailInput.readOnly = true;
 
     emailGroup.append(emailLabel, emailInput);
 
@@ -503,6 +504,7 @@ function openProfileEditForm(user) {
     pseudoInput.id = 'profile-pseudo';
     pseudoInput.name = 'pseudo';
     pseudoInput.value = user.pseudo || '';
+    pseudoInput.readOnly = true;
 
     pseudoGroup.append(pseudoLabel, pseudoInput);
 
@@ -680,8 +682,9 @@ function openProfileEditForm(user) {
         saveButton.textContent = 'Enregistrement...';
 
         const data = {
-            email: emailInput.value.trim(),
-            pseudo: pseudoInput.value.trim(),
+            // Conserve les valeurs du compte pour rester compatible avec l'API existante
+            email: user.email,
+            pseudo: user.pseudo,
             dateOfBirth: dateOfBirthInput.value,
             department,
             city: cityInput.value.trim() || null,
