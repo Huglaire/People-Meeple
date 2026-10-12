@@ -48,6 +48,9 @@ final class UserController extends AbstractController
             'role' => $user->getRole(),
             'createdAt' => $user->getCreatedAt()?->format(\DateTimeInterface::ATOM),
             'updatedAt' => $user->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
+
+            // Retourne le nom de fichier de la photo de profil
+            'profilePicture' => $user->getProfilePicture(),
         ]);
     }
 
@@ -57,7 +60,7 @@ final class UserController extends AbstractController
     #[Route('/api/players/libraries', name: 'api_players_libraries', methods: ['GET'])]
     #[OA\Get(
         summary: 'Récupérer les ludothèques des joueurs',
-        description: 'Retourne les jeux possédés ou connus des joueurs actifs.'
+        description: 'Retourne les jeux possédés ou connus des règles des joueurs actifs.'
     )]
     #[OA\Response(
         response: 200,

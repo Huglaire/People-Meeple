@@ -178,6 +178,9 @@ final class AuthController
         $user->setRole('USER');
         $user->setCreatedAt(new \DateTimeImmutable());
 
+        // Attribue la photo Meeple par défaut au nouvel utilisateur
+        $user->setProfilePicture('meeple-default.png');
+
         // Validation des contraintes définies sur l'entité User
         $errors = $validator->validate($user);
 
