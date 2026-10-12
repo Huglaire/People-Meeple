@@ -3,6 +3,8 @@
 import { createGameCard } from '../components/GameCard.js';
 import { createPlayerCard } from '../components/PlayerCard.js';
 import { getGames } from '../api/gamesApi.js';
+import { isAuthenticated } from '../services/authService.js';
+import { navigateTo } from '../router/router.js';
 
 import ludothequeImage from '../assets/images/backgrounds/ludotheque.jpg';
 
@@ -17,20 +19,20 @@ export function createHomePage() {
 
     const hero = createHeroSection();
     const gamesSection = createGamesSection();
-    const playersSection = createPlayersSection();
 
-    page.append(
-        hero,
-        gamesSection,
-        playersSection
-    );
+    page.append(hero, gamesSection);
+
+    // Les suggestions de joueurs sont réservées aux membres connectés
+    if (isAuthenticated()) {
+        page.append(createPlayersSection());
+    }
 
     return page;
 }
 
 
 /* ========================================
-   Hero
+   Hero et recherche de jeux
    ======================================== */
 
 function createHeroSection() {
@@ -54,7 +56,10 @@ function createHeroSection() {
     title.append(firstLine, secondLine);
 
     const description = document.createElement('p');
-    description.textContent = 'Trouve des joueurs près de chez toi pour faire une partie avec eux.';
+
+    description.textContent = isAuthenticated()
+        ? 'Trouve des joueurs près de chez toi pour faire une partie avec eux.'
+        : 'Découvre des jeux de société et rejoins une communauté de joueurs pour partager tes prochaines parties.';
 
     const searchForm = document.createElement('form');
     searchForm.classList.add('home-search');
@@ -62,16 +67,35 @@ function createHeroSection() {
     const searchContainer = document.createElement('div');
     searchContainer.classList.add('home-search-input');
 
+    // Icône de recherche
     const searchIcon = document.createElement('i');
     searchIcon.classList.add('bi', 'bi-search');
     searchIcon.setAttribute('aria-hidden', 'true');
 
+    // Champ de recherche
     const searchInput = document.createElement('input');
     searchInput.type = 'search';
     searchInput.placeholder = 'Rechercher un jeu...';
     searchInput.setAttribute('aria-label', 'Rechercher un jeu');
+    searchInput.setAttribute('autocomplete', 'off');
+    searchInput.setAttribute('aria-autocomplete', 'list');
+    searchInput.setAttribute('aria-expanded', 'false');
 
-    searchContainer.append(searchIcon, searchInput);
+    // Menu des suggestions
+    const suggestionsMenu = document.createElement('div');
+    suggestionsMenu.classList.add('home-search-suggestions');
+    suggestionsMenu.hidden = true;
+    suggestionsMenu.setAttribute('role', 'listbox');
+    suggestionsMenu.setAttribute(
+        'aria-label',
+        'Suggestions de jeux'
+    );
+
+    searchContainer.append(
+        searchIcon,
+        searchInput,
+        suggestionsMenu
+    );
 
     const searchButton = document.createElement('button');
     searchButton.type = 'submit';
@@ -79,7 +103,182 @@ function createHeroSection() {
 
     searchForm.append(searchContainer, searchButton);
 
-    // Prépare la future recherche de jeux
+    // Conserve les jeux chargés pour filtrer sans rappeler l'API
+    let availableGames = [];
+    let gamesLoaded = false;
+    let loadingGames = false;
+    let latestSearch = '';
+
+    // Normalise les textes pour ignorer la casse et les accents
+    function normalizeText(value) {
+        return value
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLocaleLowerCase('fr')
+            .trim();
+    }
+
+    // Ferme la liste des suggestions
+    function closeSuggestions() {
+        suggestionsMenu.hidden = true;
+        suggestionsMenu.replaceChildren();
+        searchInput.setAttribute('aria-expanded', 'false');
+    }
+
+    // Affiche les jeux correspondant au début du nom saisi
+    function displaySuggestions(search) {
+        suggestionsMenu.replaceChildren();
+
+        const normalizedSearch = normalizeText(search);
+
+        if (normalizedSearch === '') {
+            closeSuggestions();
+            return;
+        }
+
+        const matchingGames = availableGames
+            .filter((game) => {
+                return normalizeText(game.name || '')
+                    .startsWith(normalizedSearch);
+            })
+            .sort((first, second) => {
+                return first.name.localeCompare(
+                    second.name,
+                    'fr',
+                    { sensitivity: 'base' }
+                );
+            });
+
+        if (matchingGames.length === 0) {
+            const emptyMessage = document.createElement('p');
+            emptyMessage.classList.add('home-search-no-results');
+            emptyMessage.textContent = 'Aucun jeu trouvé.';
+
+            suggestionsMenu.append(emptyMessage);
+            suggestionsMenu.hidden = false;
+            searchInput.setAttribute('aria-expanded', 'true');
+
+            return;
+        }
+
+        matchingGames.forEach((game) => {
+            const suggestion = document.createElement('button');
+
+            suggestion.type = 'button';
+            suggestion.classList.add('home-search-suggestion');
+            suggestion.setAttribute('role', 'option');
+            suggestion.textContent = game.name;
+
+            // Ouvre la page de détail du jeu sélectionné
+            suggestion.addEventListener('click', () => {
+                if (!game.slug) {
+                    console.error(
+                        'Le jeu ne possède pas de slug :',
+                        game
+                    );
+
+                    return;
+                }
+
+                closeSuggestions();
+                navigateTo(`/jeux/${game.slug}`);
+            });
+
+            suggestionsMenu.append(suggestion);
+        });
+
+        suggestionsMenu.hidden = false;
+        searchInput.setAttribute('aria-expanded', 'true');
+    }
+
+    // Charge le catalogue au premier besoin
+    async function loadSearchGames() {
+        if (gamesLoaded || loadingGames) {
+            return;
+        }
+
+        loadingGames = true;
+
+        try {
+            availableGames = await getGames();
+            gamesLoaded = true;
+
+            // Affiche les résultats correspondant à la saisie actuelle
+            if (searchInput.value.trim() !== '') {
+                displaySuggestions(searchInput.value);
+            }
+        } catch (error) {
+            console.error(
+                'Impossible de charger les suggestions de jeux.',
+                error
+            );
+
+            if (searchInput.value.trim() !== '') {
+                suggestionsMenu.replaceChildren();
+
+                const errorMessage = document.createElement('p');
+                errorMessage.classList.add('home-search-no-results');
+                errorMessage.textContent =
+                    'Impossible de charger les jeux pour le moment.';
+
+                suggestionsMenu.append(errorMessage);
+                suggestionsMenu.hidden = false;
+                searchInput.setAttribute('aria-expanded', 'true');
+            }
+        } finally {
+            loadingGames = false;
+        }
+    }
+
+    // Filtre les résultats à chaque frappe
+    searchInput.addEventListener('input', () => {
+        latestSearch = searchInput.value.trim();
+
+        if (latestSearch === '') {
+            closeSuggestions();
+            return;
+        }
+
+        if (gamesLoaded) {
+            displaySuggestions(latestSearch);
+        } else {
+            loadSearchGames();
+        }
+    });
+
+    // Ouvre les suggestions si le champ contient déjà une recherche
+    searchInput.addEventListener('focus', () => {
+        if (searchInput.value.trim() === '') {
+            return;
+        }
+
+        if (gamesLoaded) {
+            displaySuggestions(searchInput.value);
+        } else {
+            loadSearchGames();
+        }
+    });
+
+    // Ferme les suggestions avec la touche Échap
+    searchInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeSuggestions();
+        }
+
+        // Sélectionne le premier résultat avec la touche Entrée
+        if (event.key === 'Enter' && !suggestionsMenu.hidden) {
+            const firstSuggestion = suggestionsMenu.querySelector(
+                '.home-search-suggestion'
+            );
+
+            if (firstSuggestion) {
+                event.preventDefault();
+                firstSuggestion.click();
+            }
+        }
+    });
+
+    // Empêche le formulaire de recharger la page
     searchForm.addEventListener('submit', (event) => {
         event.preventDefault();
 
@@ -89,14 +288,48 @@ function createHeroSection() {
             return;
         }
 
-        console.log(`Recherche du jeu : ${search}`);
+        if (!gamesLoaded) {
+            loadSearchGames();
+            return;
+        }
+
+        const normalizedSearch = normalizeText(search);
+
+        const exactMatch = availableGames.find((game) => {
+            return normalizeText(game.name || '') === normalizedSearch;
+        });
+
+        const firstMatch = availableGames
+            .filter((game) => {
+                return normalizeText(game.name || '')
+                    .startsWith(normalizedSearch);
+            })
+            .sort((first, second) => {
+                return first.name.localeCompare(
+                    second.name,
+                    'fr',
+                    { sensitivity: 'base' }
+                );
+            })[0];
+
+        const selectedGame = exactMatch || firstMatch;
+
+        if (selectedGame?.slug) {
+            closeSuggestions();
+            navigateTo(`/jeux/${selectedGame.slug}`);
+        } else {
+            displaySuggestions(search);
+        }
     });
 
-    content.append(
-        title,
-        description,
-        searchForm
-    );
+    // Ferme le menu quand l'utilisateur clique ailleurs
+    document.addEventListener('click', (event) => {
+        if (!searchContainer.contains(event.target)) {
+            closeSuggestions();
+        }
+    });
+
+    content.append(title, description, searchForm);
 
     // Image du hero desktop
     const imageContainer = document.createElement('div');
@@ -107,7 +340,6 @@ function createHeroSection() {
     image.alt = 'Ludothèque contenant des jeux de société';
 
     imageContainer.append(image);
-
     section.append(content, imageContainer);
 
     return section;
@@ -251,12 +483,7 @@ function createPlayersSection() {
         playersGrid.append(createPlayerCard(player));
     });
 
-    container.append(
-        heading,
-        location,
-        playersGrid
-    );
-
+    container.append(heading, location, playersGrid);
     section.append(container);
 
     return section;
@@ -267,7 +494,12 @@ function createPlayersSection() {
    Titre de section
    ======================================== */
 
-function createSectionHeading(firstPart, secondPart, linkLabel, linkPath) {
+function createSectionHeading(
+    firstPart,
+    secondPart,
+    linkLabel,
+    linkPath
+) {
     const headingContainer = document.createElement('div');
     headingContainer.classList.add('home-section-heading');
 

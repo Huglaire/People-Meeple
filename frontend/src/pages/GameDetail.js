@@ -2,6 +2,7 @@
 
 import { getGameBySlug } from '../api/gamesApi.js';
 import { navigateTo } from '../router/router.js';
+import { isAuthenticated } from '../services/authService.js';
 
 import '../css/game-detail.css';
 
@@ -87,14 +88,18 @@ function createGameCard(game) {
     publisher.append(publisherLabel, publisherValue);
 
     const informationBlock = createInformationBlock(game);
-    const libraryMenu = createLibraryMenu();
 
     information.append(
         title,
         publisher,
-        informationBlock,
-        libraryMenu
+        informationBlock
     );
+
+    // Seuls les membres connectés peuvent modifier leur ludothèque
+    if (isAuthenticated()) {
+        const libraryMenu = createLibraryMenu();
+        information.append(libraryMenu);
+    }
 
     card.append(imageContainer, information);
 
@@ -139,7 +144,7 @@ function createGameInformation(iconName, labelText, valueText) {
     label.textContent = labelText;
 
     const value = document.createElement('strong');
-    value.textContent = valueText;
+    value.textContent = valueText ?? 'Non renseigné';
 
     content.append(label, value);
     information.append(icon, content);
@@ -274,7 +279,7 @@ function createDescriptionSection(game) {
     title.textContent = 'Description';
 
     const description = document.createElement('p');
-    description.textContent = game.description;
+    description.textContent = game.description || 'Aucune description disponible.';
 
     section.append(title, description);
 

@@ -10,6 +10,39 @@ import {
 
 import { navigateTo } from '../router/router.js';
 
+// Crée un lien de navigation
+function createNavigationLink(label, path) {
+    const link = document.createElement('a');
+
+    link.href = path;
+    link.textContent = label;
+    link.classList.add('header-navigation-link');
+
+    link.addEventListener('click', (event) => {
+        event.preventDefault();
+        navigateTo(path);
+    });
+
+    return link;
+}
+
+// Crée un bouton de déconnexion
+function createLogoutButton() {
+    const button = document.createElement('button');
+
+    button.type = 'button';
+    button.textContent = 'Déconnexion';
+    button.classList.add('header-register');
+    button.setAttribute('aria-label', 'Se déconnecter');
+
+    button.addEventListener('click', () => {
+        logout();
+        navigateTo('/');
+    });
+
+    return button;
+}
+
 export function createHeader() {
     const header = document.createElement('header');
     header.classList.add('site-header');
@@ -17,7 +50,7 @@ export function createHeader() {
     const container = document.createElement('div');
     container.classList.add('header-container');
 
-    // Logo complet
+    // Crée le logo complet
     const logoLink = document.createElement('a');
     logoLink.href = '/';
     logoLink.classList.add('header-logo');
@@ -34,7 +67,7 @@ export function createHeader() {
 
     logoLink.append(logo, lettrage);
 
-    // Bouton du menu mobile
+    // Crée le bouton du menu mobile
     const menuButton = document.createElement('button');
     menuButton.type = 'button';
     menuButton.classList.add('mobile-menu-button');
@@ -49,58 +82,40 @@ export function createHeader() {
 
     menuButton.append(menuIcon);
 
-    // Navigation principale
+    // Crée la navigation principale
     const navigation = document.createElement('nav');
     navigation.id = 'main-navigation';
     navigation.classList.add('header-navigation');
     navigation.setAttribute('aria-label', 'Navigation principale');
 
+    // Les liens publics sont visibles pour tous
     const navigationItems = [
         { label: 'Accueil', path: '/' },
-        { label: 'Jeux', path: '/jeux' },
-        { label: 'Joueurs', path: '/joueurs' },
-        { label: 'Messages', path: '/discussions' },
-        { label: 'Profil', path: '/profil' }
+        { label: 'Jeux', path: '/jeux' }
     ];
 
+    // Les liens communautaires sont réservés aux membres
+    if (isAuthenticated()) {
+        navigationItems.push(
+            { label: 'Joueurs', path: '/joueurs' },
+            { label: 'Ma ludothèque', path: '/ludotheque' },
+            { label: 'Messages', path: '/discussions' },
+            { label: 'Profil', path: '/profil' }
+        );
+    }
+
     navigationItems.forEach((item) => {
-        const link = document.createElement('a');
-
-        link.href = item.path;
-        link.textContent = item.label;
-        link.classList.add('header-navigation-link');
-
-        navigation.append(link);
+        navigation.append(
+            createNavigationLink(item.label, item.path)
+        );
     });
 
-    // Actions utilisateur
+    // Prépare les actions de compte pour ordinateur
     const userActions = document.createElement('div');
     userActions.classList.add('header-actions');
 
     if (isAuthenticated()) {
-        // Lien vers le profil de l'utilisateur connecté
-        const profileLink = document.createElement('a');
-        profileLink.href = '/profil';
-        profileLink.textContent = 'Profil';
-        profileLink.classList.add('header-login');
-
-        profileLink.addEventListener('click', (event) => {
-            event.preventDefault();
-            navigateTo('/profil');
-        });
-
-        // Bouton de déconnexion
-        const logoutButton = document.createElement('button');
-        logoutButton.type = 'button';
-        logoutButton.textContent = 'Déconnexion';
-        logoutButton.classList.add('header-register');
-
-        logoutButton.addEventListener('click', () => {
-            logout();
-            navigateTo('/');
-        });
-
-        userActions.append(profileLink, logoutButton);
+        userActions.append(createLogoutButton());
     } else {
         // Lien vers la connexion
         const loginLink = document.createElement('a');
@@ -126,6 +141,21 @@ export function createHeader() {
 
         userActions.append(loginLink, registerLink);
     }
+
+    // Ajoute les actions au menu déroulant mobile
+    const mobileActions = document.createElement('div');
+    mobileActions.classList.add('mobile-menu-actions');
+
+    if (isAuthenticated()) {
+        mobileActions.append(createLogoutButton());
+    } else {
+        const loginLink = createNavigationLink('Connexion', '/connexion');
+        const registerLink = createNavigationLink('Inscription', '/inscription');
+
+        mobileActions.append(loginLink, registerLink);
+    }
+
+    navigation.append(mobileActions);
 
     // Ouvre et ferme le menu mobile
     menuButton.addEventListener('click', () => {
