@@ -1416,3 +1416,34 @@ button {
         max-height: 220px;
     }
 }
+
+.players-search-field {
+    position: relative;
+}
+
+.players-search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    max-height: 240px;
+    margin: 4px 0 0;
+    padding: 4px 0;
+    overflow-y: auto;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.players-search-suggestions li {
+    padding: 10px 14px;
+    cursor: pointer;
+}
+
+.players-search-suggestions li:hover,
+.players-search-suggestions li.is-active {
+    background: #f3f3f3;
+}

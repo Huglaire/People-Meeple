@@ -22,6 +22,16 @@ class AppFixtures extends Fixture
         $faker = Factory::create('fr_FR');
         $now = new \DateTimeImmutable();
 
+        // Liste des portraits disponibles pour les utilisateurs de test.
+        $profilePictures = [
+            'profil femme 2.jpg',
+            'profil femme 3.jpg',
+            'Profil femme.jpg',
+            'profil homme 2.jpg',
+            'profil homme 3.jpg',
+            'profil homme.jpg',
+        ];
+
         /*
          * Création du compte administrateur.
          */
@@ -32,6 +42,7 @@ class AppFixtures extends Fixture
             $this->passwordHasher->hashPassword($admin, 'password')
         );
         $admin->setPseudo('AdminMeeple');
+        $admin->setProfilePicture($faker->randomElement($profilePictures));
         $admin->setDateOfBirth(new \DateTimeImmutable('1985-01-15'));
         $admin->setDepartment('75');
         $admin->setCity('Paris');
@@ -53,6 +64,7 @@ class AppFixtures extends Fixture
             $this->passwordHasher->hashPassword($testUser, 'password')
         );
         $testUser->setPseudo('TestMeeple');
+        $testUser->setProfilePicture($faker->randomElement($profilePictures));
         $testUser->setDateOfBirth(new \DateTimeImmutable('1990-05-10'));
         $testUser->setDepartment('75');
         $testUser->setCity('Paris');
@@ -74,6 +86,7 @@ class AppFixtures extends Fixture
             $this->passwordHasher->hashPassword($testUser2, 'password')
         );
         $testUser2->setPseudo('TestMeeple2');
+        $testUser2->setProfilePicture($faker->randomElement($profilePictures));
         $testUser2->setDateOfBirth(new \DateTimeImmutable('1992-08-20'));
         $testUser2->setDepartment('92');
         $testUser2->setCity('Clamart');
@@ -84,82 +97,6 @@ class AppFixtures extends Fixture
         $testUser2->setUpdatedAt($now);
 
         $manager->persist($testUser2);
-
-        /*
-         * Création des six joueurs utilisés dans les écrans
-         * de démonstration du frontend.
-         */
-        $demoUsersData = [
-            [
-                'email' => 'marion@mail.fr',
-                'pseudo' => 'Marion',
-                'dateOfBirth' => '1998-06-15',
-                'department' => '92',
-                'city' => 'Chaville',
-            ],
-            [
-                'email' => 'aurel@mail.fr',
-                'pseudo' => 'Aurel',
-                'dateOfBirth' => '1995-05-15',
-                'department' => '92',
-                'city' => 'Sceaux',
-            ],
-            [
-                'email' => 'jean@mail.fr',
-                'pseudo' => 'Jean',
-                'dateOfBirth' => '1988-04-15',
-                'department' => '92',
-                'city' => 'Antony',
-            ],
-            [
-                'email' => 'charlotte@mail.fr',
-                'pseudo' => 'Charlotte',
-                'dateOfBirth' => '1999-03-15',
-                'department' => '92',
-                'city' => 'Saint-Cloud',
-            ],
-            [
-                'email' => 'caroline@mail.fr',
-                'pseudo' => 'Caroline',
-                'dateOfBirth' => '1992-02-15',
-                'department' => '92',
-                'city' => 'Issy-Les-Moulineaux',
-            ],
-            [
-                'email' => 'mickael@mail.fr',
-                'pseudo' => 'Mickaël',
-                'dateOfBirth' => '1993-01-15',
-                'department' => '92',
-                'city' => 'Clamart',
-            ],
-        ];
-
-        $demoUsers = [];
-
-        foreach ($demoUsersData as $userData) {
-            $user = new User();
-
-            $user->setEmail($userData['email']);
-            $user->setRoles(['ROLE_USER']);
-            $user->setPassword(
-                $this->passwordHasher->hashPassword($user, 'password')
-            );
-            $user->setPseudo($userData['pseudo']);
-            $user->setDateOfBirth(
-                new \DateTimeImmutable($userData['dateOfBirth'])
-            );
-            $user->setDepartment($userData['department']);
-            $user->setCity($userData['city']);
-            $user->setCityVisible(true);
-            $user->setIsActive(true);
-            $user->setRole('USER');
-            $user->setCreatedAt($now);
-            $user->setUpdatedAt($now);
-
-            $manager->persist($user);
-
-            $demoUsers[$userData['pseudo']] = $user;
-        }
 
         /*
          * Création de 20 utilisateurs supplémentaires
@@ -176,6 +113,9 @@ class AppFixtures extends Fixture
                 $this->passwordHasher->hashPassword($user, 'password')
             );
             $user->setPseudo($faker->unique()->userName());
+            $user->setProfilePicture(
+                $faker->randomElement($profilePictures)
+            );
             $user->setDateOfBirth(
                 \DateTimeImmutable::createFromMutable(
                     $faker->dateTimeBetween('-60 years', '-18 years')
@@ -291,7 +231,7 @@ class AppFixtures extends Fixture
                 'description' => 'Développez votre cité et votre réseau commercial.',
                 'publisher' => 'DLP Games',
                 'minPlayers' => 2,
-                'maxPlayers' => 4,
+                'maxPlayers' => 5,
                 'minimumAge' => 12,
                 'duration' => 90,
             ],
@@ -373,7 +313,7 @@ class AppFixtures extends Fixture
                 'publisher' => 'Magilano',
                 'minPlayers' => 2,
                 'maxPlayers' => 8,
-                'minimumAge' => 8,
+                'minimumAge' => 10,
                 'duration' => 30,
             ],
             [
@@ -418,112 +358,29 @@ class AppFixtures extends Fixture
         $manager->flush();
 
         /*
-         * Ludothèques fixes des six joueurs affichés
-         * dans le frontend.
+         * Regroupe tous les joueurs qui doivent recevoir une ludothèque.
+         * Le compte administrateur est volontairement exclu.
          */
-        $demoLibraries = [
-            'Marion' => [
-                'Azul',
-                'Challengers',
-                'Five Tribes',
-                'Orléans',
-                'Root',
-                'Orichalque',
-            ],
-            'Aurel' => [
-                '7 Wonders',
-                'Terraforming Mars',
-                'Heat',
-                'Catan',
-                'Carcassonne',
-                'Dice Forge',
-            ],
-            'Jean' => [
-                'Root',
-                'Terraforming Mars',
-                'Orléans',
-                'Catan',
-                'Five Tribes',
-                'Challengers',
-            ],
-            'Charlotte' => [
-                'Azul',
-                'Splendor Duel',
-                'Sagrada',
-                'Love Letter',
-                'Skyjo',
-                'Micro Macro Crime City',
-            ],
-            'Caroline' => [
-                '7 Wonders',
-                'Azul',
-                'Citadelles',
-                'Carcassonne',
-                'Sagrada',
-                'Five Tribes',
-            ],
-            'Mickaël' => [
-                'Heat',
-                'Root',
-                'Terraforming Mars',
-                'Orléans',
-                'Catan',
-                'Challengers',
-            ],
-        ];
-
-        /*
-         * Création des associations UserGame des six profils.
-         * Les statuts varient pour représenter des situations réalistes.
-         */
-        foreach ($demoLibraries as $pseudo => $library) {
-            foreach ($library as $index => $gameName) {
-                if (!isset($games[$gameName])) {
-                    continue;
-                }
-
-                /*
-                 * Répartition déterministe des statuts :
-                 * possédé et connu, possédé seulement, connu seulement.
-                 */
-                $owns = match ($index % 3) {
-                    0 => true,
-                    1 => true,
-                    2 => false,
-                };
-
-                $knowsRules = match ($index % 3) {
-                    0 => true,
-                    1 => false,
-                    2 => true,
-                };
-
-                $userGame = new UserGame();
-
-                $userGame->setUser($demoUsers[$pseudo]);
-                $userGame->setGame($games[$gameName]);
-                $userGame->setOwns($owns);
-                $userGame->setKnowsRules($knowsRules);
-                $userGame->setCreatedAt($now);
-                $userGame->setUpdatedAt($now);
-
-                $manager->persist($userGame);
-            }
-        }
-
-        /*
-         * Création de ludothèques aléatoires pour les autres utilisateurs.
-         */
-        $otherUsers = [
+        $players = [
             $testUser,
             $testUser2,
             ...$fakerUsers,
         ];
 
-        foreach ($otherUsers as $user) {
+        /*
+         * Crée une ludothèque aléatoire pour chaque joueur.
+         * Chaque joueur reçoit entre 1 et 12 jeux différents.
+         */
+        foreach ($players as $user) {
+            $numberOfGames = $faker->numberBetween(
+                1,
+                min(12, count($games))
+            );
+
+            // Sélectionne des jeux sans doublons.
             $randomGames = $faker->randomElements(
                 array_values($games),
-                $faker->numberBetween(6, 12)
+                $numberOfGames
             );
 
             foreach ($randomGames as $game) {
@@ -532,15 +389,20 @@ class AppFixtures extends Fixture
                 $userGame->setUser($user);
                 $userGame->setGame($game);
 
+                // Génère aléatoirement les statuts du jeu.
                 $owns = $faker->boolean();
                 $knowsRules = $faker->boolean();
 
                 /*
-                 * On garantit qu'un jeu est au moins possédé
-                 * ou connu du joueur.
+                 * Garantit que le joueur possède le jeu
+                 * ou qu'il en connaît les règles.
                  */
                 if (!$owns && !$knowsRules) {
-                    $owns = true;
+                    if ($faker->boolean()) {
+                        $owns = true;
+                    } else {
+                        $knowsRules = true;
+                    }
                 }
 
                 $userGame->setOwns($owns);

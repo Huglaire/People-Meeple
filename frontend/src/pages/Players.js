@@ -2,203 +2,272 @@
 
 import { createPlayerResult } from '../components/PlayerResult.js';
 import { navigateTo } from '../router/router.js';
-
 import ludothequeImage from '../assets/images/backgrounds/ludotheque.jpg';
-
-import profilFemmeImage from '../assets/images/profiles/Profil femme.jpg';
-import profilFemme2Image from '../assets/images/profiles/profil femme 2.jpg';
-import profilFemme3Image from '../assets/images/profiles/profil femme 3.jpg';
+// Photos de profil utilisées par les fixtures
 import profilHommeImage from '../assets/images/profiles/profil homme.jpg';
 import profilHomme2Image from '../assets/images/profiles/profil homme 2.jpg';
 import profilHomme3Image from '../assets/images/profiles/profil homme 3.jpg';
-
+import profilFemmeImage from '../assets/images/profiles/Profil femme.jpg';
+import profilFemme2Image from '../assets/images/profiles/profil femme 2.jpg';
+import profilFemme3Image from '../assets/images/profiles/profil femme 3.jpg';
 import '../css/players.css';
 
 // Adresse de l'API Symfony
 const API_URL = 'http://127.0.0.1:8000';
 
-// Données de présentation des joueurs
-const players = [
-    {
-        slug: 'marion',
-        name: 'Marion',
-        age: 28,
-        city: 'Chaville (92)',
-        department: 'Hauts-de-Seine',
-        games: 11,
-        image: profilFemmeImage,
-        memberSince: 'juin 2025',
-        description:
-            'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-        library: []
-    },
-    {
-        slug: 'aurel',
-        name: 'Aurel',
-        age: 31,
-        city: 'Sceaux (92)',
-        department: 'Hauts-de-Seine',
-        games: 36,
-        image: profilHommeImage,
-        memberSince: 'mai 2025',
-        description:
-            'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-        library: []
-    },
-    {
-        slug: 'jean',
-        name: 'Jean',
-        age: 38,
-        city: 'Antony (92)',
-        department: 'Hauts-de-Seine',
-        games: 20,
-        image: profilHomme2Image,
-        memberSince: 'avril 2025',
-        description:
-            'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-        library: []
-    },
-    {
-        slug: 'charlotte',
-        name: 'Charlotte',
-        age: 27,
-        city: 'Saint-Cloud (92)',
-        department: 'Hauts-de-Seine',
-        games: 6,
-        image: profilFemme2Image,
-        memberSince: 'mars 2025',
-        description:
-            'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-        library: []
-    },
-    {
-        slug: 'caroline',
-        name: 'Caroline',
-        age: 34,
-        city: 'Issy-Les-Moulineaux (92)',
-        department: 'Hauts-de-Seine',
-        games: 14,
-        image: profilFemme3Image,
-        memberSince: 'février 2025',
-        description:
-            'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-        library: []
-    },
-    {
-        slug: 'mickael',
-        name: 'Mickaël',
-        age: 33,
-        city: 'Clamart (92)',
-        department: 'Hauts-de-Seine',
-        games: 38,
-        image: profilHomme3Image,
-        memberSince: 'janvier 2025',
-        description:
-            'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-        library: []
-    }
-];
+// Les profils sont désormais chargés depuis la base de données.
+let players = [];
 
+// Convertit un pseudo en identifiant d'URL lisible.
+function createPlayerSlug(pseudo, id) {
+    const normalizedPseudo = String(pseudo || 'joueur')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
+    return `${normalizedPseudo || 'joueur'}-${id}`;
+}
+
+// Calcule l'âge à partir de la date de naissance.
+function calculateAge(dateOfBirth) {
+    if (!dateOfBirth) {
+        return null;
+    }
+
+    const birthDate = new Date(`${dateOfBirth}T00:00:00`);
+
+    if (Number.isNaN(birthDate.getTime())) {
+        return null;
+    }
+
+    const today = new Date();
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+
+    const monthDifference = today.getMonth() - birthDate.getMonth();
+
+    if (
+        monthDifference < 0 ||
+        (
+            monthDifference === 0 &&
+            today.getDate() < birthDate.getDate()
+        )
+    ) {
+        age -= 1;
+    }
+
+    return age;
+}
+
+// Formate la date d'inscription pour l'affichage.
+function formatMemberSince(createdAt) {
+    if (!createdAt) {
+        return 'date inconnue';
+    }
+
+    const date = new Date(createdAt);
+
+    if (Number.isNaN(date.getTime())) {
+        return 'date inconnue';
+    }
+
+    return new Intl.DateTimeFormat('fr-FR', {
+        month: 'long',
+        year: 'numeric'
+    }).format(date);
+}
+
+// Associe chaque nom enregistré en base à sa photo locale.
+function getApiImageUrl(imagePath) {
+    if (!imagePath) {
+        return profilHommeImage;
+    }
+
+    // Conserve les URL complètes.
+    if (/^https?:\/\//i.test(imagePath)) {
+        return imagePath;
+    }
+
+    // Les images des jeux sont servies par Symfony.
+    if (imagePath.startsWith('/images/')) {
+        return `${API_URL}${imagePath}`;
+    }
+
+    // Correspondance entre les noms des fixtures et les fichiers locaux.
+    const profileImages = {
+        'profil homme.jpg': profilHommeImage,
+        'profil homme 2.jpg': profilHomme2Image,
+        'profil homme 3.jpg': profilHomme3Image,
+        'Profil femme.jpg': profilFemmeImage,
+        'profil femme 2.jpg': profilFemme2Image,
+        'profil femme 3.jpg': profilFemme3Image
+    };
+
+    return profileImages[imagePath] || profilHommeImage;
+}
+
+// Transforme les données de l'API en données attendues par l'interface.
+function mapApiPlayer(apiPlayer) {
+    const library = Array.isArray(apiPlayer.library)
+        ? apiPlayer.library
+        : [];
+
+    const department = apiPlayer.department
+        ? String(apiPlayer.department)
+        : '';
+
+    // Respecte la visibilité de la ville définie par le joueur.
+    const city = apiPlayer.city
+        ? `${apiPlayer.city}${department ? ` (${department})` : ''}`
+        : (
+            apiPlayer.cityVisible
+                ? 'Ville non renseignée'
+                : 'Ville masquée'
+        );
+
+    return {
+        id: apiPlayer.id,
+        slug: createPlayerSlug(apiPlayer.pseudo, apiPlayer.id),
+        name: apiPlayer.pseudo || 'Joueur',
+        age: calculateAge(apiPlayer.dateOfBirth),
+        city,
+        department,
+        games: library.length,
+        image: getApiImageUrl(apiPlayer.profilePicture),
+        memberSince: formatMemberSince(apiPlayer.createdAt),
+        description: 'Joueur de jeux de société sur People Meeple.',
+        library
+    };
+}
 
 /* ========================================
    API des ludothèques
    ======================================== */
 
 /**
- * Récupère les ludothèques depuis l'API Symfony.
+ * Récupère les profils et ludothèques depuis l'API Symfony.
  */
 async function fetchPlayerLibraries() {
-    // Récupère le JWT enregistré lors de la connexion
+    // Récupère le JWT enregistré lors de la connexion.
     const token = localStorage.getItem('token');
 
-    const response = await fetch(
-        `${API_URL}/api/players/libraries`,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        }
-    );
-
-    if (!response.ok) {
+    if (!token) {
         throw new Error(
-            `Erreur API : ${response.status}`
+            'Aucun jeton de connexion trouvé. Connecte-toi pour rechercher des joueurs.'
         );
     }
 
-    return response.json();
+    const response = await fetch(`${API_URL}/api/players/libraries`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`Erreur API : ${response.status}`);
+    }
+
+    const payload = await response.json();
+
+    // Accepte une liste directe ou une réponse contenant la clé "players".
+    const apiPlayers = Array.isArray(payload)
+        ? payload
+        : (
+            Array.isArray(payload.players)
+                ? payload.players
+                : []
+        );
+
+    return apiPlayers.map(mapApiPlayer);
 }
 
-
 /**
- * Charge les ludothèques des joueurs.
+ * Charge les profils et ludothèques depuis la base de données.
  */
-async function loadPlayerLibraries(page) {
+async function loadPlayerLibraries(page, requestedSlug = null) {
     try {
-        const playersLibraries =
-            await fetchPlayerLibraries();
+        players = await fetchPlayerLibraries();
 
-        playersLibraries.forEach((apiPlayer) => {
-            const player = players.find(
-                (item) =>
-                    item.name.toLowerCase() ===
-                    apiPlayer.pseudo.toLowerCase()
-            );
-
-            if (!player) {
-                return;
-            }
-
-            // Remplace les données fictives par les données API
-            player.library = Array.isArray(
-                apiPlayer.library
-            )
-                ? apiPlayer.library
-                : [];
-
-            // Utilise le nombre réel de jeux
-            player.games = player.library.length;
-        });
-
-        const resultsContainer =
-            page.querySelector('.players-results');
+        // Sur la page de recherche, actualise les résultats.
+        const resultsContainer = page.querySelector('.players-results');
 
         if (resultsContainer) {
             refreshPlayersPage(resultsContainer);
             return;
         }
 
-        const profile =
-            page.querySelector('.player-profile');
+        // Sur une page de profil, recherche le joueur demandé.
+        const profileContainer = page.querySelector(
+            '[data-profile-container]'
+        );
 
-        if (!profile) {
+        if (!profileContainer) {
             return;
         }
-
-        const slug =
-            profile.dataset.playerSlug;
 
         const player = players.find(
-            (item) => item.slug === slug
+            (item) => item.slug === requestedSlug
         );
 
+        profileContainer.replaceChildren();
+
         if (!player) {
+            profileContainer.append(createPlayerNotFoundPage());
             return;
         }
 
-        const newProfile =
-            createPlayerProfile(player);
-
-        profile.replaceWith(newProfile);
-
+        profileContainer.append(createPlayerProfile(player));
     } catch (error) {
         console.error(
-            'Impossible de récupérer les ludothèques des joueurs.',
+            'Impossible de récupérer les profils des joueurs.',
             error
         );
+
+        const resultsContainer = page.querySelector('.players-results');
+
+        if (resultsContainer) {
+            showPlayersLoadError(resultsContainer);
+            return;
+        }
+
+        const profileContainer = page.querySelector(
+            '[data-profile-container]'
+        );
+
+        if (profileContainer) {
+            profileContainer.replaceChildren(
+                createPlayerNotFoundPage()
+            );
+        }
     }
 }
 
+/**
+ * Affiche un message si l'API ne peut pas fournir les profils.
+ */
+function showPlayersLoadError(container) {
+    const list = container.querySelector('[data-results-list]');
+    const count = container.querySelector('.players-results-count');
+
+    if (count) {
+        count.textContent = '(indisponible)';
+    }
+
+    if (list) {
+        const message = document.createElement('p');
+
+        message.classList.add('players-load-error');
+
+        message.textContent =
+            'Impossible de charger les joueurs. Vérifie ta connexion puis réessaie.';
+
+        list.replaceChildren(message);
+    }
+
+    container.querySelector('.players-desktop-profile')?.remove();
+}
 
 /* ========================================
    Pages
@@ -210,127 +279,93 @@ async function loadPlayerLibraries(page) {
 export function createPlayersPage() {
     const page = document.createElement('main');
 
-    page.classList.add(
-        'players-page'
-    );
+    page.classList.add('players-page');
 
-    const hero =
-        createPlayersHero();
-
-    const content =
-        createPlayersContent();
+    const hero = createPlayersHero();
+    const content = createPlayersContent();
 
     page.append(
         hero,
         content
     );
 
-    // Charge les vraies ludothèques depuis Symfony
+    // Charge les profils et ludothèques depuis Symfony.
     loadPlayerLibraries(page);
 
     return page;
 }
-
 
 /**
  * Crée la page de profil d'un joueur.
  */
 export function createPlayerProfilePage(slug) {
-    const player = players.find(
-        (item) => item.slug === slug
-    );
-
-    if (!player) {
-        return createPlayerNotFoundPage();
-    }
-
     const page = document.createElement('main');
 
-    page.classList.add(
-        'player-profile-page'
-    );
+    page.classList.add('player-profile-page');
 
-    const backLink =
-        document.createElement('a');
+    const backLink = document.createElement('a');
 
     backLink.href = '/joueurs';
+    backLink.classList.add('player-profile-back');
+    backLink.textContent = 'Retour aux résultats';
 
-    backLink.classList.add(
-        'player-profile-back'
-    );
+    backLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        navigateTo('/joueurs');
+    });
 
-    backLink.textContent =
-        'Retour aux résultats';
+    const profileContainer = document.createElement('div');
 
-    backLink.addEventListener(
-        'click',
-        (event) => {
-            event.preventDefault();
+    profileContainer.dataset.profileContainer = 'true';
 
-            navigateTo('/joueurs');
-        }
-    );
+    const loadingMessage = document.createElement('p');
 
-    const profile =
-        createPlayerProfile(player);
+    loadingMessage.textContent = 'Chargement du profil...';
+
+    profileContainer.append(loadingMessage);
 
     page.append(
         backLink,
-        profile
+        profileContainer
     );
 
-    // Charge la vraie ludothèque depuis Symfony
-    loadPlayerLibraries(page);
+    // Le profil est recherché à partir des données de l'API.
+    loadPlayerLibraries(page, slug);
 
     return page;
 }
-
 
 /* ========================================
    Hero
    ======================================== */
 
 function createPlayersHero() {
-    const section =
-        document.createElement('section');
+    const section = document.createElement('section');
 
-    section.classList.add(
-        'players-hero'
-    );
+    section.classList.add('players-hero');
 
-    const content =
-        document.createElement('div');
+    const content = document.createElement('div');
 
-    content.classList.add(
-        'players-hero-content'
-    );
+    content.classList.add('players-hero-content');
 
-    const title =
-        document.createElement('h1');
+    const title = document.createElement('h1');
 
-    const firstLine =
-        document.createElement('span');
+    const firstLine = document.createElement('span');
 
-    firstLine.textContent =
-        'Rechercher des';
+    firstLine.textContent = 'Rechercher des';
 
-    const secondLine =
-        document.createElement('span');
+    const secondLine = document.createElement('span');
 
-    secondLine.classList.add(
-        'heading-highlight'
-    );
+    secondLine.classList.add('heading-highlight');
 
-    secondLine.textContent =
-        'joueurs';
+    secondLine.textContent = 'joueurs';
 
     title.append(
         firstLine,
         secondLine
     );
 
-    const description =
-        document.createElement('p');
+    const description = document.createElement('p');
 
     description.textContent =
         'Trouve des joueurs qui possèdent ou connaissent les règles du jeu que tu aimes';
@@ -340,21 +375,14 @@ function createPlayersHero() {
         description
     );
 
-    const imageContainer =
-        document.createElement('div');
+    const imageContainer = document.createElement('div');
 
-    imageContainer.classList.add(
-        'players-hero-image'
-    );
+    imageContainer.classList.add('players-hero-image');
 
-    const image =
-        document.createElement('img');
+    const image = document.createElement('img');
 
-    image.src =
-        ludothequeImage;
-
-    image.alt =
-        'Ludothèque contenant des jeux de société';
+    image.src = ludothequeImage;
+    image.alt = 'Ludothèque contenant des jeux de société';
 
     imageContainer.append(image);
 
@@ -366,24 +394,17 @@ function createPlayersHero() {
     return section;
 }
 
-
 /* ========================================
    Contenu
    ======================================== */
 
 function createPlayersContent() {
-    const section =
-        document.createElement('section');
+    const section = document.createElement('section');
 
-    section.classList.add(
-        'players-content'
-    );
+    section.classList.add('players-content');
 
-    const searchPanel =
-        createSearchPanel();
-
-    const resultsPanel =
-        createResultsPanel();
+    const searchPanel = createSearchPanel();
+    const resultsPanel = createResultsPanel();
 
     section.append(
         searchPanel,
@@ -393,67 +414,85 @@ function createPlayersContent() {
     return section;
 }
 
+/* ========================================
+   Utilitaires du menu déroulant des jeux
+   ======================================== */
+
+/**
+ * Retire les accents et met en minuscules.
+ */
+function normalizeText(text) {
+    return text
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+}
+
+/**
+ * Retourne la liste totale des jeux sans doublons,
+ * construite à partir des ludothèques des joueurs.
+ */
+function getAllGames() {
+    const names = new Set();
+
+    players.forEach((player) => {
+        player.library.forEach((game) => {
+            names.add(game.name);
+        });
+    });
+
+    return Array.from(names).sort((a, b) =>
+        a.localeCompare(b, 'fr')
+    );
+}
 
 /* ========================================
    Recherche
    ======================================== */
 
 function createSearchPanel() {
-    const panel =
-        document.createElement('div');
+    const panel = document.createElement('div');
 
-    panel.classList.add(
-        'players-search-panel'
-    );
+    panel.classList.add('players-search-panel');
 
     /* -------------------------------------
        Recherche par jeu
        ------------------------------------- */
 
-    const gameField =
-        document.createElement('div');
+    const gameField = document.createElement('div');
 
-    gameField.classList.add(
-        'players-search-field'
-    );
+    gameField.classList.add('players-search-field');
 
-    const gameLabel =
-        document.createElement('label');
+    const gameLabel = document.createElement('label');
 
-    gameLabel.textContent =
-        'Jeu';
+    gameLabel.textContent = 'Jeu';
 
-    const gameInputContainer =
-        document.createElement('div');
+    const gameInputContainer = document.createElement('div');
 
-    gameInputContainer.classList.add(
-        'players-search-input'
-    );
+    gameInputContainer.classList.add('players-search-input');
 
-    const icon =
-        document.createElement('i');
+    const icon = document.createElement('i');
 
     icon.classList.add(
         'bi',
         'bi-search'
     );
 
-    icon.setAttribute(
-        'aria-hidden',
-        'true'
-    );
+    icon.setAttribute('aria-hidden', 'true');
 
-    const input =
-        document.createElement('input');
+    const input = document.createElement('input');
 
     input.type = 'search';
-
-    input.placeholder =
-        'Rechercher un jeu...';
+    input.placeholder = 'Rechercher un jeu...';
 
     input.setAttribute(
         'aria-label',
         'Rechercher un jeu'
+    );
+
+    input.setAttribute(
+        'autocomplete',
+        'off'
     );
 
     gameInputContainer.append(
@@ -461,120 +500,327 @@ function createSearchPanel() {
         input
     );
 
+    // Liste déroulante des suggestions de jeux.
+    const suggestions = document.createElement('ul');
+
+    suggestions.classList.add('players-search-suggestions');
+
+    suggestions.setAttribute('role', 'listbox');
+
+    suggestions.hidden = true;
+
     gameField.append(
         gameLabel,
-        gameInputContainer
+        gameInputContainer,
+        suggestions
     );
-
 
     /* -------------------------------------
        Recherche par département
        ------------------------------------- */
 
-    const departmentField =
-        document.createElement('div');
+    const departmentField = document.createElement('div');
 
-    departmentField.classList.add(
-        'players-search-field'
-    );
+    departmentField.classList.add('players-search-field');
 
-    const departmentLabel =
-        document.createElement('label');
+    const departmentLabel = document.createElement('label');
 
-    departmentLabel.textContent =
-        'Département';
+    departmentLabel.textContent = 'Département';
 
-    const select =
-        document.createElement('select');
+    const select = document.createElement('select');
 
     select.setAttribute(
         'aria-label',
         'Choisir un département'
     );
 
-    const defaultOption =
-        document.createElement('option');
+    // Liste des départements français.
+    const departments = [
+        ['01', 'Ain'],
+        ['02', 'Aisne'],
+        ['03', 'Allier'],
+        ['04', 'Alpes-de-Haute-Provence'],
+        ['05', 'Hautes-Alpes'],
+        ['06', 'Alpes-Maritimes'],
+        ['07', 'Ardèche'],
+        ['08', 'Ardennes'],
+        ['09', 'Ariège'],
+        ['10', 'Aube'],
+        ['11', 'Aude'],
+        ['12', 'Aveyron'],
+        ['13', 'Bouches-du-Rhône'],
+        ['14', 'Calvados'],
+        ['15', 'Cantal'],
+        ['16', 'Charente'],
+        ['17', 'Charente-Maritime'],
+        ['18', 'Cher'],
+        ['19', 'Corrèze'],
+        ['2A', 'Corse-du-Sud'],
+        ['2B', 'Haute-Corse'],
+        ['21', "Côte-d'Or"],
+        ['22', "Côtes-d'Armor"],
+        ['23', 'Creuse'],
+        ['24', 'Dordogne'],
+        ['25', 'Doubs'],
+        ['26', 'Drôme'],
+        ['27', 'Eure'],
+        ['28', 'Eure-et-Loir'],
+        ['29', 'Finistère'],
+        ['30', 'Gard'],
+        ['31', 'Haute-Garonne'],
+        ['32', 'Gers'],
+        ['33', 'Gironde'],
+        ['34', 'Hérault'],
+        ['35', 'Ille-et-Vilaine'],
+        ['36', 'Indre'],
+        ['37', 'Indre-et-Loire'],
+        ['38', 'Isère'],
+        ['39', 'Jura'],
+        ['40', 'Landes'],
+        ['41', 'Loir-et-Cher'],
+        ['42', 'Loire'],
+        ['43', 'Haute-Loire'],
+        ['44', 'Loire-Atlantique'],
+        ['45', 'Loiret'],
+        ['46', 'Lot'],
+        ['47', 'Lot-et-Garonne'],
+        ['48', 'Lozère'],
+        ['49', 'Maine-et-Loire'],
+        ['50', 'Manche'],
+        ['51', 'Marne'],
+        ['52', 'Haute-Marne'],
+        ['53', 'Mayenne'],
+        ['54', 'Meurthe-et-Moselle'],
+        ['55', 'Meuse'],
+        ['56', 'Morbihan'],
+        ['57', 'Moselle'],
+        ['58', 'Nièvre'],
+        ['59', 'Nord'],
+        ['60', 'Oise'],
+        ['61', 'Orne'],
+        ['62', 'Pas-de-Calais'],
+        ['63', 'Puy-de-Dôme'],
+        ['64', 'Pyrénées-Atlantiques'],
+        ['65', 'Hautes-Pyrénées'],
+        ['66', 'Pyrénées-Orientales'],
+        ['67', 'Bas-Rhin'],
+        ['68', 'Haut-Rhin'],
+        ['69', 'Rhône'],
+        ['70', 'Haute-Saône'],
+        ['71', 'Saône-et-Loire'],
+        ['72', 'Sarthe'],
+        ['73', 'Savoie'],
+        ['74', 'Haute-Savoie'],
+        ['75', 'Paris'],
+        ['76', 'Seine-Maritime'],
+        ['77', 'Seine-et-Marne'],
+        ['78', 'Yvelines'],
+        ['79', 'Deux-Sèvres'],
+        ['80', 'Somme'],
+        ['81', 'Tarn'],
+        ['82', 'Tarn-et-Garonne'],
+        ['83', 'Var'],
+        ['84', 'Vaucluse'],
+        ['85', 'Vendée'],
+        ['86', 'Vienne'],
+        ['87', 'Haute-Vienne'],
+        ['88', 'Vosges'],
+        ['89', 'Yonne'],
+        ['90', 'Territoire de Belfort'],
+        ['91', 'Essonne'],
+        ['92', 'Hauts-de-Seine'],
+        ['93', 'Seine-Saint-Denis'],
+        ['94', 'Val-de-Marne'],
+        ['95', "Val-d'Oise"],
+        ['971', 'Guadeloupe'],
+        ['972', 'Martinique'],
+        ['973', 'Guyane'],
+        ['974', 'La Réunion'],
+        ['976', 'Mayotte']
+    ];
+
+    // Ajoute l'option de recherche par défaut.
+    const defaultOption = document.createElement('option');
 
     defaultOption.value = '';
+    defaultOption.textContent = 'Tous les départements';
 
-    defaultOption.textContent =
-        'Choisir un département';
+    select.append(defaultOption);
 
-    const departmentOption =
-        document.createElement('option');
+    // Ajoute chaque département au menu déroulant.
+    departments.forEach(([code, name]) => {
+        const option = document.createElement('option');
 
-    departmentOption.value =
-        'Hauts-de-Seine';
+        option.value = name;
+        option.textContent = `${code} - ${name}`;
 
-    departmentOption.textContent =
-        'Hauts-de-Seine';
-
-    select.append(
-        defaultOption,
-        departmentOption
-    );
+        select.append(option);
+    });
 
     departmentField.append(
         departmentLabel,
         select
     );
 
-
     /* -------------------------------------
-       Bouton
+       Menu déroulant des jeux
        ------------------------------------- */
 
-    const button =
-        document.createElement('button');
+    let activeIndex = -1;
 
-    button.type = 'button';
+    function closeSuggestions() {
+        suggestions.hidden = true;
+        suggestions.replaceChildren();
+        activeIndex = -1;
+    }
 
-    button.classList.add(
-        'players-search-button'
-    );
-
-    button.textContent =
-        'Rechercher';
-
-    button.addEventListener(
-        'click',
-        () => {
-            filterPlayers(
-                input.value.trim(),
-                select.value
-            );
-        }
-    );
-
-    /*
-     * Permet également de lancer la recherche
-     * avec la touche Entrée.
-     */
-    input.addEventListener(
-        'keydown',
-        (event) => {
-            if (event.key !== 'Enter') {
-                return;
+    function setActiveSuggestion(index) {
+        Array.from(suggestions.children).forEach(
+            (item, i) => {
+                item.classList.toggle(
+                    'is-active',
+                    i === index
+                );
             }
+        );
 
+        activeIndex = index;
+    }
+
+    function selectSuggestion(gameName) {
+        input.value = gameName;
+
+        closeSuggestions();
+
+        filterPlayers(
+            gameName,
+            select.value
+        );
+    }
+
+    function updateSuggestions() {
+        const query = normalizeText(input.value.trim());
+
+        if (query === '') {
+            closeSuggestions();
+            return;
+        }
+
+        const matches = getAllGames().filter(
+            (name) => normalizeText(name).startsWith(query)
+        );
+
+        suggestions.replaceChildren();
+
+        activeIndex = -1;
+
+        if (matches.length === 0) {
+            suggestions.hidden = true;
+            return;
+        }
+
+        matches.forEach((name) => {
+            const item = document.createElement('li');
+
+            item.setAttribute('role', 'option');
+            item.textContent = name;
+
+            // mousedown intervient avant le blur de l'input.
+            item.addEventListener('mousedown', (event) => {
+                event.preventDefault();
+                selectSuggestion(name);
+            });
+
+            suggestions.append(item);
+        });
+
+        suggestions.hidden = false;
+    }
+
+    input.addEventListener('input', updateSuggestions);
+    input.addEventListener('focus', updateSuggestions);
+    input.addEventListener('blur', closeSuggestions);
+
+    input.addEventListener('keydown', (event) => {
+        const items = suggestions.children;
+
+        if (
+            suggestions.hidden ||
+            items.length === 0
+        ) {
+            return;
+        }
+
+        if (event.key === 'ArrowDown') {
             event.preventDefault();
 
-            filterPlayers(
-                input.value.trim(),
-                select.value
+            setActiveSuggestion(
+                (activeIndex + 1) % items.length
             );
-        }
-    );
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
 
-    select.addEventListener(
-        'change',
-        () => {
-            filterPlayers(
-                input.value.trim(),
-                select.value
+            setActiveSuggestion(
+                (activeIndex - 1 + items.length) % items.length
             );
+        } else if (
+            event.key === 'Enter' &&
+            activeIndex >= 0
+        ) {
+            event.preventDefault();
+
+            // Empêche l'écouteur Entrée classique de se déclencher.
+            event.stopImmediatePropagation();
+
+            selectSuggestion(
+                items[activeIndex].textContent
+            );
+        } else if (event.key === 'Escape') {
+            closeSuggestions();
         }
-    );
+    });
+
+    /* -------------------------------------
+       Bouton de recherche
+       ------------------------------------- */
+
+    const button = document.createElement('button');
+
+    button.type = 'button';
+    button.classList.add('players-search-button');
+    button.textContent = 'Rechercher';
+
+    button.addEventListener('click', () => {
+        closeSuggestions();
+
+        filterPlayers(
+            input.value.trim(),
+            select.value
+        );
+    });
+
+    // Permet également de lancer la recherche avec la touche Entrée.
+    input.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') {
+            return;
+        }
+
+        event.preventDefault();
+
+        closeSuggestions();
+
+        filterPlayers(
+            input.value.trim(),
+            select.value
+        );
+    });
+
+    select.addEventListener('change', () => {
+        filterPlayers(
+            input.value.trim(),
+            select.value
+        );
+    });
 
     panel.append(
         gameField,
@@ -585,293 +831,195 @@ function createSearchPanel() {
     return panel;
 }
 
-
 /* ========================================
    Résultats
    ======================================== */
 
 function createResultsPanel() {
-    const container =
-        document.createElement('div');
+    const container = document.createElement('div');
 
-    container.classList.add(
-        'players-results'
-    );
+    container.classList.add('players-results');
 
-    const heading =
-        document.createElement('h2');
+    const heading = document.createElement('h2');
 
-    const title =
-        document.createElement('span');
+    const title = document.createElement('span');
 
-    title.textContent =
-        'Résultats';
+    title.textContent = 'Résultats';
 
-    const count =
-        document.createElement('span');
+    const count = document.createElement('span');
 
-    count.classList.add(
-        'players-results-count'
-    );
-
-    count.textContent =
-        `(${players.length} joueurs)`;
+    count.classList.add('players-results-count');
+    count.textContent = '(chargement...)';
 
     heading.append(
         title,
         count
     );
 
-    const list =
-        document.createElement('div');
+    const list = document.createElement('div');
 
-    list.classList.add(
-        'players-results-list'
-    );
+    list.classList.add('players-results-list');
+    list.dataset.resultsList = 'true';
 
-    list.dataset.resultsList =
-        'true';
+    const loadingMessage = document.createElement('p');
 
-    players.forEach(
-        (player, index) => {
-            list.append(
-                createPlayerResult(
-                    player,
-                    index === 0,
-                    (selectedPlayer) => {
-                        selectPlayer(
-                            selectedPlayer,
-                            container
-                        );
-                    }
-                )
-            );
-        }
-    );
+    loadingMessage.textContent = 'Chargement des joueurs...';
 
-    const selectedPlayer =
-        players[0];
-
-    const profile =
-        createPlayerProfile(
-            selectedPlayer
-        );
-
-    profile.classList.add(
-        'players-desktop-profile'
-    );
+    list.append(loadingMessage);
 
     container.append(
         heading,
-        list,
-        profile
+        list
     );
 
     return container;
 }
 
-
 /**
- * Rafraîchit les résultats après le chargement
- * des données provenant de l'API.
+ * Rafraîchit les résultats après le chargement des données de l'API.
  */
 function refreshPlayersPage(container) {
-    const list =
-        container.querySelector(
-            '[data-results-list]'
-        );
+    const list = container.querySelector('[data-results-list]');
+    const count = container.querySelector('.players-results-count');
 
-    if (!list) {
+    if (!list || !count) {
         return;
     }
 
-    const currentProfile =
-        container.querySelector(
-            '.players-desktop-profile'
-        );
+    const currentProfile = container.querySelector(
+        '.players-desktop-profile'
+    );
 
-    const selectedSlug =
-        currentProfile?.dataset.playerSlug ||
-        players[0]?.slug;
+    const selectedSlug = currentProfile?.dataset.playerSlug;
+
+    count.textContent = `(${players.length} joueurs)`;
 
     list.replaceChildren();
 
-    players.forEach(
-        (player) => {
-            list.append(
-                createPlayerResult(
-                    player,
-                    player.slug === selectedSlug,
-                    (selectedPlayer) => {
-                        selectPlayer(
-                            selectedPlayer,
-                            container
-                        );
-                    }
-                )
-            );
-        }
-    );
-
-    const selectedPlayer =
-        players.find(
-            (player) =>
-                player.slug === selectedSlug
-        ) || players[0];
-
-    if (!selectedPlayer || !currentProfile) {
+    if (players.length === 0) {
+        list.append(createEmptyResults());
+        currentProfile?.remove();
         return;
     }
 
-    const newProfile =
-        createPlayerProfile(
-            selectedPlayer
+    players.forEach((player) => {
+        list.append(
+            createPlayerResult(
+                player,
+                player.slug === selectedSlug ||
+                (!selectedSlug && player === players[0]),
+                (selectedPlayer) => {
+                    selectPlayer(
+                        selectedPlayer,
+                        container
+                    );
+                }
+            )
         );
+    });
 
-    newProfile.classList.add(
-        'players-desktop-profile'
-    );
+    const selectedPlayer =
+        players.find((player) => player.slug === selectedSlug) ||
+        players[0];
 
-    currentProfile.replaceWith(
-        newProfile
-    );
+    const newProfile = createPlayerProfile(selectedPlayer);
+
+    newProfile.classList.add('players-desktop-profile');
+
+    if (currentProfile) {
+        currentProfile.replaceWith(newProfile);
+    } else {
+        container.append(newProfile);
+    }
 }
-
 
 /* ========================================
    Sélection d'un joueur
    ======================================== */
 
-function selectPlayer(
-    player,
-    container
-) {
-    const results =
-        container.querySelectorAll(
-            '.player-result'
-        );
+function selectPlayer(player, container) {
+    const results = container.querySelectorAll('.player-result');
 
-    results.forEach(
-        (result) => {
-            result.classList.remove(
-                'is-selected'
-            );
-        }
+    results.forEach((result) => {
+        result.classList.remove('is-selected');
+    });
+
+    const selectedResult = Array.from(results).find(
+        (result) =>
+            result.getAttribute('href') === `/joueurs/${player.slug}`
     );
 
-    const selectedResult =
-        Array.from(results).find(
-            (result) =>
-                result.getAttribute(
-                    'href'
-                ) ===
-                `/joueurs/${player.slug}`
-        );
-
     if (selectedResult) {
-        selectedResult.classList.add(
-            'is-selected'
-        );
+        selectedResult.classList.add('is-selected');
     }
 
-    const currentProfile =
-        container.querySelector(
-            '.players-desktop-profile'
-        );
+    const currentProfile = container.querySelector(
+        '.players-desktop-profile'
+    );
 
     if (!currentProfile) {
         return;
     }
 
-    const newProfile =
-        createPlayerProfile(
-            player
-        );
+    const newProfile = createPlayerProfile(player);
 
-    newProfile.classList.add(
-        'players-desktop-profile'
-    );
+    newProfile.classList.add('players-desktop-profile');
 
-    currentProfile.replaceWith(
-        newProfile
-    );
+    currentProfile.replaceWith(newProfile);
 }
-
 
 /* ========================================
    Profil joueur
    ======================================== */
 
 function createPlayerProfile(player) {
-    const profile =
-        document.createElement('article');
+    const profile = document.createElement('article');
 
-    profile.classList.add(
-        'player-profile'
-    );
+    profile.classList.add('player-profile');
+    profile.dataset.playerSlug = player.slug;
 
-    profile.dataset.playerSlug =
-        player.slug;
+    const header = document.createElement('div');
 
-    const header =
-        document.createElement('div');
-
-    header.classList.add(
-        'player-profile-header'
-    );
-
+    header.classList.add('player-profile-header');
 
     /* -------------------------------------
        Photo
        ------------------------------------- */
 
-    const imageContainer =
-        document.createElement('div');
+    const imageContainer = document.createElement('div');
 
-    imageContainer.classList.add(
-        'player-profile-image'
-    );
+    imageContainer.classList.add('player-profile-image');
 
-    const image =
-        document.createElement('img');
+    const image = document.createElement('img');
 
-    image.src =
-        player.image;
-
-    image.alt =
-        `Photo de profil de ${player.name}`;
+    image.src = player.image || profilHommeImage;
+    image.alt = `Photo de profil de ${player.name}`;
 
     imageContainer.append(image);
-
 
     /* -------------------------------------
        Informations
        ------------------------------------- */
 
-    const information =
-        document.createElement('div');
+    const information = document.createElement('div');
 
-    information.classList.add(
-        'player-profile-information'
+    information.classList.add('player-profile-information');
+
+    const name = document.createElement('h1');
+
+    name.textContent = player.name;
+
+    const age = createProfileInformation(
+        'bi-person',
+        player.age === null
+            ? 'Âge non renseigné'
+            : `${player.age} ans`
     );
 
-    const name =
-        document.createElement('h1');
-
-    name.textContent =
-        player.name;
-
-    const age =
-        createProfileInformation(
-            'bi-person',
-            `${player.age} ans`
-        );
-
-    const city =
-        createProfileInformation(
-            'bi-geo-alt',
-            player.city
-        );
+    const city = createProfileInformation(
+        'bi-geo-alt',
+        player.city
+    );
 
     information.append(
         name,
@@ -879,41 +1027,25 @@ function createPlayerProfile(player) {
         city
     );
 
-
     /* -------------------------------------
        Actions
        ------------------------------------- */
 
-    const actions =
-        document.createElement('div');
+    const actions = document.createElement('div');
 
-    actions.classList.add(
-        'player-profile-actions'
-    );
+    actions.classList.add('player-profile-actions');
 
-    const messageButton =
-        document.createElement('button');
+    const messageButton = document.createElement('button');
 
     messageButton.type = 'button';
+    messageButton.classList.add('player-profile-message');
+    messageButton.textContent = 'Envoyer un message';
 
-    messageButton.classList.add(
-        'player-profile-message'
-    );
-
-    messageButton.textContent =
-        'Envoyer un message';
-
-    const libraryButton =
-        document.createElement('button');
+    const libraryButton = document.createElement('button');
 
     libraryButton.type = 'button';
-
-    libraryButton.classList.add(
-        'player-profile-library'
-    );
-
-    libraryButton.textContent =
-        'Voir la ludothèque';
+    libraryButton.classList.add('player-profile-library');
+    libraryButton.textContent = 'Voir la ludothèque';
 
     actions.append(
         messageButton,
@@ -926,38 +1058,27 @@ function createPlayerProfile(player) {
         actions
     );
 
-
     /* -------------------------------------
        Corps du profil
        ------------------------------------- */
 
-    const body =
-        document.createElement('div');
+    const body = document.createElement('div');
 
-    body.classList.add(
-        'player-profile-body'
-    );
+    body.classList.add('player-profile-body');
 
-    const about =
-        createAboutSection(player);
-
-    const library =
-        createLibrarySection(player);
+    const about = createAboutSection(player);
+    const library = createLibrarySection(player);
 
     body.append(
         about,
         library
     );
 
-
     /* -------------------------------------
        Statistiques
        ------------------------------------- */
 
-    const statistics =
-        createProfileStatistics(
-            player
-        );
+    const statistics = createProfileStatistics(player);
 
     profile.append(
         header,
@@ -968,30 +1089,22 @@ function createPlayerProfile(player) {
     return profile;
 }
 
-
 /* ========================================
    À propos
    ======================================== */
 
 function createAboutSection(player) {
-    const section =
-        document.createElement('section');
+    const section = document.createElement('section');
 
-    section.classList.add(
-        'player-profile-about'
-    );
+    section.classList.add('player-profile-about');
 
-    const title =
-        document.createElement('h2');
+    const title = document.createElement('h2');
 
-    title.textContent =
-        'A propos';
+    title.textContent = 'À propos';
 
-    const description =
-        document.createElement('p');
+    const description = document.createElement('p');
 
-    description.textContent =
-        player.description;
+    description.textContent = player.description;
 
     section.append(
         title,
@@ -1001,59 +1114,40 @@ function createAboutSection(player) {
     return section;
 }
 
-
 /* ========================================
    Ludothèque
    ======================================== */
 
 function createLibrarySection(player) {
-    const section =
-        document.createElement('section');
+    const section = document.createElement('section');
 
-    section.classList.add(
-        'player-profile-library-section'
-    );
+    section.classList.add('player-profile-library-section');
 
-    const heading =
-        document.createElement('div');
+    const heading = document.createElement('div');
 
-    heading.classList.add(
-        'player-profile-library-heading'
-    );
+    heading.classList.add('player-profile-library-heading');
 
-    const title =
-        document.createElement('h2');
+    const title = document.createElement('h2');
 
-    title.textContent =
-        'Sa ludothèque';
+    title.textContent = 'Sa ludothèque';
 
-    const link =
-        document.createElement('a');
+    const link = document.createElement('a');
 
     link.href = '#';
+    link.textContent = 'Voir toute sa ludothèque';
 
-    link.textContent =
-        'Voir toute sa ludothèque';
+    link.addEventListener('click', (event) => {
+        event.preventDefault();
+    });
 
-    link.addEventListener(
-        'click',
-        (event) => {
-            event.preventDefault();
-        }
-    );
-
-    const arrow =
-        document.createElement('i');
+    const arrow = document.createElement('i');
 
     arrow.classList.add(
         'bi',
         'bi-arrow-right'
     );
 
-    arrow.setAttribute(
-        'aria-hidden',
-        'true'
-    );
+    arrow.setAttribute('aria-hidden', 'true');
 
     link.append(arrow);
 
@@ -1062,66 +1156,44 @@ function createLibrarySection(player) {
         link
     );
 
-
     /* -------------------------------------
        Jeux
        ------------------------------------- */
 
-    const games =
-        document.createElement('div');
+    const games = document.createElement('div');
 
-    games.classList.add(
-        'player-profile-games'
-    );
+    games.classList.add('player-profile-games');
 
     player.library
         .slice(0, 6)
-        .forEach(
-            (game) => {
-                const card =
-                    document.createElement('article');
+        .forEach((game) => {
+            const card = document.createElement('article');
 
-                card.classList.add(
-                    'player-profile-game'
-                );
+            card.classList.add('player-profile-game');
 
-                const imageContainer =
-                    document.createElement('div');
+            const imageContainer = document.createElement('div');
 
-                imageContainer.classList.add(
-                    'player-profile-game-image'
-                );
+            imageContainer.classList.add('player-profile-game-image');
 
-                const image =
-                    document.createElement('img');
+            const image = document.createElement('img');
 
-                /*
-                 * Les images sont servies par Symfony.
-                 */
-                image.src =
-                    `${API_URL}${game.image}`;
+            // Les images des jeux sont servies par Symfony.
+            image.src = `${API_URL}${game.image}`;
+            image.alt = `Boîte du jeu ${game.name}`;
 
-                image.alt =
-                    `Boîte du jeu ${game.name}`;
+            imageContainer.append(image);
 
-                imageContainer.append(
-                    image
-                );
+            const name = document.createElement('span');
 
-                const name =
-                    document.createElement('span');
+            name.textContent = game.name;
 
-                name.textContent =
-                    game.name;
+            card.append(
+                imageContainer,
+                name
+            );
 
-                card.append(
-                    imageContainer,
-                    name
-                );
-
-                games.append(card);
-            }
-        );
+            games.append(card);
+        });
 
     section.append(
         heading,
@@ -1131,30 +1203,24 @@ function createLibrarySection(player) {
     return section;
 }
 
-
 /* ========================================
    Statistiques
    ======================================== */
 
 function createProfileStatistics(player) {
-    const statistics =
-        document.createElement('div');
+    const statistics = document.createElement('div');
 
-    statistics.classList.add(
-        'player-profile-statistics'
+    statistics.classList.add('player-profile-statistics');
+
+    const games = createStatistic(
+        'bi-dice-5',
+        `${player.games} jeux dans sa ludothèque`
     );
 
-    const games =
-        createStatistic(
-            'bi-dice-5',
-            `${player.games} jeux dans sa ludothèque`
-        );
-
-    const memberSince =
-        createStatistic(
-            'bi-calendar3',
-            `Membre depuis ${player.memberSince}`
-        );
+    const memberSince = createStatistic(
+        'bi-calendar3',
+        `Membre depuis ${player.memberSince}`
+    );
 
     statistics.append(
         games,
@@ -1164,36 +1230,25 @@ function createProfileStatistics(player) {
     return statistics;
 }
 
-
 /* ========================================
    Éléments d'information
    ======================================== */
 
-function createStatistic(
-    iconName,
-    text
-) {
-    const statistic =
-        document.createElement('p');
+function createStatistic(iconName, text) {
+    const statistic = document.createElement('p');
 
-    const icon =
-        document.createElement('i');
+    const icon = document.createElement('i');
 
     icon.classList.add(
         'bi',
         iconName
     );
 
-    icon.setAttribute(
-        'aria-hidden',
-        'true'
-    );
+    icon.setAttribute('aria-hidden', 'true');
 
-    const label =
-        document.createElement('span');
+    const label = document.createElement('span');
 
-    label.textContent =
-        text;
+    label.textContent = text;
 
     statistic.append(
         icon,
@@ -1203,32 +1258,21 @@ function createStatistic(
     return statistic;
 }
 
+function createProfileInformation(iconName, text) {
+    const information = document.createElement('p');
 
-function createProfileInformation(
-    iconName,
-    text
-) {
-    const information =
-        document.createElement('p');
-
-    const icon =
-        document.createElement('i');
+    const icon = document.createElement('i');
 
     icon.classList.add(
         'bi',
         iconName
     );
 
-    icon.setAttribute(
-        'aria-hidden',
-        'true'
-    );
+    icon.setAttribute('aria-hidden', 'true');
 
-    const label =
-        document.createElement('span');
+    const label = document.createElement('span');
 
-    label.textContent =
-        text;
+    label.textContent = text;
 
     information.append(
         icon,
@@ -1238,92 +1282,66 @@ function createProfileInformation(
     return information;
 }
 
-
 /* ========================================
    Filtre des joueurs
    ======================================== */
 
 /**
- * Filtre les joueurs selon le jeu
- * et le département sélectionnés.
+ * Filtre les joueurs selon le jeu et le département sélectionnés.
  */
-function filterPlayers(
-    gameSearch,
-    department
-) {
-    const container =
-        document.querySelector(
-            '.players-results'
-        );
+function filterPlayers(gameSearch, department) {
+    const container = document.querySelector('.players-results');
 
     if (!container) {
         return;
     }
 
-    const list =
-        container.querySelector(
-            '[data-results-list]'
-        );
+    const list = container.querySelector('[data-results-list]');
 
     if (!list) {
         return;
     }
 
-    /*
-     * Normalise la recherche pour permettre
-     * une recherche insensible aux majuscules.
-     */
-    const normalizedGameSearch =
-        gameSearch.toLowerCase();
+    // Normalise la recherche pour ignorer les accents et la casse.
+    const normalizedGameSearch = normalizeText(gameSearch.trim());
 
-    const filteredPlayers =
-        players.filter(
-            (player) => {
-                /*
-                 * Vérifie le département.
-                 * Une valeur vide signifie "tous les départements".
-                 */
-                const matchesDepartment =
-                    department === '' ||
-                    player.department === department;
+    const departmentSelect = document.querySelector(
+        '.players-search-panel select'
+    );
 
-                /*
-                 * Vérifie le jeu dans la ludothèque.
-                 * Une recherche vide signifie "tous les jeux".
-                 */
-                const matchesGame =
-                    normalizedGameSearch === '' ||
-                    player.library.some(
-                        (game) =>
-                            game.name
-                                .toLowerCase()
-                                .includes(
-                                    normalizedGameSearch
-                                )
-                    );
+    const selectedDepartmentText =
+        departmentSelect?.selectedOptions[0]?.textContent || '';
 
-                return (
-                    matchesDepartment &&
-                    matchesGame
-                );
-            }
-        );
+    const selectedDepartmentCode =
+        selectedDepartmentText.split(' - ')[0];
 
+    const filteredPlayers = players.filter((player) => {
+        // Vérifie le département.
+        const matchesDepartment =
+            department === '' ||
+            normalizeText(player.department) === normalizeText(department) ||
+            player.department === selectedDepartmentCode;
+
+        // Vérifie le jeu dans la ludothèque.
+        const matchesGame =
+            normalizedGameSearch === '' ||
+            player.library.some(
+                (game) =>
+                    normalizeText(game.name).includes(normalizedGameSearch)
+            );
+
+        return matchesDepartment && matchesGame;
+    });
 
     /* -------------------------------------
        Mise à jour du nombre de résultats
        ------------------------------------- */
 
-    const count =
-        container.querySelector(
-            '.players-results-count'
-        );
+    const count = container.querySelector('.players-results-count');
 
     if (count) {
-        count.textContent =
-            `(${filteredPlayers.length} joueurs)`;
+        count.textContent = `(${filteredPlayers.length} joueurs)`;
     }
-
 
     /* -------------------------------------
        Aucun résultat
@@ -1332,71 +1350,52 @@ function filterPlayers(
     list.replaceChildren();
 
     if (filteredPlayers.length === 0) {
-        const empty =
-            createEmptyResults();
-
-        list.append(empty);
-
+        list.append(createEmptyResults());
         return;
     }
-
 
     /* -------------------------------------
        Résultats
        ------------------------------------- */
 
-    filteredPlayers.forEach(
-        (player) => {
-            list.append(
-                createPlayerResult(
-                    player,
-                    false,
-                    (selectedPlayer) => {
-                        selectPlayer(
-                            selectedPlayer,
-                            container
-                        );
-                    }
-                )
-            );
-        }
-    );
+    filteredPlayers.forEach((player) => {
+        list.append(
+            createPlayerResult(
+                player,
+                false,
+                (selectedPlayer) => {
+                    selectPlayer(
+                        selectedPlayer,
+                        container
+                    );
+                }
+            )
+        );
+    });
 }
 
-
 /**
- * Crée le message affiché lorsqu'aucun
- * joueur ne correspond à la recherche.
+ * Crée le message affiché lorsqu'aucun joueur ne correspond à la recherche.
  */
 function createEmptyResults() {
-    const empty =
-        document.createElement('div');
+    const empty = document.createElement('div');
 
-    empty.classList.add(
-        'players-empty-results'
-    );
+    empty.classList.add('players-empty-results');
 
-    const icon =
-        document.createElement('i');
+    const icon = document.createElement('i');
 
     icon.classList.add(
         'bi',
         'bi-search'
     );
 
-    icon.setAttribute(
-        'aria-hidden',
-        'true'
-    );
+    icon.setAttribute('aria-hidden', 'true');
 
-    const title =
-        document.createElement('h3');
+    const title = document.createElement('h3');
 
-    title.textContent =
-        'Aucun joueur trouvé';
+    title.textContent = 'Aucun joueur trouvé';
 
-    const description =
-        document.createElement('p');
+    const description = document.createElement('p');
 
     description.textContent =
         'Essaie avec un autre jeu ou un autre département.';
@@ -1410,42 +1409,28 @@ function createEmptyResults() {
     return empty;
 }
 
-
 /* ========================================
    Joueur introuvable
    ======================================== */
 
 function createPlayerNotFoundPage() {
-    const page =
-        document.createElement('main');
+    const page = document.createElement('main');
 
-    page.classList.add(
-        'player-not-found'
-    );
+    page.classList.add('player-not-found');
 
-    const title =
-        document.createElement('h1');
+    const title = document.createElement('h1');
 
-    title.textContent =
-        'Joueur introuvable';
+    title.textContent = 'Joueur introuvable';
 
-    const link =
-        document.createElement('a');
+    const link = document.createElement('a');
 
-    link.href =
-        '/joueurs';
+    link.href = '/joueurs';
+    link.textContent = 'Retour aux joueurs';
 
-    link.textContent =
-        'Retour aux joueurs';
-
-    link.addEventListener(
-        'click',
-        (event) => {
-            event.preventDefault();
-
-            navigateTo('/joueurs');
-        }
-    );
+    link.addEventListener('click', (event) => {
+        event.preventDefault();
+        navigateTo('/joueurs');
+    });
 
     page.append(
         title,

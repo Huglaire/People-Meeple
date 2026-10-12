@@ -110,8 +110,19 @@ final class UserController extends AbstractController
                 ];
             }
 
+            // Retourne les informations publiques nécessaires à la recherche
             $players[] = [
+                'id' => $user->getId(),
                 'pseudo' => $user->getPseudo(),
+                'dateOfBirth' => $user->getDateOfBirth()?->format('Y-m-d'),
+                'department' => $user->getDepartment(),
+
+                // La ville n'est exposée que si l'utilisateur l'a rendue visible
+                'city' => $user->isCityVisible() ? $user->getCity() : null,
+                'cityVisible' => $user->isCityVisible(),
+
+                'createdAt' => $user->getCreatedAt()?->format(\DateTimeInterface::ATOM),
+                'profilePicture' => $user->getProfilePicture(),
                 'library' => $library,
             ];
         }
