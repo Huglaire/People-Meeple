@@ -1,8 +1,8 @@
 // Crée les pages de recherche et de profil des joueurs
-
 import { createPlayerResult } from '../components/PlayerResult.js';
 import { navigateTo } from '../router/router.js';
 import ludothequeImage from '../assets/images/backgrounds/ludotheque.jpg';
+
 // Photos de profil utilisées par les fixtures
 import profilHommeImage from '../assets/images/profiles/profil homme.jpg';
 import profilHomme2Image from '../assets/images/profiles/profil homme 2.jpg';
@@ -15,8 +15,14 @@ import '../css/players.css';
 // Adresse de l'API Symfony
 const API_URL = 'http://127.0.0.1:8000';
 
-// Les profils sont désormais chargés depuis la base de données.
+// Les profils sont chargés depuis la base de données.
 let players = [];
+
+// Contient uniquement les joueurs correspondant à la recherche.
+let filteredPlayers = [];
+
+// Indique si une recherche a été lancée.
+let hasSearched = false;
 
 // Convertit un pseudo en identifiant d'URL lisible.
 function createPlayerSlug(pseudo, id) {
@@ -43,9 +49,7 @@ function calculateAge(dateOfBirth) {
     }
 
     const today = new Date();
-
     let age = today.getFullYear() - birthDate.getFullYear();
-
     const monthDifference = today.getMonth() - birthDate.getMonth();
 
     if (
@@ -190,10 +194,12 @@ async function loadPlayerLibraries(page, requestedSlug = null) {
     try {
         players = await fetchPlayerLibraries();
 
-        // Sur la page de recherche, actualise les résultats.
+        // Sur la page de recherche, affiche l'invitation à rechercher.
         const resultsContainer = page.querySelector('.players-results');
 
         if (resultsContainer) {
+            filteredPlayers = [];
+            hasSearched = false;
             refreshPlayersPage(resultsContainer);
             return;
         }
@@ -257,9 +263,7 @@ function showPlayersLoadError(container) {
 
     if (list) {
         const message = document.createElement('p');
-
         message.classList.add('players-load-error');
-
         message.textContent =
             'Impossible de charger les joueurs. Vérifie ta connexion puis réessaie.';
 
@@ -278,7 +282,6 @@ function showPlayersLoadError(container) {
  */
 export function createPlayersPage() {
     const page = document.createElement('main');
-
     page.classList.add('players-page');
 
     const hero = createPlayersHero();
@@ -300,11 +303,9 @@ export function createPlayersPage() {
  */
 export function createPlayerProfilePage(slug) {
     const page = document.createElement('main');
-
     page.classList.add('player-profile-page');
 
     const backLink = document.createElement('a');
-
     backLink.href = '/joueurs';
     backLink.classList.add('player-profile-back');
     backLink.textContent = 'Retour aux résultats';
@@ -315,11 +316,9 @@ export function createPlayerProfilePage(slug) {
     });
 
     const profileContainer = document.createElement('div');
-
     profileContainer.dataset.profileContainer = 'true';
 
     const loadingMessage = document.createElement('p');
-
     loadingMessage.textContent = 'Chargement du profil...';
 
     profileContainer.append(loadingMessage);
@@ -341,23 +340,18 @@ export function createPlayerProfilePage(slug) {
 
 function createPlayersHero() {
     const section = document.createElement('section');
-
     section.classList.add('players-hero');
 
     const content = document.createElement('div');
-
     content.classList.add('players-hero-content');
 
     const title = document.createElement('h1');
 
     const firstLine = document.createElement('span');
-
     firstLine.textContent = 'Rechercher des';
 
     const secondLine = document.createElement('span');
-
     secondLine.classList.add('heading-highlight');
-
     secondLine.textContent = 'joueurs';
 
     title.append(
@@ -366,7 +360,6 @@ function createPlayersHero() {
     );
 
     const description = document.createElement('p');
-
     description.textContent =
         'Trouve des joueurs qui possèdent ou connaissent les règles du jeu que tu aimes';
 
@@ -376,11 +369,9 @@ function createPlayersHero() {
     );
 
     const imageContainer = document.createElement('div');
-
     imageContainer.classList.add('players-hero-image');
 
     const image = document.createElement('img');
-
     image.src = ludothequeImage;
     image.alt = 'Ludothèque contenant des jeux de société';
 
@@ -400,7 +391,6 @@ function createPlayersHero() {
 
 function createPlayersContent() {
     const section = document.createElement('section');
-
     section.classList.add('players-content');
 
     const searchPanel = createSearchPanel();
@@ -422,10 +412,11 @@ function createPlayersContent() {
  * Retire les accents et met en minuscules.
  */
 function normalizeText(text) {
-    return text
+    return String(text || '')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase();
+        .toLowerCase()
+        .trim();
 }
 
 /**
@@ -452,7 +443,6 @@ function getAllGames() {
 
 function createSearchPanel() {
     const panel = document.createElement('div');
-
     panel.classList.add('players-search-panel');
 
     /* -------------------------------------
@@ -460,28 +450,22 @@ function createSearchPanel() {
        ------------------------------------- */
 
     const gameField = document.createElement('div');
-
     gameField.classList.add('players-search-field');
 
     const gameLabel = document.createElement('label');
-
     gameLabel.textContent = 'Jeu';
 
     const gameInputContainer = document.createElement('div');
-
     gameInputContainer.classList.add('players-search-input');
 
     const icon = document.createElement('i');
-
     icon.classList.add(
         'bi',
         'bi-search'
     );
-
     icon.setAttribute('aria-hidden', 'true');
 
     const input = document.createElement('input');
-
     input.type = 'search';
     input.placeholder = 'Rechercher un jeu...';
 
@@ -502,11 +486,8 @@ function createSearchPanel() {
 
     // Liste déroulante des suggestions de jeux.
     const suggestions = document.createElement('ul');
-
     suggestions.classList.add('players-search-suggestions');
-
     suggestions.setAttribute('role', 'listbox');
-
     suggestions.hidden = true;
 
     gameField.append(
@@ -520,11 +501,9 @@ function createSearchPanel() {
        ------------------------------------- */
 
     const departmentField = document.createElement('div');
-
     departmentField.classList.add('players-search-field');
 
     const departmentLabel = document.createElement('label');
-
     departmentLabel.textContent = 'Département';
 
     const select = document.createElement('select');
@@ -641,19 +620,15 @@ function createSearchPanel() {
 
     // Ajoute l'option de recherche par défaut.
     const defaultOption = document.createElement('option');
-
     defaultOption.value = '';
-    defaultOption.textContent = 'Tous les départements';
-
+    defaultOption.textContent = 'Choisir un département';
     select.append(defaultOption);
 
     // Ajoute chaque département au menu déroulant.
     departments.forEach(([code, name]) => {
         const option = document.createElement('option');
-
         option.value = name;
         option.textContent = `${code} - ${name}`;
-
         select.append(option);
     });
 
@@ -689,17 +664,11 @@ function createSearchPanel() {
 
     function selectSuggestion(gameName) {
         input.value = gameName;
-
         closeSuggestions();
-
-        filterPlayers(
-            gameName,
-            select.value
-        );
     }
 
     function updateSuggestions() {
-        const query = normalizeText(input.value.trim());
+        const query = normalizeText(input.value);
 
         if (query === '') {
             closeSuggestions();
@@ -711,7 +680,6 @@ function createSearchPanel() {
         );
 
         suggestions.replaceChildren();
-
         activeIndex = -1;
 
         if (matches.length === 0) {
@@ -721,7 +689,6 @@ function createSearchPanel() {
 
         matches.forEach((name) => {
             const item = document.createElement('li');
-
             item.setAttribute('role', 'option');
             item.textContent = name;
 
@@ -753,13 +720,11 @@ function createSearchPanel() {
 
         if (event.key === 'ArrowDown') {
             event.preventDefault();
-
             setActiveSuggestion(
                 (activeIndex + 1) % items.length
             );
         } else if (event.key === 'ArrowUp') {
             event.preventDefault();
-
             setActiveSuggestion(
                 (activeIndex - 1 + items.length) % items.length
             );
@@ -768,8 +733,6 @@ function createSearchPanel() {
             activeIndex >= 0
         ) {
             event.preventDefault();
-
-            // Empêche l'écouteur Entrée classique de se déclencher.
             event.stopImmediatePropagation();
 
             selectSuggestion(
@@ -785,14 +748,12 @@ function createSearchPanel() {
        ------------------------------------- */
 
     const button = document.createElement('button');
-
     button.type = 'button';
     button.classList.add('players-search-button');
     button.textContent = 'Rechercher';
 
     button.addEventListener('click', () => {
         closeSuggestions();
-
         filterPlayers(
             input.value.trim(),
             select.value
@@ -806,7 +767,6 @@ function createSearchPanel() {
         }
 
         event.preventDefault();
-
         closeSuggestions();
 
         filterPlayers(
@@ -816,10 +776,13 @@ function createSearchPanel() {
     });
 
     select.addEventListener('change', () => {
-        filterPlayers(
-            input.value.trim(),
-            select.value
-        );
+        // N'effectue une recherche que si les deux critères sont renseignés.
+        if (input.value.trim() && select.value) {
+            filterPlayers(
+                input.value.trim(),
+                select.value
+            );
+        }
     });
 
     panel.append(
@@ -837,19 +800,16 @@ function createSearchPanel() {
 
 function createResultsPanel() {
     const container = document.createElement('div');
-
     container.classList.add('players-results');
 
     const heading = document.createElement('h2');
 
     const title = document.createElement('span');
-
     title.textContent = 'Résultats';
 
     const count = document.createElement('span');
-
     count.classList.add('players-results-count');
-    count.textContent = '(chargement...)';
+    count.textContent = '';
 
     heading.append(
         title,
@@ -857,13 +817,12 @@ function createResultsPanel() {
     );
 
     const list = document.createElement('div');
-
     list.classList.add('players-results-list');
     list.dataset.resultsList = 'true';
 
     const loadingMessage = document.createElement('p');
-
-    loadingMessage.textContent = 'Chargement des joueurs...';
+    loadingMessage.textContent =
+        'Chargement des jeux disponibles...';
 
     list.append(loadingMessage);
 
@@ -876,7 +835,8 @@ function createResultsPanel() {
 }
 
 /**
- * Rafraîchit les résultats après le chargement des données de l'API.
+ * Actualise les résultats après le chargement des données de l'API
+ * ou après une recherche.
  */
 function refreshPlayersPage(container) {
     const list = container.querySelector('[data-results-list]');
@@ -886,44 +846,51 @@ function refreshPlayersPage(container) {
         return;
     }
 
-    const currentProfile = container.querySelector(
-        '.players-desktop-profile'
-    );
-
-    const selectedSlug = currentProfile?.dataset.playerSlug;
-
-    count.textContent = `(${players.length} joueurs)`;
-
+    // Efface les résultats précédents.
     list.replaceChildren();
 
-    if (players.length === 0) {
-        list.append(createEmptyResults());
-        currentProfile?.remove();
+    // Aucun profil n'est affiché avant une recherche valide.
+    if (!hasSearched) {
+        count.textContent = '';
+
+        const message = document.createElement('p');
+        message.textContent =
+            'Choisis un jeu et un département pour rechercher des joueurs.';
+
+        list.append(message);
+
+        container.querySelector('.players-desktop-profile')?.remove();
         return;
     }
 
-    players.forEach((player) => {
+    // Met à jour le nombre de joueurs trouvés.
+    count.textContent =
+        `(${filteredPlayers.length} joueurs disponibles)`;
+
+    // Affiche un message si aucun joueur ne correspond.
+    if (filteredPlayers.length === 0) {
+        list.append(createEmptyResults());
+        container.querySelector('.players-desktop-profile')?.remove();
+        return;
+    }
+
+    // Affiche uniquement les joueurs correspondant aux critères.
+    filteredPlayers.forEach((player, index) => {
         list.append(
             createPlayerResult(
                 player,
-                player.slug === selectedSlug ||
-                (!selectedSlug && player === players[0]),
-                (selectedPlayer) => {
-                    selectPlayer(
-                        selectedPlayer,
-                        container
-                    );
-                }
+                index === 0,
+                (selectedPlayer) => selectPlayer(selectedPlayer, container)
             )
         );
     });
 
-    const selectedPlayer =
-        players.find((player) => player.slug === selectedSlug) ||
-        players[0];
+    // Affiche le profil du premier résultat par défaut.
+    const currentProfile = container.querySelector(
+        '.players-desktop-profile'
+    );
 
-    const newProfile = createPlayerProfile(selectedPlayer);
-
+    const newProfile = createPlayerProfile(filteredPlayers[0]);
     newProfile.classList.add('players-desktop-profile');
 
     if (currentProfile) {
@@ -962,7 +929,6 @@ function selectPlayer(player, container) {
     }
 
     const newProfile = createPlayerProfile(player);
-
     newProfile.classList.add('players-desktop-profile');
 
     currentProfile.replaceWith(newProfile);
@@ -974,12 +940,10 @@ function selectPlayer(player, container) {
 
 function createPlayerProfile(player) {
     const profile = document.createElement('article');
-
     profile.classList.add('player-profile');
     profile.dataset.playerSlug = player.slug;
 
     const header = document.createElement('div');
-
     header.classList.add('player-profile-header');
 
     /* -------------------------------------
@@ -987,11 +951,9 @@ function createPlayerProfile(player) {
        ------------------------------------- */
 
     const imageContainer = document.createElement('div');
-
     imageContainer.classList.add('player-profile-image');
 
     const image = document.createElement('img');
-
     image.src = player.image || profilHommeImage;
     image.alt = `Photo de profil de ${player.name}`;
 
@@ -1002,11 +964,9 @@ function createPlayerProfile(player) {
        ------------------------------------- */
 
     const information = document.createElement('div');
-
     information.classList.add('player-profile-information');
 
     const name = document.createElement('h1');
-
     name.textContent = player.name;
 
     const age = createProfileInformation(
@@ -1032,20 +992,26 @@ function createPlayerProfile(player) {
        ------------------------------------- */
 
     const actions = document.createElement('div');
-
     actions.classList.add('player-profile-actions');
 
     const messageButton = document.createElement('button');
-
     messageButton.type = 'button';
     messageButton.classList.add('player-profile-message');
     messageButton.textContent = 'Envoyer un message';
 
     const libraryButton = document.createElement('button');
-
     libraryButton.type = 'button';
     libraryButton.classList.add('player-profile-library');
     libraryButton.textContent = 'Voir la ludothèque';
+
+    // Les actions seront reliées aux pages correspondantes ultérieurement.
+    messageButton.addEventListener('click', () => {
+        navigateTo('/messages');
+    });
+
+    libraryButton.addEventListener('click', () => {
+        navigateTo(`/joueurs/${player.slug}/ludotheque`);
+    });
 
     actions.append(
         messageButton,
@@ -1063,7 +1029,6 @@ function createPlayerProfile(player) {
        ------------------------------------- */
 
     const body = document.createElement('div');
-
     body.classList.add('player-profile-body');
 
     const about = createAboutSection(player);
@@ -1095,15 +1060,12 @@ function createPlayerProfile(player) {
 
 function createAboutSection(player) {
     const section = document.createElement('section');
-
     section.classList.add('player-profile-about');
 
     const title = document.createElement('h2');
-
     title.textContent = 'À propos';
 
     const description = document.createElement('p');
-
     description.textContent = player.description;
 
     section.append(
@@ -1120,33 +1082,28 @@ function createAboutSection(player) {
 
 function createLibrarySection(player) {
     const section = document.createElement('section');
-
     section.classList.add('player-profile-library-section');
 
     const heading = document.createElement('div');
-
     heading.classList.add('player-profile-library-heading');
 
     const title = document.createElement('h2');
-
     title.textContent = 'Sa ludothèque';
 
     const link = document.createElement('a');
-
-    link.href = '#';
+    link.href = `/joueurs/${player.slug}/ludotheque`;
     link.textContent = 'Voir toute sa ludothèque';
 
     link.addEventListener('click', (event) => {
         event.preventDefault();
+        navigateTo(`/joueurs/${player.slug}/ludotheque`);
     });
 
     const arrow = document.createElement('i');
-
     arrow.classList.add(
         'bi',
         'bi-arrow-right'
     );
-
     arrow.setAttribute('aria-hidden', 'true');
 
     link.append(arrow);
@@ -1161,30 +1118,26 @@ function createLibrarySection(player) {
        ------------------------------------- */
 
     const games = document.createElement('div');
-
     games.classList.add('player-profile-games');
 
     player.library
         .slice(0, 6)
         .forEach((game) => {
             const card = document.createElement('article');
-
             card.classList.add('player-profile-game');
 
             const imageContainer = document.createElement('div');
-
             imageContainer.classList.add('player-profile-game-image');
 
             const image = document.createElement('img');
 
             // Les images des jeux sont servies par Symfony.
-            image.src = `${API_URL}${game.image}`;
+            image.src = getApiImageUrl(game.image);
             image.alt = `Boîte du jeu ${game.name}`;
 
             imageContainer.append(image);
 
             const name = document.createElement('span');
-
             name.textContent = game.name;
 
             card.append(
@@ -1209,7 +1162,6 @@ function createLibrarySection(player) {
 
 function createProfileStatistics(player) {
     const statistics = document.createElement('div');
-
     statistics.classList.add('player-profile-statistics');
 
     const games = createStatistic(
@@ -1238,16 +1190,13 @@ function createStatistic(iconName, text) {
     const statistic = document.createElement('p');
 
     const icon = document.createElement('i');
-
     icon.classList.add(
         'bi',
         iconName
     );
-
     icon.setAttribute('aria-hidden', 'true');
 
     const label = document.createElement('span');
-
     label.textContent = text;
 
     statistic.append(
@@ -1262,16 +1211,13 @@ function createProfileInformation(iconName, text) {
     const information = document.createElement('p');
 
     const icon = document.createElement('i');
-
     icon.classList.add(
         'bi',
         iconName
     );
-
     icon.setAttribute('aria-hidden', 'true');
 
     const label = document.createElement('span');
-
     label.textContent = text;
 
     information.append(
@@ -1302,8 +1248,18 @@ function filterPlayers(gameSearch, department) {
         return;
     }
 
-    // Normalise la recherche pour ignorer les accents et la casse.
-    const normalizedGameSearch = normalizeText(gameSearch.trim());
+    const normalizedGameSearch = normalizeText(gameSearch);
+
+    // Une recherche nécessite obligatoirement un jeu et un département.
+    if (!normalizedGameSearch || !department) {
+        hasSearched = false;
+        filteredPlayers = [];
+        refreshPlayersPage(container);
+        return;
+    }
+
+    // Indique qu'une recherche valide a été lancée.
+    hasSearched = true;
 
     const departmentSelect = document.querySelector(
         '.players-search-panel select'
@@ -1313,65 +1269,34 @@ function filterPlayers(gameSearch, department) {
         departmentSelect?.selectedOptions[0]?.textContent || '';
 
     const selectedDepartmentCode =
-        selectedDepartmentText.split(' - ')[0];
+        selectedDepartmentText.split(' - ')[0].trim();
 
-    const filteredPlayers = players.filter((player) => {
-        // Vérifie le département.
+    // Filtre les joueurs sur le jeu et le département sélectionnés.
+    filteredPlayers = players.filter((player) => {
+        const playerDepartment = normalizeText(
+            String(player.department || '')
+        );
+
+        const selectedDepartment = normalizeText(
+            String(department)
+        );
+
+        // Vérifie le département du joueur.
         const matchesDepartment =
-            department === '' ||
-            normalizeText(player.department) === normalizeText(department) ||
-            player.department === selectedDepartmentCode;
+            playerDepartment === selectedDepartment ||
+            String(player.department) === selectedDepartmentCode;
 
-        // Vérifie le jeu dans la ludothèque.
-        const matchesGame =
-            normalizedGameSearch === '' ||
-            player.library.some(
-                (game) =>
-                    normalizeText(game.name).includes(normalizedGameSearch)
-            );
+        // Le joueur doit posséder le jeu ou en connaître les règles.
+        const matchesGame = player.library.some((game) =>
+            normalizeText(game.name).includes(normalizedGameSearch) &&
+            (game.owns || game.knowsRules)
+        );
 
         return matchesDepartment && matchesGame;
     });
 
-    /* -------------------------------------
-       Mise à jour du nombre de résultats
-       ------------------------------------- */
-
-    const count = container.querySelector('.players-results-count');
-
-    if (count) {
-        count.textContent = `(${filteredPlayers.length} joueurs)`;
-    }
-
-    /* -------------------------------------
-       Aucun résultat
-       ------------------------------------- */
-
-    list.replaceChildren();
-
-    if (filteredPlayers.length === 0) {
-        list.append(createEmptyResults());
-        return;
-    }
-
-    /* -------------------------------------
-       Résultats
-       ------------------------------------- */
-
-    filteredPlayers.forEach((player) => {
-        list.append(
-            createPlayerResult(
-                player,
-                false,
-                (selectedPlayer) => {
-                    selectPlayer(
-                        selectedPlayer,
-                        container
-                    );
-                }
-            )
-        );
-    });
+    // Met à jour les résultats et le profil affiché.
+    refreshPlayersPage(container);
 }
 
 /**
@@ -1379,24 +1304,19 @@ function filterPlayers(gameSearch, department) {
  */
 function createEmptyResults() {
     const empty = document.createElement('div');
-
     empty.classList.add('players-empty-results');
 
     const icon = document.createElement('i');
-
     icon.classList.add(
         'bi',
         'bi-search'
     );
-
     icon.setAttribute('aria-hidden', 'true');
 
     const title = document.createElement('h3');
-
     title.textContent = 'Aucun joueur trouvé';
 
     const description = document.createElement('p');
-
     description.textContent =
         'Essaie avec un autre jeu ou un autre département.';
 
@@ -1415,15 +1335,12 @@ function createEmptyResults() {
 
 function createPlayerNotFoundPage() {
     const page = document.createElement('main');
-
     page.classList.add('player-not-found');
 
     const title = document.createElement('h1');
-
     title.textContent = 'Joueur introuvable';
 
     const link = document.createElement('a');
-
     link.href = '/joueurs';
     link.textContent = 'Retour aux joueurs';
 
