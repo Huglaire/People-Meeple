@@ -16,12 +16,15 @@ export function createGamesPage() {
 
     page.append(hero, gamesSection);
 
-    loadGames(gamesSection);
+    // Charge les jeux et relie la recherche au catalogue
+    loadGames(gamesSection, hero.searchInput, hero.searchForm);
 
     return page;
 }
 
+
 // Crée le hero de la page des jeux
+
 function createGamesHero() {
     const section = document.createElement('section');
     section.classList.add('games-hero');
@@ -67,17 +70,9 @@ function createGamesHero() {
 
     searchForm.append(searchContainer, searchButton);
 
-    searchForm.addEventListener('submit', (event) => {
-        event.preventDefault();
-
-        const search = searchInput.value.trim();
-
-        if (search === '') {
-            return;
-        }
-
-        console.log(`Recherche du jeu : ${search}`);
-    });
+    // Rend la recherche accessible depuis la page principale
+    section.searchInput = searchInput;
+    section.searchForm = searchForm;
 
     content.append(title, description, searchForm);
 
@@ -95,7 +90,9 @@ function createGamesHero() {
     return section;
 }
 
+
 // Crée la section contenant la liste des jeux
+
 function createGamesSection() {
     const section = document.createElement('section');
     section.classList.add('games-section');
@@ -133,27 +130,46 @@ function createGamesSection() {
     return section;
 }
 
-// Récupère les jeux depuis l'API et les affiche
-async function loadGames(section) {
+
+// Récupère les jeux depuis l'API et configure la recherche
+
+async function loadGames(section, searchInput, searchForm) {
     try {
         const games = await getGames();
 
-        section.gamesGrid.replaceChildren();
+        // Trie tous les jeux par ordre alphabétique
+        const sortedGames = [...games].sort((gameA, gameB) =>
+            String(gameA.name || '').localeCompare(
+                String(gameB.name || ''),
+                'fr',
+                { sensitivity: 'base' }
+            )
+        );
 
-        section.gamesCount.textContent = `(${games.length} jeux)`;
+        // Affiche les jeux correspondant à la recherche
+        function updateGames() {
+            const search = normalizeGameName(searchInput.value.trim());
 
-        if (games.length === 0) {
-            const message = document.createElement('p');
-            message.textContent = 'Aucun jeu disponible pour le moment.';
+            const filteredGames = sortedGames.filter((game) => {
+                const gameName = normalizeGameName(game.name || '');
 
-            section.gamesGrid.append(message);
+                return gameName.startsWith(search);
+            });
 
-            return;
+            renderGames(section, filteredGames, sortedGames.length);
         }
 
-        games.forEach((game) => {
-            section.gamesGrid.append(createGameCard(game));
+        // Actualise les résultats à chaque modification de la saisie
+        searchInput.addEventListener('input', updateGames);
+
+        // Le bouton déclenche également la recherche
+        searchForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            updateGames();
         });
+
+        // Affiche initialement tous les jeux triés
+        updateGames();
     } catch (error) {
         section.gamesGrid.replaceChildren();
 
@@ -165,4 +181,48 @@ async function loadGames(section) {
 
         console.error(error);
     }
+}
+
+
+// Normalise les noms pour ignorer les accents et la casse
+
+function normalizeGameName(name) {
+    return String(name)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase('fr');
+}
+
+
+// Affiche les résultats de la recherche
+
+function renderGames(section, games, totalGames) {
+    section.gamesGrid.replaceChildren();
+
+    section.gamesCount.textContent =
+        `(${games.length} ${games.length > 1 ? 'jeux' : 'jeu'})`;
+
+    if (totalGames === 0) {
+        const message = document.createElement('p');
+        message.textContent = 'Aucun jeu disponible pour le moment.';
+
+        section.gamesGrid.append(message);
+
+        return;
+    }
+
+    if (games.length === 0) {
+        const message = document.createElement('p');
+        message.textContent =
+            'Aucun jeu ne commence par ces lettres.';
+
+        section.gamesGrid.append(message);
+
+        return;
+    }
+
+    // Construit les cartes avec les jeux filtrés et triés
+    games.forEach((game) => {
+        section.gamesGrid.append(createGameCard(game));
+    });
 }

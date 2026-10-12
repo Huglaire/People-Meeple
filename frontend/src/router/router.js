@@ -1,4 +1,5 @@
-// Routeur principal de l'application People Meeple
+
+ // Routeur principal de l'application People Meeple
 
 import { createHomePage } from '../pages/Home.js';
 import { createLoginPage } from '../pages/Login.js';
@@ -12,6 +13,7 @@ import { createGameDetailPage } from '../pages/GameDetail.js';
 import { createProfilePage } from '../pages/Profile.js';
 import { createLayout } from '../components/Layout.js';
 import { createLudothequePage } from '../pages/Ludotheque.js';
+import { createPlayerLibraryPage } from '../pages/PlayerLibrary.js';
 
 const routes = {
     '/': createHomePage,
@@ -42,6 +44,9 @@ export function router() {
 
     if (routes[path]) {
         page = routes[path]();
+    } else if (/^\/joueurs\/[a-z0-9-]+\/ludotheque$/.test(path)) {
+        const slug = path.split('/')[2];
+        page = createPlayerLibraryPage(slug);
     } else if (path.startsWith('/jeux/')) {
         const slug = path.split('/')[2];
         page = createGameDetailPage(slug);
