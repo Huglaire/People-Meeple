@@ -5,6 +5,7 @@ namespace App\DataFixtures;
 use App\Entity\Game;
 use App\Entity\User;
 use App\Entity\UserGame;
+use DateTimeImmutable;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Faker\Factory;
@@ -20,14 +21,17 @@ class AppFixtures extends Fixture
     public function load(ObjectManager $manager): void
     {
         $faker = Factory::create('fr_FR');
-        $now = new \DateTimeImmutable();
+        $now = new DateTimeImmutable();
 
         // Recherche les avatars téléchargés dans le dossier public.
         $avatarDirectory = dirname(__DIR__, 2) . '/public/images/avatars';
         $profilePictures = [];
 
         if (is_dir($avatarDirectory)) {
-            $files = glob($avatarDirectory . '/*.{jpg,jpeg,png,webp}', GLOB_BRACE);
+            $files = glob(
+                $avatarDirectory . '/*.{jpg,jpeg,png,webp}',
+                GLOB_BRACE
+            );
 
             if ($files !== false) {
                 foreach ($files as $file) {
@@ -220,7 +224,15 @@ class AppFixtures extends Fixture
         $games = [];
 
         foreach ($gamesData as $data) {
-            [$name, $description, $publisher, $minPlayers, $maxPlayers, $minimumAge, $duration] = $data;
+            [
+                $name,
+                $description,
+                $publisher,
+                $minPlayers,
+                $maxPlayers,
+                $minimumAge,
+                $duration
+            ] = $data;
 
             $game = new Game();
             $game->setName($name);
@@ -249,22 +261,66 @@ class AppFixtures extends Fixture
             for ($i = 0; $i < 10; $i++) {
                 $user = new User();
 
-                $pseudo = 'Meeple' . str_pad(
-                    (string) $profileNumber,
-                    4,
-                    '0',
-                    STR_PAD_LEFT
+                // Génère un prénom et un nom français plausibles.
+                $firstName = $faker->firstName();
+                $lastName = $faker->lastName();
+
+                // Construit un pseudo lisible et une adresse e-mail unique.
+                $pseudo = $firstName . ' ' . $lastName;
+
+                // Normalise les noms pour les rendre compatibles avec une adresse e-mail.
+                $emailFirstName = iconv(
+                    'UTF-8',
+                    'ASCII//TRANSLIT//IGNORE',
+                    $firstName
                 );
 
-                $user->setEmail('joueur' . $profileNumber . '@mail.fr');
+                $emailLastName = iconv(
+                    'UTF-8',
+                    'ASCII//TRANSLIT//IGNORE',
+                    $lastName
+                );
+
+                $emailFirstName = strtolower(
+                    preg_replace(
+                        '/[^a-zA-Z0-9]+/',
+                        '',
+                        $emailFirstName ?: 'joueur'
+                    )
+                );
+
+                $emailLastName = strtolower(
+                    preg_replace(
+                        '/[^a-zA-Z0-9]+/',
+                        '',
+                        $emailLastName ?: 'meeple'
+                    )
+                );
+
+                // Ajoute le numéro du profil pour garantir l'unicité de l'adresse.
+                $email = $emailFirstName
+                    . '.'
+                    . $emailLastName
+                    . '.'
+                    . str_pad(
+                        (string) $profileNumber,
+                        4,
+                        '0',
+                        STR_PAD_LEFT
+                    )
+                    . '@example.com';
+
+                $user->setEmail($email);
                 $user->setRoles(['ROLE_USER']);
                 $user->setPassword(
                     $this->passwordHasher->hashPassword($user, 'password')
                 );
                 $user->setPseudo($pseudo);
-                $user->setProfilePicture($faker->randomElement($profilePictures));
+                $user->setProfilePicture(
+                    $faker->randomElement($profilePictures)
+                );
                 $user->setDateOfBirth(
-                    \DateTimeImmutable::createFromMutable(
+                    DateTimeImmutable::createFromMutable(
                         $faker->dateTimeBetween('-60 years', '-18 years')
                     )
                 );
@@ -351,7 +407,7 @@ class AppFixtures extends Fixture
         string $department,
         string $city,
         string $profilePicture,
-        \DateTimeImmutable $now
+        DateTimeImmutable $now
     ): User {
         $user = new User();
         $user->setEmail($email);
@@ -363,7 +419,7 @@ class AppFixtures extends Fixture
         );
         $user->setPseudo($pseudo);
         $user->setProfilePicture($profilePicture);
-        $user->setDateOfBirth(new \DateTimeImmutable($dateOfBirth));
+        $user->setDateOfBirth(new DateTimeImmutable($dateOfBirth));
         $user->setDepartment($department);
         $user->setCity($city);
         $user->setCityVisible(true);
