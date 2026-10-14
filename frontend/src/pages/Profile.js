@@ -1,12 +1,35 @@
+
 // Crée la page profil de l'utilisateur connecté
 
-import { getCurrentUser, updateCurrentUser } from '../api/authApi.js';
+import {
+    getCurrentUser,
+    updateCurrentUser,
+    updateProfilePicture
+} from '../api/authApi.js';
+
 import { getMyGames } from '../api/userGamesApi.js';
 import { getToken } from '../services/authService.js';
 import { navigateTo } from '../router/router.js';
 import ludothequeImage from '../assets/images/backgrounds/ludotheque.jpg';
 import '../css/profile.css';
 
+// Adresse du serveur backend pour les photos de profil
+const PROFILE_PICTURE_BASE_URL = 'http://127.0.0.1:8000/images/';
+
+// Photo affichée lorsqu'aucune photo personnalisée n'est disponible
+const DEFAULT_PROFILE_PICTURE =
+    `${PROFILE_PICTURE_BASE_URL}meeple-default.png`;
+
+// Formats d'image acceptés
+const ALLOWED_PICTURE_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif'
+];
+
+// Taille maximale autorisée : 2 Mo
+const MAX_PICTURE_SIZE = 2 * 1024 * 1024;
 
 /* ========================================
    Départements français
@@ -116,6 +139,26 @@ const DEPARTMENTS = [
     { code: '976', name: 'Mayotte' }
 ];
 
+/* ========================================
+   Adresse d'une photo de profil
+   ======================================== */
+
+function getProfilePictureUrl(profilePicture) {
+    if (!profilePicture) {
+        return DEFAULT_PROFILE_PICTURE;
+    }
+
+    // Conserve les URL complètes si le backend en renvoie une
+    if (
+        profilePicture.startsWith('http://') ||
+        profilePicture.startsWith('https://')
+    ) {
+        return profilePicture;
+    }
+
+    // Construit l'adresse publique de la photo enregistrée
+    return `${PROFILE_PICTURE_BASE_URL}${encodeURIComponent(profilePicture)}`;
+}
 
 /* ========================================
    Création de la page
@@ -139,14 +182,12 @@ export function createProfilePage() {
 
     content.append(loading);
     container.append(content);
-
     page.append(hero, container);
 
     loadProfile(content);
 
     return page;
 }
-
 
 /* ========================================
    Hero
@@ -184,7 +225,6 @@ function createProfileHero() {
     return section;
 }
 
-
 /* ========================================
    Chargement du profil
    ======================================== */
@@ -221,7 +261,6 @@ async function loadProfile(content) {
     }
 }
 
-
 /* ========================================
    Mes informations
    ======================================== */
@@ -232,6 +271,26 @@ function createProfileInformation(user) {
 
     const title = document.createElement('h2');
     title.textContent = 'Mes informations';
+
+    // Affiche la photo de profil actuelle
+    const pictureField = document.createElement('div');
+    pictureField.classList.add('profile-field');
+
+    const pictureLabel = document.createElement('span');
+    pictureLabel.classList.add('profile-field-label');
+    pictureLabel.textContent = 'Photo de profil';
+
+    const picture = document.createElement('img');
+    picture.classList.add('profile-picture-preview');
+    picture.src = getProfilePictureUrl(user.profilePicture);
+    picture.alt = 'Photo de profil';
+
+    // Utilise la photo par défaut si l'image est inaccessible
+    picture.addEventListener('error', () => {
+        picture.src = DEFAULT_PROFILE_PICTURE;
+    }, { once: true });
+
+    pictureField.append(pictureLabel, picture);
 
     const pseudoField = createProfileField(
         'Pseudo',
@@ -250,7 +309,7 @@ function createProfileInformation(user) {
 
     const departmentField = createProfileField(
         'Département',
-        user.department || 'Non renseigné'
+        getDepartmentName(user.department)
     );
 
     const cityField = createProfileField(
@@ -265,6 +324,7 @@ function createProfileInformation(user) {
 
     section.append(
         title,
+        pictureField,
         pseudoField,
         emailField,
         dateField,
@@ -275,7 +335,6 @@ function createProfileInformation(user) {
 
     return section;
 }
-
 
 /* ========================================
    Champ d'information
@@ -298,6 +357,23 @@ function createProfileField(labelText, valueText) {
     return field;
 }
 
+/* ========================================
+   Nom du département
+   ======================================== */
+
+function getDepartmentName(departmentCode) {
+    if (!departmentCode) {
+        return 'Non renseigné';
+    }
+
+    const department = DEPARTMENTS.find(
+        (item) => item.code === departmentCode
+    );
+
+    return department
+        ? `${department.code} — ${department.name}`
+        : departmentCode;
+}
 
 /* ========================================
    Aperçu de la ludothèque
@@ -363,7 +439,6 @@ function createLibraryPreview(games) {
     return section;
 }
 
-
 /* ========================================
    Carte d'un jeu de la ludothèque
    ======================================== */
@@ -376,7 +451,6 @@ function createLibraryGameCard(userGame) {
     imageContainer.classList.add('profile-library-card-image');
 
     const image = document.createElement('img');
-
     const game = userGame.game || userGame;
 
     image.src = getGameImage(game);
@@ -409,7 +483,6 @@ function createLibraryGameCard(userGame) {
     return card;
 }
 
-
 /* ========================================
    Image d'un jeu
    ======================================== */
@@ -425,7 +498,6 @@ function getGameImage(game) {
 
     return '';
 }
-
 
 /* ========================================
    Actions du profil
@@ -449,7 +521,6 @@ function createProfileActions(user) {
     return section;
 }
 
-
 /* ========================================
    Formulaire de modification
    ======================================== */
@@ -470,6 +541,46 @@ function openProfileEditForm(user) {
     const form = document.createElement('form');
     form.classList.add('profile-form');
 
+    /* ---------- Photo de profil ---------- */
+
+    const pictureGroup = document.createElement('div');
+    pictureGroup.classList.add('profile-form-group');
+
+    const pictureLabel = document.createElement('label');
+    pictureLabel.setAttribute('for', 'profile-picture');
+    pictureLabel.textContent = 'Photo de profil';
+
+    const picturePreview = document.createElement('img');
+    picturePreview.classList.add('profile-picture-preview');
+    picturePreview.src = getProfilePictureUrl(user.profilePicture);
+    picturePreview.alt = 'Aperçu de votre photo de profil';
+
+    // Affiche la photo par défaut si l'image actuelle est inaccessible
+    picturePreview.addEventListener('error', () => {
+        picturePreview.src = DEFAULT_PROFILE_PICTURE;
+    }, { once: true });
+
+    const pictureInput = document.createElement('input');
+    pictureInput.type = 'file';
+    pictureInput.id = 'profile-picture';
+    pictureInput.name = 'profilePicture';
+    pictureInput.accept = ALLOWED_PICTURE_TYPES.join(',');
+
+    const pictureHelp = document.createElement('p');
+    pictureHelp.classList.add('profile-form-help');
+    pictureHelp.textContent =
+        'JPEG, PNG, WebP ou GIF. Taille maximale : 2 Mo.';
+
+    // Permet de libérer l'URL temporaire de l'aperçu
+    let temporaryPictureUrl = null;
+
+    // Nettoie l'aperçu temporaire lorsque le formulaire est retiré
+    function releaseTemporaryPictureUrl() {
+        if (temporaryPictureUrl) {
+            URL.revokeObjectURL(temporaryPictureUrl);
+            temporaryPictureUrl = null;
+        }
+    }
 
     /* ---------- Email ---------- */
 
@@ -489,7 +600,6 @@ function openProfileEditForm(user) {
 
     emailGroup.append(emailLabel, emailInput);
 
-
     /* ---------- Pseudo ---------- */
 
     const pseudoGroup = document.createElement('div');
@@ -507,7 +617,6 @@ function openProfileEditForm(user) {
     pseudoInput.readOnly = true;
 
     pseudoGroup.append(pseudoLabel, pseudoInput);
-
 
     /* ---------- Date de naissance ---------- */
 
@@ -532,17 +641,13 @@ function openProfileEditForm(user) {
         dateOfBirthInput
     );
 
-
     /* ---------- Département ---------- */
 
     const departmentGroup = document.createElement('div');
     departmentGroup.classList.add('profile-form-group');
 
     const departmentLabel = document.createElement('label');
-    departmentLabel.setAttribute(
-        'for',
-        'profile-department'
-    );
+    departmentLabel.setAttribute('for', 'profile-department');
     departmentLabel.textContent = 'Département';
 
     const departmentSelect = document.createElement('select');
@@ -551,7 +656,8 @@ function openProfileEditForm(user) {
 
     const defaultOption = document.createElement('option');
     defaultOption.value = '';
-    defaultOption.textContent = 'Sélectionnez votre département';
+    defaultOption.textContent =
+        'Sélectionnez votre département';
 
     departmentSelect.append(defaultOption);
 
@@ -574,7 +680,6 @@ function openProfileEditForm(user) {
         departmentSelect
     );
 
-
     /* ---------- Ville ---------- */
 
     const cityGroup = document.createElement('div');
@@ -593,7 +698,6 @@ function openProfileEditForm(user) {
 
     cityGroup.append(cityLabel, cityInput);
 
-
     /* ---------- Visibilité de la ville ---------- */
 
     const visibilityGroup = document.createElement('div');
@@ -606,10 +710,7 @@ function openProfileEditForm(user) {
     visibilityInput.checked = user.cityVisible === true;
 
     const visibilityLabel = document.createElement('label');
-    visibilityLabel.setAttribute(
-        'for',
-        'city-visible'
-    );
+    visibilityLabel.setAttribute('for', 'city-visible');
     visibilityLabel.textContent =
         'Afficher ma ville aux autres utilisateurs';
 
@@ -618,13 +719,58 @@ function openProfileEditForm(user) {
         visibilityLabel
     );
 
-
     /* ---------- Message d'erreur ---------- */
 
     const formError = document.createElement('p');
     formError.classList.add('profile-form-error');
     formError.hidden = true;
 
+    /* ---------- Sélection de la photo ---------- */
+
+    pictureInput.addEventListener('change', () => {
+        formError.hidden = true;
+        formError.textContent = '';
+
+        const file = pictureInput.files[0];
+
+        if (!file) {
+            releaseTemporaryPictureUrl();
+            picturePreview.src =
+                getProfilePictureUrl(user.profilePicture);
+            return;
+        }
+
+        // Vérifie le format avant d'afficher l'aperçu
+        if (!ALLOWED_PICTURE_TYPES.includes(file.type)) {
+            pictureInput.value = '';
+            formError.textContent =
+                'Format non autorisé. Utilisez JPEG, PNG, WebP ou GIF.';
+            formError.hidden = false;
+            return;
+        }
+
+        // Vérifie la taille avant l'envoi
+        if (file.size > MAX_PICTURE_SIZE) {
+            pictureInput.value = '';
+            formError.textContent =
+                'L’image ne doit pas dépasser 2 Mo.';
+            formError.hidden = false;
+            return;
+        }
+
+        // Libère l'URL précédente avant de créer un nouvel aperçu
+        releaseTemporaryPictureUrl();
+
+        temporaryPictureUrl = URL.createObjectURL(file);
+        picturePreview.src = temporaryPictureUrl;
+    });
+
+    pictureGroup.append(
+        pictureLabel,
+        picturePreview,
+        pictureInput,
+        pictureHelp
+    );
 
     /* ---------- Actions ---------- */
 
@@ -637,6 +783,7 @@ function openProfileEditForm(user) {
     cancelButton.textContent = 'Annuler';
 
     cancelButton.addEventListener('click', () => {
+        releaseTemporaryPictureUrl();
         loadProfile(profileContent);
     });
 
@@ -645,11 +792,7 @@ function openProfileEditForm(user) {
     saveButton.classList.add('profile-save-button');
     saveButton.textContent = 'Enregistrer';
 
-    actions.append(
-        cancelButton,
-        saveButton
-    );
-
+    actions.append(cancelButton, saveButton);
 
     /* ---------- Envoi du formulaire ---------- */
 
@@ -660,25 +803,43 @@ function openProfileEditForm(user) {
         formError.textContent = '';
 
         const department = departmentSelect.value;
+        const selectedPicture = pictureInput.files[0];
 
         if (department === '') {
             formError.textContent =
                 'Veuillez sélectionner votre département.';
-
             formError.hidden = false;
-
             return;
+        }
+
+        // Revérifie les caractéristiques du fichier avant l'envoi
+        if (selectedPicture) {
+            if (
+                !ALLOWED_PICTURE_TYPES.includes(selectedPicture.type)
+            ) {
+                formError.textContent =
+                    'Le format de l’image sélectionnée n’est pas autorisé.';
+                formError.hidden = false;
+                return;
+            }
+
+            if (selectedPicture.size > MAX_PICTURE_SIZE) {
+                formError.textContent =
+                    'L’image ne doit pas dépasser 2 Mo.';
+                formError.hidden = false;
+                return;
+            }
         }
 
         const token = getToken();
 
         if (!token) {
             navigateTo('/connexion');
-
             return;
         }
 
         saveButton.disabled = true;
+        cancelButton.disabled = true;
         saveButton.textContent = 'Enregistrement...';
 
         const data = {
@@ -692,7 +853,16 @@ function openProfileEditForm(user) {
         };
 
         try {
+            // Envoie la nouvelle photo uniquement si une image a été sélectionnée
+            if (selectedPicture) {
+                await updateProfilePicture(token, selectedPicture);
+            }
+
+            // Enregistre les autres informations du profil
             await updateCurrentUser(token, data);
+
+            // Libère l'aperçu temporaire après l'enregistrement
+            releaseTemporaryPictureUrl();
 
             // Recharge les données depuis l'API après modification
             const [updatedUser, updatedGames] = await Promise.all([
@@ -715,12 +885,13 @@ function openProfileEditForm(user) {
             formError.hidden = false;
 
             saveButton.disabled = false;
+            cancelButton.disabled = false;
             saveButton.textContent = 'Enregistrer';
         }
     });
 
-
     form.append(
+        pictureGroup,
         emailGroup,
         pseudoGroup,
         dateOfBirthGroup,
@@ -732,10 +903,8 @@ function openProfileEditForm(user) {
     );
 
     section.append(title, form);
-
     profileContent.replaceChildren(section);
 }
-
 
 /* ========================================
    Formatage de la date

@@ -1,4 +1,5 @@
-// Gère les appels à l'API liés à l'authentification
+
+ // Gère les appels à l'API liés à l'authentification
 
 const API_URL = 'http://127.0.0.1:8000/api';
 
@@ -103,6 +104,35 @@ export async function updateCurrentUser(token, userData) {
             validationMessage ||
             data.message ||
             'Impossible de modifier votre profil.'
+        );
+    }
+
+    return data;
+}
+
+/**
+ * Envoie une nouvelle photo de profil à l'API.
+ */
+export async function updateProfilePicture(token, imageFile) {
+    const formData = new FormData();
+
+    // Utilise le nom de champ attendu par le contrôleur Symfony
+    formData.append('profilePicture', imageFile);
+
+    const response = await fetch(`${API_URL}/me/profile-picture`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${token}`
+        },
+        body: formData
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(
+            data.message ||
+            'Impossible de modifier votre photo de profil.'
         );
     }
 

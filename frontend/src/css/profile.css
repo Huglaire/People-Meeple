@@ -543,3 +543,20 @@
     border-color: #d1d5db;
     cursor: not-allowed;
 }
+
+/* Aperçu de la photo de profil dans le formulaire */
+.profile-picture-preview {
+    display: block;
+    width: 120px;
+    height: 120px;
+    margin: 0.75rem 0;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Explication des formats acceptés */
+.profile-form-help {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #666;
+}
