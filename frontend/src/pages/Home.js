@@ -8,10 +8,8 @@ import { navigateTo } from '../router/router.js';
 
 import ludothequeImage from '../assets/images/backgrounds/ludotheque.jpg';
 
-import profilFemmeImage from '../assets/images/profiles/Profil femme.jpg';
-import profilHommeImage from '../assets/images/profiles/profil homme.jpg';
-import profilHomme2Image from '../assets/images/profiles/profil homme 2.jpg';
-import profilFemme2Image from '../assets/images/profiles/profil femme 2.jpg';
+const API_URL = 'http://127.0.0.1:8000';
+const DEFAULT_PROFILE_PICTURE = `${API_URL}/images/meeple-default.png`;
 
 export function createHomePage() {
     const page = document.createElement('div');
@@ -29,7 +27,6 @@ export function createHomePage() {
 
     return page;
 }
-
 
 /* ========================================
    Hero et recherche de jeux
@@ -56,7 +53,6 @@ function createHeroSection() {
     title.append(firstLine, secondLine);
 
     const description = document.createElement('p');
-
     description.textContent = isAuthenticated()
         ? 'Trouve des joueurs près de chez toi pour faire une partie avec eux.'
         : 'Découvre des jeux de société et rejoins une communauté de joueurs pour partager tes prochaines parties.';
@@ -86,16 +82,9 @@ function createHeroSection() {
     suggestionsMenu.classList.add('home-search-suggestions');
     suggestionsMenu.hidden = true;
     suggestionsMenu.setAttribute('role', 'listbox');
-    suggestionsMenu.setAttribute(
-        'aria-label',
-        'Suggestions de jeux'
-    );
+    suggestionsMenu.setAttribute('aria-label', 'Suggestions de jeux');
 
-    searchContainer.append(
-        searchIcon,
-        searchInput,
-        suggestionsMenu
-    );
+    searchContainer.append(searchIcon, searchInput, suggestionsMenu);
 
     const searchButton = document.createElement('button');
     searchButton.type = 'submit';
@@ -107,7 +96,6 @@ function createHeroSection() {
     let availableGames = [];
     let gamesLoaded = false;
     let loadingGames = false;
-    let latestSearch = '';
 
     // Normalise les textes pour ignorer la casse et les accents
     function normalizeText(value) {
@@ -176,7 +164,6 @@ function createHeroSection() {
                         'Le jeu ne possède pas de slug :',
                         game
                     );
-
                     return;
                 }
 
@@ -203,7 +190,6 @@ function createHeroSection() {
             availableGames = await getGames();
             gamesLoaded = true;
 
-            // Affiche les résultats correspondant à la saisie actuelle
             if (searchInput.value.trim() !== '') {
                 displaySuggestions(searchInput.value);
             }
@@ -232,15 +218,13 @@ function createHeroSection() {
 
     // Filtre les résultats à chaque frappe
     searchInput.addEventListener('input', () => {
-        latestSearch = searchInput.value.trim();
-
-        if (latestSearch === '') {
+        if (searchInput.value.trim() === '') {
             closeSuggestions();
             return;
         }
 
         if (gamesLoaded) {
-            displaySuggestions(latestSearch);
+            displaySuggestions(searchInput.value);
         } else {
             loadSearchGames();
         }
@@ -345,7 +329,6 @@ function createHeroSection() {
     return section;
 }
 
-
 /* ========================================
    Section jeux
    ======================================== */
@@ -383,7 +366,6 @@ function createGamesSection() {
     return section;
 }
 
-
 /**
  * Récupère les jeux depuis l'API et affiche les quatre premiers.
  */
@@ -409,7 +391,6 @@ async function loadHomeGames(section) {
     }
 }
 
-
 /* ========================================
    Section joueurs
    ======================================== */
@@ -428,67 +409,248 @@ function createPlayersSection() {
         '/joueurs'
     );
 
-    // Localisation affichée dans le mockup
-    const location = document.createElement('p');
-    location.classList.add('home-location');
-
-    const locationIcon = document.createElement('i');
-    locationIcon.classList.add('bi', 'bi-geo-alt');
-    locationIcon.setAttribute('aria-hidden', 'true');
-
-    const locationText = document.createElement('span');
-    locationText.textContent = 'Département : Hauts-de-Seine';
-
-    location.append(locationIcon, locationText);
-
     const playersGrid = document.createElement('div');
     playersGrid.classList.add('players-grid');
 
-    const players = [
-        {
-            name: 'Marion',
-            age: 28,
-            city: 'Chaville (92)',
-            games: 11,
-            image: profilFemmeImage,
-            path: '/joueurs/marion'
-        },
-        {
-            name: 'Aurel',
-            age: 31,
-            city: 'Sceaux (92)',
-            games: 36,
-            image: profilHommeImage,
-            path: '/joueurs/aurel'
-        },
-        {
-            name: 'Jean',
-            age: 43,
-            city: 'Antony (92)',
-            games: 20,
-            image: profilHomme2Image,
-            path: '/joueurs/jean'
-        },
-        {
-            name: 'Charlotte',
-            age: 27,
-            city: 'Saint-Cloud (92)',
-            games: 6,
-            image: profilFemme2Image,
-            path: '/joueurs/charlotte'
-        }
-    ];
+    const loading = document.createElement('p');
+    loading.textContent = 'Chargement des joueurs...';
 
-    players.forEach((player) => {
-        playersGrid.append(createPlayerCard(player));
-    });
+    playersGrid.append(loading);
 
-    container.append(heading, location, playersGrid);
+    container.append(heading, playersGrid);
     section.append(container);
+
+    // Charge les profils en fonction du département du membre connecté
+    loadHomePlayers(playersGrid);
 
     return section;
 }
 
+/**
+ * Récupère le profil connecté et les joueurs, puis sélectionne quatre profils
+ * aléatoires du même département.
+ */
+async function loadHomePlayers(playersGrid) {
+    try {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            throw new Error('Aucun jeton d’authentification disponible.');
+        }
+
+        // Récupère le profil du membre connecté
+        const currentUserResponse = await fetch(`${API_URL}/api/me`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/json'
+            }
+        });
+
+        if (!currentUserResponse.ok) {
+            throw new Error(
+                `Impossible de récupérer le profil connecté : ${currentUserResponse.status}`
+            );
+        }
+
+        const currentUser = await currentUserResponse.json();
+
+        // Récupère les joueurs et leurs ludothèques
+        const playersResponse = await fetch(
+            `${API_URL}/api/players/libraries`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json'
+                }
+            }
+        );
+
+        if (!playersResponse.ok) {
+            throw new Error(
+                `Erreur API lors du chargement des joueurs : ${playersResponse.status}`
+            );
+        }
+
+        const players = await playersResponse.json();
+
+        playersGrid.replaceChildren();
+
+        // Normalise les départements pour comparer les codes sans erreur
+        const normalizeDepartment = (department) => {
+            return String(department || '').trim().toUpperCase();
+        };
+
+        const currentDepartment = normalizeDepartment(
+            currentUser.department
+        );
+
+        if (!currentDepartment) {
+            displayPlayersMessage(
+                playersGrid,
+                'Renseigne ton département dans ton profil pour découvrir des joueurs près de chez toi.'
+            );
+            return;
+        }
+
+        // Exclut le compte connecté, les comptes de test et l'administration
+        const eligiblePlayers = players.filter((player) => {
+            const sameDepartment =
+                normalizeDepartment(player.department) === currentDepartment;
+
+            const isCurrentUser =
+                String(player.id) === String(currentUser.id);
+
+            const pseudo = String(player.pseudo || '')
+                .trim()
+                .toLowerCase();
+
+            const isTestAccount = [
+                'testmeeple',
+                'testmeeple2',
+                'adminmeeple'
+            ].includes(pseudo);
+
+            return sameDepartment && !isCurrentUser && !isTestAccount;
+        });
+
+        // Mélange les profils pour éviter de toujours afficher les mêmes
+        const shuffledPlayers = shuffleArray(eligiblePlayers);
+
+        // Affiche quatre joueurs au maximum
+        const suggestedPlayers = shuffledPlayers.slice(0, 4);
+
+        if (suggestedPlayers.length === 0) {
+            displayPlayersMessage(
+                playersGrid,
+                'Aucun autre joueur de ton département à afficher pour le moment.'
+            );
+            return;
+        }
+
+        suggestedPlayers.forEach((apiPlayer) => {
+            const player = mapApiPlayerToCard(apiPlayer);
+            playersGrid.append(createPlayerCard(player));
+        });
+    } catch (error) {
+        playersGrid.replaceChildren();
+
+        displayPlayersMessage(
+            playersGrid,
+            'Impossible de charger les joueurs pour le moment.'
+        );
+
+        console.error(
+            'Impossible de charger les joueurs de la page d’accueil.',
+            error
+        );
+    }
+}
+
+/**
+ * Mélange une copie du tableau sans modifier le tableau original.
+ */
+function shuffleArray(items) {
+    const shuffled = [...items];
+
+    for (let index = shuffled.length - 1; index > 0; index--) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+
+        [shuffled[index], shuffled[randomIndex]] = [
+            shuffled[randomIndex],
+            shuffled[index]
+        ];
+    }
+
+    return shuffled;
+}
+
+/**
+ * Affiche un message dans la grille des joueurs.
+ */
+function displayPlayersMessage(container, message) {
+    const paragraph = document.createElement('p');
+    paragraph.textContent = message;
+    container.append(paragraph);
+}
+
+/**
+ * Adapte les données de l'API au format attendu par PlayerCard.
+ */
+function mapApiPlayerToCard(apiPlayer) {
+    const age = calculateAge(apiPlayer.dateOfBirth);
+    const city = apiPlayer.city || 'Ville non renseignée';
+
+    return {
+        name: apiPlayer.pseudo || 'Joueur',
+        age,
+        city,
+        games: Array.isArray(apiPlayer.library)
+            ? apiPlayer.library.length
+            : 0,
+        image: getProfilePictureUrl(apiPlayer.profilePicture),
+        fallbackImage: DEFAULT_PROFILE_PICTURE,
+        path: '/joueurs'
+    };
+}
+
+/**
+ * Construit l'URL d'une photo de profil.
+ */
+function getProfilePictureUrl(profilePicture) {
+    if (!profilePicture) {
+        return DEFAULT_PROFILE_PICTURE;
+    }
+
+    // Conserve les URL complètes déjà fournies par l'API
+    if (/^https?:\/\//i.test(profilePicture)) {
+        return profilePicture;
+    }
+
+    // Conserve les chemins absolus fournis par l'API
+    if (profilePicture.startsWith('/')) {
+        return `${API_URL}${profilePicture}`;
+    }
+
+    // Les avatars numérotés des fixtures sont stockés dans le dossier avatars
+    if (/^\d{3}\.jpg$/i.test(profilePicture)) {
+        return `${API_URL}/images/avatars/${encodeURIComponent(profilePicture)}`;
+    }
+
+    // Les autres fichiers restent recherchés dans le dossier images
+    return `${API_URL}/images/${encodeURIComponent(profilePicture)}`;
+}
+
+/**
+ * Calcule l'âge à partir d'une date de naissance.
+ */
+function calculateAge(dateOfBirth) {
+    if (!dateOfBirth) {
+        return null;
+    }
+
+    const birthDate = new Date(`${dateOfBirth}T00:00:00`);
+
+    if (Number.isNaN(birthDate.getTime())) {
+        return null;
+    }
+
+    const today = new Date();
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+
+    const birthdayNotPassed =
+        today.getMonth() < birthDate.getMonth()
+        || (
+            today.getMonth() === birthDate.getMonth()
+            && today.getDate() < birthDate.getDate()
+        );
+
+    if (birthdayNotPassed) {
+        age--;
+    }
+
+    return age >= 0 ? age : null;
+}
 
 /* ========================================
    Titre de section
@@ -529,7 +691,6 @@ function createSectionHeading(
 
     return headingContainer;
 }
-
 
 /* ========================================
    Élément de titre coloré
