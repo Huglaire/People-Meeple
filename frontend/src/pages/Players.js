@@ -4,6 +4,7 @@ import { createPlayerResult } from '../components/PlayerResult.js';
 import { createGameCard } from '../components/GameCard.js';
 import { navigateTo } from '../router/router.js';
 import ludothequeImage from '../assets/images/backgrounds/ludotheque.jpg';
+import { createConversation } from '../api/messagingApi.js';
 
 // Photos de profil utilisées par les anciennes fixtures
 import profilHommeImage from '../assets/images/profiles/profil homme.jpg';
@@ -1029,8 +1030,56 @@ function createPlayerProfile(player) {
     libraryButton.textContent = 'Voir la ludothèque';
 
     // Les actions sont reliées aux pages correspondantes.
-    messageButton.addEventListener('click', () => {
-        navigateTo('/messages');
+    // Crée une conversation avec ce joueur ou ouvre celle qui existe déjà.
+    messageButton.addEventListener('click', async () => {
+        const playerId = Number(player.id);
+
+        if (!Number.isInteger(playerId) || playerId <= 0) {
+            showMessagingError('Impossible d’identifier ce joueur.');
+            return;
+        }
+
+        messageButton.disabled = true;
+        messageButton.textContent = 'Ouverture...';
+
+        try {
+            let conversation;
+
+            try {
+                conversation = await createConversation(playerId);
+            } catch (error) {
+                // Une conversation existante est signalée par l'API avec HTTP 409.
+                if (error.status === 409 && error.data?.conversationId) {
+                    conversation = { id: error.data.conversationId };
+                } else {
+                    throw error;
+                }
+            }
+
+            const conversationId = Number(
+                conversation?.id ?? conversation?.conversationId
+            );
+
+            if (!Number.isInteger(conversationId) || conversationId <= 0) {
+                throw new Error(
+                    'Le serveur n’a pas retourné un identifiant de conversation valide.'
+                );
+            }
+
+            navigateTo(`/discussions/${conversationId}`);
+        } catch (error) {
+            console.error(
+                'Impossible d’ouvrir une conversation avec ce joueur.',
+                error
+            );
+
+            showMessagingError(
+                error.message || 'Impossible d’ouvrir cette conversation. Réessaie.'
+            );
+        } finally {
+            messageButton.disabled = false;
+            messageButton.textContent = 'Envoyer un message';
+        }
     });
 
     libraryButton.addEventListener('click', () => {

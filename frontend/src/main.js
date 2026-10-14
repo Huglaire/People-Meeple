@@ -4,6 +4,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import './style.css';
+import './css/messaging.css';
+import './css/conversation.css';
 
 import { router } from './router/router.js';
 import { createMobileNavigation } from './components/MobileNavigation.js';

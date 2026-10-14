@@ -1,4 +1,3 @@
-
 // Routeur principal de l'application People Meeple
 
 import { createHomePage } from '../pages/Home.js';
@@ -16,6 +15,8 @@ import { createProfilePage } from '../pages/Profile.js';
 import { createLayout } from '../components/Layout.js';
 import { createLudothequePage } from '../pages/Ludotheque.js';
 import { createPlayerLibraryPage } from '../pages/PlayerLibrary.js';
+import { createDiscussionsPage } from '../pages/Discussions.js';
+import { createConversationPage } from '../pages/Conversation.js';
 
 import { isAuthenticated } from '../services/authService.js';
 import { createMobileNavigation } from '../components/MobileNavigation.js';
@@ -28,7 +29,8 @@ const routes = {
     '/ludotheque': createLudothequePage,
     '/joueurs': createPlayersPage,
     '/jeux': createGamesPage,
-    '/profil': createProfilePage
+    '/profil': createProfilePage,
+    '/discussions': createDiscussionsPage
 };
 
 // Définit les chemins accessibles sans connexion.
@@ -64,6 +66,10 @@ export function router() {
     // Charge une route connue.
     if (routes[path]) {
         page = routes[path]();
+    } else if (/^\/discussions\/\d+$/.test(path)) {
+        // Charge une conversation à partir de son identifiant.
+        const conversationId = Number(path.split('/')[2]);
+        page = createConversationPage(conversationId);
     } else if (/^\/joueurs\/[a-z0-9-]+\/ludotheque$/.test(path)) {
         // Charge la ludothèque d'un joueur.
         const slug = path.split('/')[2];
