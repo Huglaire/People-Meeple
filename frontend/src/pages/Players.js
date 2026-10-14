@@ -1,6 +1,7 @@
 // Crée les pages de recherche et de profil des joueurs
 
 import { createPlayerResult } from '../components/PlayerResult.js';
+import { createGameCard } from '../components/GameCard.js';
 import { navigateTo } from '../router/router.js';
 import ludothequeImage from '../assets/images/backgrounds/ludotheque.jpg';
 
@@ -1057,21 +1058,19 @@ function createPlayerProfile(player) {
     const about = createAboutSection(player);
     const library = createLibrarySection(player);
 
+    // Place les statistiques juste sous la description du joueur.
+    const statistics = createProfileStatistics(player);
+    statistics.style.marginTop = '12px';
+    about.append(statistics);
+
     body.append(
         about,
         library
     );
 
-    /* -------------------------------------
-       Statistiques
-       ------------------------------------- */
-
-    const statistics = createProfileStatistics(player);
-
     profile.append(
         header,
-        body,
-        statistics
+        body
     );
 
     return profile;
@@ -1097,6 +1096,20 @@ function createAboutSection(player) {
     );
 
     return section;
+}
+
+// Construit un slug de secours si l'API ne fournit pas celui du jeu.
+function createGameSlug(name, id) {
+    const normalizedName = String(name || 'jeu')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
+    return id != null
+        ? `${normalizedName || 'jeu'}-${id}`
+        : (normalizedName || 'jeu');
 }
 
 /* ========================================
@@ -1146,27 +1159,28 @@ function createLibrarySection(player) {
     player.library
         .slice(0, 6)
         .forEach((game) => {
-            const card = document.createElement('article');
-            card.classList.add('player-profile-game');
+            // Adapte les données au format attendu par la carte commune.
+            const playersCount = game.minPlayers != null && game.maxPlayers != null
+                ? (
+                    game.minPlayers === game.maxPlayers
+                        ? `${game.minPlayers} joueur${game.minPlayers > 1 ? 's' : ''}`
+                        : `${game.minPlayers}–${game.maxPlayers} joueurs`
+                )
+                : 'Nombre de joueurs non renseigné';
 
-            const imageContainer = document.createElement('div');
-            imageContainer.classList.add('player-profile-game-image');
+            const duration = game.duration
+                ? `${game.duration} min`
+                : 'Durée non renseignée';
 
-            const image = document.createElement('img');
+            const gameSlug = game.slug || createGameSlug(game.name, game.id);
 
-            // Les images des jeux sont servies par Symfony.
-            image.src = getApiImageUrl(game.image);
-            image.alt = `Boîte du jeu ${game.name}`;
-
-            imageContainer.append(image);
-
-            const name = document.createElement('span');
-            name.textContent = game.name;
-
-            card.append(
-                imageContainer,
-                name
-            );
+            const card = createGameCard({
+                ...game,
+                slug: gameSlug,
+                image: getApiImageUrl(game.image),
+                players: playersCount,
+                duration
+            });
 
             games.append(card);
         });

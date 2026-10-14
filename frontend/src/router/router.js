@@ -1,3 +1,4 @@
+
 // Routeur principal de l'application People Meeple
 
 import { createHomePage } from '../pages/Home.js';
@@ -19,34 +20,25 @@ import { createPlayerLibraryPage } from '../pages/PlayerLibrary.js';
 import { isAuthenticated } from '../services/authService.js';
 import { createMobileNavigation } from '../components/MobileNavigation.js';
 
-// Définit les pages accessibles directement
+// Définit les pages accessibles directement.
 const routes = {
     '/': createHomePage,
     '/connexion': createLoginPage,
     '/inscription': createRegisterPage,
     '/ludotheque': createLudothequePage,
-
     '/joueurs': createPlayersPage,
-
-    '/joueurs/marion': () => createPlayerProfilePage('marion'),
-    '/joueurs/aurel': () => createPlayerProfilePage('aurel'),
-    '/joueurs/jean': () => createPlayerProfilePage('jean'),
-    '/joueurs/charlotte': () => createPlayerProfilePage('charlotte'),
-    '/joueurs/caroline': () => createPlayerProfilePage('caroline'),
-    '/joueurs/mickael': () => createPlayerProfilePage('mickael'),
-
     '/jeux': createGamesPage,
     '/profil': createProfilePage
 };
 
-// Définit les chemins accessibles sans connexion
+// Définit les chemins accessibles sans connexion.
 function isPublicRoute(path) {
     return (
-        path === '/' ||
-        path === '/connexion' ||
-        path === '/inscription' ||
-        path === '/jeux' ||
-        path.startsWith('/jeux/')
+        path === '/'
+        || path === '/connexion'
+        || path === '/inscription'
+        || path === '/jeux'
+        || path.startsWith('/jeux/')
     );
 }
 
@@ -59,7 +51,7 @@ export function router() {
         return;
     }
 
-    // Redirige les visiteurs qui tentent d'ouvrir une page privée
+    // Redirige les visiteurs qui tentent d'ouvrir une page privée.
     if (!isPublicRoute(path) && !isAuthenticated()) {
         window.history.replaceState({}, '', '/connexion');
         path = '/connexion';
@@ -69,15 +61,19 @@ export function router() {
 
     let page;
 
-    // Charge une route connue
+    // Charge une route connue.
     if (routes[path]) {
         page = routes[path]();
     } else if (/^\/joueurs\/[a-z0-9-]+\/ludotheque$/.test(path)) {
-        // Charge la ludothèque d'un joueur
+        // Charge la ludothèque d'un joueur.
         const slug = path.split('/')[2];
         page = createPlayerLibraryPage(slug);
+    } else if (/^\/joueurs\/[a-z0-9-]+$/.test(path)) {
+        // Charge le profil du joueur correspondant au slug de l'URL.
+        const slug = path.split('/')[2];
+        page = createPlayerProfilePage(slug);
     } else if (path.startsWith('/jeux/')) {
-        // Charge le détail d'un jeu
+        // Charge le détail d'un jeu.
         const slug = path.split('/')[2];
         page = createGameDetailPage(slug);
     }
@@ -85,7 +81,7 @@ export function router() {
     if (page) {
         app.append(createLayout(page));
     } else {
-        // Affiche une page d'erreur pour les routes inconnues
+        // Affiche une page d'erreur pour les routes inconnues.
         const errorPage = document.createElement('main');
         errorPage.classList.add('container', 'py-5');
 
@@ -96,7 +92,7 @@ export function router() {
         app.append(createLayout(errorPage));
     }
 
-    // Actualise la navigation mobile après chaque changement de page
+    // Actualise la navigation mobile après chaque changement de page.
     const currentMobileNavigation = document.querySelector(
         '.mobile-navigation'
     );
@@ -110,11 +106,11 @@ export function router() {
     }
 }
 
-// Gère les changements de page internes
+// Gère les changements de page internes.
 export function navigateTo(path) {
     window.history.pushState({}, '', path);
     router();
 }
 
-// Gère les retours et avances dans l'historique
+// Gère les retours et avances dans l'historique.
 window.addEventListener('popstate', router);

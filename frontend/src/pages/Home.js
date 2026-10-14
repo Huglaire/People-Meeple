@@ -1,4 +1,5 @@
-// Crée la page d'accueil de People Meeple
+
+ // Crée la page d'accueil de People Meeple
 
 import { createGameCard } from '../components/GameCard.js';
 import { createPlayerCard } from '../components/PlayerCard.js';
@@ -20,7 +21,7 @@ export function createHomePage() {
 
     page.append(hero, gamesSection);
 
-    // Les suggestions de joueurs sont réservées aux membres connectés
+    // Les suggestions de joueurs sont réservées aux membres connectés.
     if (isAuthenticated()) {
         page.append(createPlayersSection());
     }
@@ -63,12 +64,12 @@ function createHeroSection() {
     const searchContainer = document.createElement('div');
     searchContainer.classList.add('home-search-input');
 
-    // Icône de recherche
+    // Icône de recherche.
     const searchIcon = document.createElement('i');
     searchIcon.classList.add('bi', 'bi-search');
     searchIcon.setAttribute('aria-hidden', 'true');
 
-    // Champ de recherche
+    // Champ de recherche.
     const searchInput = document.createElement('input');
     searchInput.type = 'search';
     searchInput.placeholder = 'Rechercher un jeu...';
@@ -77,7 +78,7 @@ function createHeroSection() {
     searchInput.setAttribute('aria-autocomplete', 'list');
     searchInput.setAttribute('aria-expanded', 'false');
 
-    // Menu des suggestions
+    // Menu des suggestions.
     const suggestionsMenu = document.createElement('div');
     suggestionsMenu.classList.add('home-search-suggestions');
     suggestionsMenu.hidden = true;
@@ -92,12 +93,12 @@ function createHeroSection() {
 
     searchForm.append(searchContainer, searchButton);
 
-    // Conserve les jeux chargés pour filtrer sans rappeler l'API
+    // Conserve les jeux chargés pour filtrer sans rappeler l'API.
     let availableGames = [];
     let gamesLoaded = false;
     let loadingGames = false;
 
-    // Normalise les textes pour ignorer la casse et les accents
+    // Normalise les textes pour ignorer la casse et les accents.
     function normalizeText(value) {
         return value
             .normalize('NFD')
@@ -106,14 +107,14 @@ function createHeroSection() {
             .trim();
     }
 
-    // Ferme la liste des suggestions
+    // Ferme la liste des suggestions.
     function closeSuggestions() {
         suggestionsMenu.hidden = true;
         suggestionsMenu.replaceChildren();
         searchInput.setAttribute('aria-expanded', 'false');
     }
 
-    // Affiche les jeux correspondant au début du nom saisi
+    // Affiche les jeux correspondant au début du nom saisi.
     function displaySuggestions(search) {
         suggestionsMenu.replaceChildren();
 
@@ -157,7 +158,7 @@ function createHeroSection() {
             suggestion.setAttribute('role', 'option');
             suggestion.textContent = game.name;
 
-            // Ouvre la page de détail du jeu sélectionné
+            // Ouvre la page de détail du jeu sélectionné.
             suggestion.addEventListener('click', () => {
                 if (!game.slug) {
                     console.error(
@@ -178,7 +179,7 @@ function createHeroSection() {
         searchInput.setAttribute('aria-expanded', 'true');
     }
 
-    // Charge le catalogue au premier besoin
+    // Charge le catalogue au premier besoin.
     async function loadSearchGames() {
         if (gamesLoaded || loadingGames) {
             return;
@@ -216,7 +217,7 @@ function createHeroSection() {
         }
     }
 
-    // Filtre les résultats à chaque frappe
+    // Filtre les résultats à chaque frappe.
     searchInput.addEventListener('input', () => {
         if (searchInput.value.trim() === '') {
             closeSuggestions();
@@ -230,7 +231,7 @@ function createHeroSection() {
         }
     });
 
-    // Ouvre les suggestions si le champ contient déjà une recherche
+    // Ouvre les suggestions si le champ contient déjà une recherche.
     searchInput.addEventListener('focus', () => {
         if (searchInput.value.trim() === '') {
             return;
@@ -243,13 +244,13 @@ function createHeroSection() {
         }
     });
 
-    // Ferme les suggestions avec la touche Échap
+    // Ferme les suggestions avec la touche Échap.
     searchInput.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
             closeSuggestions();
         }
 
-        // Sélectionne le premier résultat avec la touche Entrée
+        // Sélectionne le premier résultat avec la touche Entrée.
         if (event.key === 'Enter' && !suggestionsMenu.hidden) {
             const firstSuggestion = suggestionsMenu.querySelector(
                 '.home-search-suggestion'
@@ -262,7 +263,7 @@ function createHeroSection() {
         }
     });
 
-    // Empêche le formulaire de recharger la page
+    // Empêche le formulaire de recharger la page.
     searchForm.addEventListener('submit', (event) => {
         event.preventDefault();
 
@@ -306,7 +307,7 @@ function createHeroSection() {
         }
     });
 
-    // Ferme le menu quand l'utilisateur clique ailleurs
+    // Ferme le menu quand l'utilisateur clique ailleurs.
     document.addEventListener('click', (event) => {
         if (!searchContainer.contains(event.target)) {
             closeSuggestions();
@@ -315,7 +316,7 @@ function createHeroSection() {
 
     content.append(title, description, searchForm);
 
-    // Image du hero desktop
+    // Image du hero desktop.
     const imageContainer = document.createElement('div');
     imageContainer.classList.add('home-hero-image');
 
@@ -358,7 +359,7 @@ function createGamesSection() {
     container.append(heading, gamesGrid);
     section.append(container);
 
-    // Conserve la grille pour pouvoir la remplir après l'appel API
+    // Conserve la grille pour pouvoir la remplir après l'appel API.
     section.gamesGrid = gamesGrid;
 
     loadHomeGames(section);
@@ -367,15 +368,31 @@ function createGamesSection() {
 }
 
 /**
- * Récupère les jeux depuis l'API et affiche les quatre premiers.
+ * Récupère les jeux depuis l'API et en sélectionne quatre au hasard.
  */
 async function loadHomeGames(section) {
     try {
         const games = await getGames();
 
+        // Vérifie que l'API a bien renvoyé une liste de jeux.
+        if (!Array.isArray(games)) {
+            throw new Error('La liste des jeux reçue est invalide.');
+        }
+
+        // Mélange tous les jeux avant d'en sélectionner quatre.
+        const suggestedGames = shuffleArray(games).slice(0, 4);
+
         section.gamesGrid.replaceChildren();
 
-        games.slice(0, 4).forEach((game) => {
+        if (suggestedGames.length === 0) {
+            const emptyMessage = document.createElement('p');
+            emptyMessage.textContent = 'Aucun jeu à découvrir pour le moment.';
+
+            section.gamesGrid.append(emptyMessage);
+            return;
+        }
+
+        suggestedGames.forEach((game) => {
             section.gamesGrid.append(createGameCard(game));
         });
     } catch (error) {
@@ -387,7 +404,10 @@ async function loadHomeGames(section) {
 
         section.gamesGrid.append(errorMessage);
 
-        console.error(error);
+        console.error(
+            'Impossible de charger les jeux de la page d’accueil.',
+            error
+        );
     }
 }
 
@@ -420,7 +440,7 @@ function createPlayersSection() {
     container.append(heading, playersGrid);
     section.append(container);
 
-    // Charge les profils en fonction du département du membre connecté
+    // Charge les profils en fonction du département du membre connecté.
     loadHomePlayers(playersGrid);
 
     return section;
@@ -438,7 +458,7 @@ async function loadHomePlayers(playersGrid) {
             throw new Error('Aucun jeton d’authentification disponible.');
         }
 
-        // Récupère le profil du membre connecté
+        // Récupère le profil du membre connecté.
         const currentUserResponse = await fetch(`${API_URL}/api/me`, {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -454,7 +474,7 @@ async function loadHomePlayers(playersGrid) {
 
         const currentUser = await currentUserResponse.json();
 
-        // Récupère les joueurs et leurs ludothèques
+        // Récupère les joueurs et leurs ludothèques.
         const playersResponse = await fetch(
             `${API_URL}/api/players/libraries`,
             {
@@ -475,7 +495,7 @@ async function loadHomePlayers(playersGrid) {
 
         playersGrid.replaceChildren();
 
-        // Normalise les départements pour comparer les codes sans erreur
+        // Normalise les départements pour comparer les codes sans erreur.
         const normalizeDepartment = (department) => {
             return String(department || '').trim().toUpperCase();
         };
@@ -492,7 +512,7 @@ async function loadHomePlayers(playersGrid) {
             return;
         }
 
-        // Exclut le compte connecté, les comptes de test et l'administration
+        // Exclut le compte connecté, les comptes de test et l'administration.
         const eligiblePlayers = players.filter((player) => {
             const sameDepartment =
                 normalizeDepartment(player.department) === currentDepartment;
@@ -513,10 +533,10 @@ async function loadHomePlayers(playersGrid) {
             return sameDepartment && !isCurrentUser && !isTestAccount;
         });
 
-        // Mélange les profils pour éviter de toujours afficher les mêmes
+        // Mélange les profils pour éviter de toujours afficher les mêmes.
         const shuffledPlayers = shuffleArray(eligiblePlayers);
 
-        // Affiche quatre joueurs au maximum
+        // Affiche quatre joueurs au maximum.
         const suggestedPlayers = shuffledPlayers.slice(0, 4);
 
         if (suggestedPlayers.length === 0) {
@@ -589,8 +609,23 @@ function mapApiPlayerToCard(apiPlayer) {
             : 0,
         image: getProfilePictureUrl(apiPlayer.profilePicture),
         fallbackImage: DEFAULT_PROFILE_PICTURE,
-        path: '/joueurs'
+        // Chaque carte pointe vers le profil correspondant à son joueur.
+        path: `/joueurs/${createPlayerSlug(apiPlayer.pseudo, apiPlayer.id)}`
     };
+}
+
+/**
+ * Construit un slug identique à celui utilisé dans Players.js.
+ */
+function createPlayerSlug(pseudo, id) {
+    const normalizedPseudo = String(pseudo || 'joueur')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
+    return `${normalizedPseudo || 'joueur'}-${id}`;
 }
 
 /**
@@ -601,22 +636,22 @@ function getProfilePictureUrl(profilePicture) {
         return DEFAULT_PROFILE_PICTURE;
     }
 
-    // Conserve les URL complètes déjà fournies par l'API
+    // Conserve les URL complètes déjà fournies par l'API.
     if (/^https?:\/\//i.test(profilePicture)) {
         return profilePicture;
     }
 
-    // Conserve les chemins absolus fournis par l'API
+    // Conserve les chemins absolus fournis par l'API.
     if (profilePicture.startsWith('/')) {
         return `${API_URL}${profilePicture}`;
     }
 
-    // Les avatars numérotés des fixtures sont stockés dans le dossier avatars
+    // Les avatars numérotés des fixtures sont stockés dans le dossier avatars.
     if (/^\d{3}\.jpg$/i.test(profilePicture)) {
         return `${API_URL}/images/avatars/${encodeURIComponent(profilePicture)}`;
     }
 
-    // Les autres fichiers restent recherchés dans le dossier images
+    // Les autres fichiers restent recherchés dans le dossier images.
     return `${API_URL}/images/${encodeURIComponent(profilePicture)}`;
 }
 

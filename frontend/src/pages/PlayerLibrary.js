@@ -1,23 +1,35 @@
-// Crée la page complète de la ludothèque d'un joueur
+
+// Crée la page complète de la ludothèque d'un joueur.
 
 import { navigateTo } from '../router/router.js';
+
 import '../css/player-library.css';
 
 const API_URL = 'http://127.0.0.1:8000';
 
-// Associe les pseudos de démonstration aux URL des profils
-const playerSlugs = {
-    marion: 'Marion',
-    aurel: 'Aurel',
-    jean: 'Jean',
-    charlotte: 'Charlotte',
-    caroline: 'Caroline',
-    mickael: 'Mickaël'
-};
+/**
+ * Construit un slug identique à celui utilisé dans Players.js.
+ */
+function createPlayerSlug(pseudo, id) {
+    const normalizedPseudo = String(pseudo || 'joueur')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
 
-// Intercepte les liens et boutons de ludothèque des profils existants
+    return `${normalizedPseudo || 'joueur'}-${id}`;
+}
+
+// Intercepte les liens et boutons de ludothèque des profils.
 document.addEventListener('click', (event) => {
-    const trigger = event.target.closest(
+    const target = event.target;
+
+    if (!(target instanceof Element)) {
+        return;
+    }
+
+    const trigger = target.closest(
         '.player-profile-library-heading a, .player-profile-library'
     );
 
@@ -34,6 +46,7 @@ document.addEventListener('click', (event) => {
 
     event.preventDefault();
     event.stopImmediatePropagation();
+
     navigateTo(`/joueurs/${slug}/ludotheque`);
 }, true);
 
@@ -65,8 +78,7 @@ export function createPlayerLibraryPage(slug) {
     eyebrow.textContent = 'PEOPLE MEEPLE';
 
     const title = document.createElement('h1');
-    title.textContent = 'La ludothèque de ' +
-        (playerSlugs[slug] || 'ce joueur');
+    title.textContent = 'La ludothèque de ce joueur';
 
     const introduction = document.createElement('p');
     introduction.classList.add('player-library-introduction');
@@ -106,7 +118,7 @@ export function createPlayerLibraryPage(slug) {
     container.append(backLink, heading, status, grid);
     page.append(container);
 
-    loadLibrary(slug, count, status, grid, searchInput);
+    loadLibrary(slug, title, count, status, grid, searchInput);
 
     return page;
 }
@@ -114,7 +126,14 @@ export function createPlayerLibraryPage(slug) {
 /**
  * Récupère les ludothèques et affiche les jeux du joueur demandé.
  */
-async function loadLibrary(slug, count, status, grid, searchInput) {
+async function loadLibrary(
+    slug,
+    title,
+    count,
+    status,
+    grid,
+    searchInput
+) {
     const token = localStorage.getItem('token');
 
     if (!token) {
@@ -127,7 +146,8 @@ async function loadLibrary(slug, count, status, grid, searchInput) {
     try {
         const response = await fetch(`${API_URL}/api/players/libraries`, {
             headers: {
-                Authorization: `Bearer ${token}`
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/json'
             }
         });
 
@@ -135,22 +155,36 @@ async function loadLibrary(slug, count, status, grid, searchInput) {
             throw new Error(`Erreur API : ${response.status}`);
         }
 
-        const players = await response.json();
-        const expectedName = playerSlugs[slug];
+        const payload = await response.json();
 
-        const player = players.find((item) =>
-            String(item.pseudo || '').toLowerCase() ===
-            String(expectedName || '').toLowerCase()
-        );
+        // Accepte une liste directe ou une réponse contenant la clé players.
+        const apiPlayers = Array.isArray(payload)
+            ? payload
+            : (
+                Array.isArray(payload.players)
+                    ? payload.players
+                    : []
+            );
+
+        // Recherche le joueur à partir de son pseudo et de son identifiant.
+        const player = apiPlayers.find((item) => {
+            return createPlayerSlug(item.pseudo, item.id) === slug;
+        });
 
         if (!player) {
+            title.textContent = 'Ludothèque introuvable';
             count.textContent = '';
             status.textContent =
                 'La ludothèque de ce joueur est introuvable.';
             return;
         }
 
-        const games = Array.isArray(player.library) ? player.library : [];
+        // Affiche le pseudo réel du joueur.
+        title.textContent = `La ludothèque de ${player.pseudo || 'ce joueur'}`;
+
+        const games = Array.isArray(player.library)
+            ? player.library
+            : [];
 
         count.textContent =
             `${games.length} jeu${games.length > 1 ? 'x' : ''}`;
@@ -161,11 +195,16 @@ async function loadLibrary(slug, count, status, grid, searchInput) {
 
         renderGames(games, grid, searchInput.value);
 
+        // Actualise les jeux selon le texte saisi.
         searchInput.addEventListener('input', () => {
             renderGames(games, grid, searchInput.value);
         });
     } catch (error) {
-        console.error('Impossible de charger cette ludothèque.', error);
+        console.error(
+            'Impossible de charger cette ludothèque.',
+            error
+        );
+
         count.textContent = '';
         status.textContent =
             'Impossible de charger cette ludothèque pour le moment. Vérifie que le serveur est démarré puis réessaie.';
@@ -179,23 +218,30 @@ async function loadLibrary(slug, count, status, grid, searchInput) {
 function renderGames(games, grid, search) {
     grid.replaceChildren();
 
-    const normalizedSearch = search.trim().toLocaleLowerCase('fr');
+    // Ignore la casse et les accents lors de la recherche.
+    const normalizeText = (value) => {
+        return String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLocaleLowerCase('fr')
+            .trim();
+    };
 
-    // Trie les jeux par ordre alphabétique, en tenant compte des accents
-    const sortedGames = [...games].sort((gameA, gameB) =>
-        String(gameA.name || '').localeCompare(
+    const normalizedSearch = normalizeText(search);
+
+    // Trie les jeux par ordre alphabétique.
+    const sortedGames = [...games].sort((gameA, gameB) => {
+        return String(gameA.name || '').localeCompare(
             String(gameB.name || ''),
             'fr',
             { sensitivity: 'base' }
-        )
-    );
+        );
+    });
 
-    // Filtre les jeux après le tri alphabétique
-    const filteredGames = sortedGames.filter((game) =>
-        String(game.name || '')
-            .toLocaleLowerCase('fr')
-            .includes(normalizedSearch)
-    );
+    // Filtre les jeux après le tri alphabétique.
+    const filteredGames = sortedGames.filter((game) => {
+        return normalizeText(game.name).includes(normalizedSearch);
+    });
 
     if (filteredGames.length === 0) {
         const empty = document.createElement('div');
@@ -236,6 +282,12 @@ function createGameCard(game) {
     image.alt = `Boîte du jeu ${game.name || ''}`;
     image.loading = 'lazy';
 
+    // Masque l'image si elle ne peut pas être chargée.
+    image.addEventListener('error', () => {
+        image.removeAttribute('src');
+        image.alt = 'Image du jeu indisponible';
+    }, { once: true });
+
     imageContainer.append(image);
 
     const content = document.createElement('div');
@@ -247,7 +299,7 @@ function createGameCard(game) {
     const details = document.createElement('div');
     details.classList.add('player-library-game-details');
 
-    // Affiche le nombre de joueurs prévu pour le jeu
+    // Affiche le nombre de joueurs prévu pour le jeu.
     if (game.minPlayers != null && game.maxPlayers != null) {
         const players = document.createElement('span');
 
@@ -264,7 +316,7 @@ function createGameCard(game) {
         details.append(players);
     }
 
-    // Affiche la durée moyenne d'une partie
+    // Affiche la durée moyenne d'une partie.
     if (game.duration) {
         const duration = document.createElement('span');
 
@@ -279,7 +331,7 @@ function createGameCard(game) {
         details.append(duration);
     }
 
-    // Affiche un statut synthétique selon les informations de la ludothèque
+    // Affiche un statut synthétique selon les informations de la ludothèque.
     const status = document.createElement('p');
     status.classList.add('player-library-game-status');
 
@@ -316,7 +368,7 @@ function createGameCard(game) {
             document.createTextNode('Connaît les règles')
         );
     } else {
-        // Signale que le statut n'est pas renseigné
+        // Signale que le statut n'est pas renseigné.
         status.classList.add('status-unknown');
         statusIcon.classList.add('bi', 'bi-question-circle');
 
@@ -340,5 +392,11 @@ function getGameImage(image) {
         return '';
     }
 
-    return image.startsWith('http') ? image : `${API_URL}${image}`;
+    // Conserve les URL complètes.
+    if (/^https?:\/\//i.test(image)) {
+        return image;
+    }
+
+    // Ajoute l'adresse du serveur aux chemins relatifs.
+    return `${API_URL}${image.startsWith('/') ? '' : '/'}${image}`;
 }
