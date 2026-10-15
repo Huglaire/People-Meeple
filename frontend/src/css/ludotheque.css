@@ -462,3 +462,46 @@
         top: calc(100% + 7px);
     }
 }
+
+
+/* ========================================
+   Interaction des cartes de ma ludothèque
+   ======================================== */
+
+.ludotheque-card {
+    cursor: pointer;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.ludotheque-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(74, 24, 42, 0.18);
+    border-color: #7b263f;
+}
+
+/* Indication visuelle pour la navigation au clavier */
+.ludotheque-card:focus-visible {
+    outline: 3px solid #7b263f;
+    outline-offset: 3px;
+}
+
+/* Les contrôles conservent leur propre curseur */
+.ludotheque-card button,
+.ludotheque-card input,
+.ludotheque-card label {
+    cursor: pointer;
+}
+
+/* Évite les animations pour les personnes qui les limitent */
+@media (prefers-reduced-motion: reduce) {
+    .ludotheque-card {
+        transition: none;
+    }
+
+    .ludotheque-card:hover {
+        transform: none;
+    }
+}

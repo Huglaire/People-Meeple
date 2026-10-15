@@ -425,7 +425,7 @@ function createPlayersSection() {
     const heading = createSectionHeading(
         'Joueurs',
         'proches de chez vous',
-        'Voir tous les joueurs',
+        'Recherche des joueurs',
         '/joueurs'
     );
 

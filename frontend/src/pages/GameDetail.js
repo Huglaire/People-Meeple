@@ -197,9 +197,9 @@ function createLibraryMenu() {
     successMessage.append(successIcon, successText);
 
     const options = [
-        'Ajouter à ma ludothèque',
+        'Je possède ce jeu',
         'Je connais les règles du jeu',
-        'Ajouter à ma ludothèque + je connais les règles'
+        'Je possède ce jeu + je connais les règles'
     ];
 
     let selectedOption = null;

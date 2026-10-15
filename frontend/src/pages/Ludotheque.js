@@ -240,6 +240,38 @@ function createUserGameCard(
         'ludotheque-card'
     );
 
+    // Permet d'ouvrir la fiche descriptive du jeu depuis sa carte.
+    const gameSlug = userGame.slug || createGameSlug(userGame.name);
+
+    card.setAttribute('role', 'link');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute(
+        'aria-label',
+        `Voir la description de ${userGame.name || 'ce jeu'}`
+    );
+
+    card.addEventListener('click', (event) => {
+        // Les contrôles de gestion de la ludothèque gardent leur fonction.
+        if (event.target.closest('button, input, label, a')) {
+            return;
+        }
+
+        navigateTo(`/jeux/${gameSlug}`);
+    });
+
+    // Permet la navigation au clavier sans interférer avec les contrôles.
+    card.addEventListener('keydown', (event) => {
+        if (
+            event.target !== card
+            || (event.key !== 'Enter' && event.key !== ' ')
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+        navigateTo(`/jeux/${gameSlug}`);
+    });
+
     const imageContainer = document.createElement('div');
 
     imageContainer.classList.add(
@@ -1142,6 +1174,21 @@ function updateLibraryCount(section) {
 
     count.textContent =
         `${cards.length} jeu${cards.length > 1 ? 'x' : ''}`;
+}
+
+
+/* ========================================
+   Création du slug d'un jeu
+   ======================================== */
+
+function createGameSlug(name) {
+    return String(name || 'jeu')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
 }
 
 

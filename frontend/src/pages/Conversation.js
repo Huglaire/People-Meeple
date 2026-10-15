@@ -67,6 +67,19 @@ export function createConversationPage(conversationId) {
     messageInput.setAttribute('aria-label', 'Ton message');
     messageInput.required = true;
 
+    // Envoie le message avec Entrée.
+    // Maj + Entrée permet de conserver les sauts de ligne.
+    messageInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+
+            // Évite de soumettre le formulaire si un envoi est déjà en cours.
+            if (!isSending && !sendButton.disabled) {
+                form.requestSubmit();
+            }
+        }
+    });
+
     const sendButton = document.createElement('button');
     sendButton.type = 'submit';
     sendButton.classList.add('conversation-send-button');

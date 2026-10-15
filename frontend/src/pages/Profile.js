@@ -1,4 +1,3 @@
-
 // Crée la page profil de l'utilisateur connecté
 
 import {
@@ -12,9 +11,11 @@ import { getToken } from '../services/authService.js';
 import { navigateTo } from '../router/router.js';
 import ludothequeImage from '../assets/images/backgrounds/ludotheque.jpg';
 import '../css/profile.css';
+import '../css/games.css';
+import '../css/ludotheque.css';
 
 // Adresse du serveur backend pour les photos de profil
-const PROFILE_PICTURE_BASE_URL = 'http://127.0.0.1:8000/images/';
+const PROFILE_PICTURE_BASE_URL = 'http://127.0.0.1:8000/images/avatars/';
 
 // Photo affichée lorsqu'aucune photo personnalisée n'est disponible
 const DEFAULT_PROFILE_PICTURE =
@@ -144,20 +145,32 @@ const DEPARTMENTS = [
    ======================================== */
 
 function getProfilePictureUrl(profilePicture) {
-    if (!profilePicture) {
+    if (!profilePicture || typeof profilePicture !== 'string') {
         return DEFAULT_PROFILE_PICTURE;
     }
 
-    // Conserve les URL complètes si le backend en renvoie une
-    if (
-        profilePicture.startsWith('http://') ||
-        profilePicture.startsWith('https://')
-    ) {
-        return profilePicture;
+    const picturePath = profilePicture.trim();
+
+    if (!picturePath) {
+        return DEFAULT_PROFILE_PICTURE;
     }
 
-    // Construit l'adresse publique de la photo enregistrée
-    return `${PROFILE_PICTURE_BASE_URL}${encodeURIComponent(profilePicture)}`;
+    // Conserve les URL complètes renvoyées par l'API.
+    if (/^https?:\/\//i.test(picturePath)) {
+        return picturePath;
+    }
+
+    // Prend en charge les chemins publics commençant par un slash.
+    if (picturePath.startsWith('/')) {
+        return `http://127.0.0.1:8000${picturePath}`;
+    }
+
+    if (picturePath.includes('/')) {
+        return `http://127.0.0.1:8000/${picturePath}`;
+    }
+
+    // Si l'API renvoie uniquement un nom de fichier, utilise /images/.
+    return `${PROFILE_PICTURE_BASE_URL}${encodeURIComponent(picturePath)}`;
 }
 
 /* ========================================
@@ -245,8 +258,7 @@ async function loadProfile(content) {
 
         content.replaceChildren(
             createLibraryPreview(games),
-            createProfileInformation(user),
-            createProfileActions(user)
+            createProfileInformation(user)
         );
     } catch (error) {
         console.error(error);
@@ -269,10 +281,26 @@ function createProfileInformation(user) {
     const section = document.createElement('section');
     section.classList.add('profile-section');
 
+    // En-tête de la carte avec le bouton de modification.
+    const header = document.createElement('div');
+    header.classList.add('profile-section-header');
+
     const title = document.createElement('h2');
     title.textContent = 'Mes informations';
 
-    // Affiche la photo de profil actuelle
+    // Réutilise le style du bouton rouge de la carte Ma ludothèque.
+    const editButton = document.createElement('button');
+    editButton.type = 'button';
+    editButton.classList.add('profile-library-button');
+    editButton.textContent = 'Modifier mon profil';
+
+    editButton.addEventListener('click', () => {
+        openProfileEditForm(user);
+    });
+
+    header.append(title, editButton);
+
+    // Affiche la photo de profil actuelle.
     const pictureField = document.createElement('div');
     pictureField.classList.add('profile-field');
 
@@ -285,7 +313,7 @@ function createProfileInformation(user) {
     picture.src = getProfilePictureUrl(user.profilePicture);
     picture.alt = 'Photo de profil';
 
-    // Utilise la photo par défaut si l'image est inaccessible
+    // Utilise la photo par défaut si l'image est inaccessible.
     picture.addEventListener('error', () => {
         picture.src = DEFAULT_PROFILE_PICTURE;
     }, { once: true });
@@ -323,7 +351,7 @@ function createProfileInformation(user) {
     );
 
     section.append(
-        title,
+        header,
         pictureField,
         pseudoField,
         emailField,
@@ -409,8 +437,13 @@ function createLibraryPreview(games) {
 
     header.append(titleContainer, button);
 
+    // Réutilise les classes des cartes de /ludotheque.
     const grid = document.createElement('div');
-    grid.classList.add('profile-library-grid');
+    grid.classList.add(
+        'games-grid',
+        'ludotheque-grid',
+        'profile-library-grid'
+    );
 
     if (games.length === 0) {
         const emptyMessage = document.createElement('p');
@@ -444,43 +477,143 @@ function createLibraryPreview(games) {
    ======================================== */
 
 function createLibraryGameCard(userGame) {
-    const card = document.createElement('article');
-    card.classList.add('profile-library-card');
-
-    const imageContainer = document.createElement('div');
-    imageContainer.classList.add('profile-library-card-image');
-
-    const image = document.createElement('img');
+    // Selon la réponse de l'API, les données peuvent être imbriquées.
     const game = userGame.game || userGame;
 
-    image.src = getGameImage(game);
-    image.alt = game.name || 'Jeu de société';
+    const gameData = {
+        ...userGame,
+        ...game,
+        owns: userGame.owns ?? game.owns ?? false,
+        knowsRules: userGame.knowsRules ?? game.knowsRules ?? false
+    };
+
+    const card = document.createElement('article');
+    card.classList.add('game-card', 'ludotheque-card');
+
+    const gameSlug = gameData.slug || createGameSlug(gameData.name);
+
+    // Rend la carte accessible à la souris et au clavier.
+    card.setAttribute('role', 'link');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute(
+        'aria-label',
+        `Voir la description de ${gameData.name || 'ce jeu'}`
+    );
+
+    card.addEventListener('click', () => {
+        navigateTo(`/jeux/${gameSlug}`);
+    });
+
+    card.addEventListener('keydown', (event) => {
+        if (
+            event.target !== card ||
+            (event.key !== 'Enter' && event.key !== ' ')
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+        navigateTo(`/jeux/${gameSlug}`);
+    });
+
+    const imageContainer = document.createElement('div');
+    imageContainer.classList.add(
+        'game-card-image',
+        'ludotheque-card-image'
+    );
+
+    const image = document.createElement('img');
+    image.src = getGameImage(gameData);
+    image.alt = gameData.name || 'Jeu de société';
 
     imageContainer.append(image);
 
     const content = document.createElement('div');
-    content.classList.add('profile-library-card-content');
+    content.classList.add(
+        'game-card-content',
+        'ludotheque-card-content'
+    );
 
     const title = document.createElement('h3');
-    title.textContent = game.name || 'Jeu';
+    title.textContent = gameData.name || 'Jeu';
 
-    const status = document.createElement('p');
-    status.classList.add('profile-library-card-status');
+    const information = document.createElement('div');
+    information.classList.add(
+        'game-card-information',
+        'ludotheque-card-information'
+    );
 
-    const ownership = userGame.owns
+    // Nombre de joueurs.
+    if (gameData.minPlayers != null && gameData.maxPlayers != null) {
+        const players = document.createElement('span');
+
+        const playersIcon = document.createElement('i');
+        playersIcon.classList.add('bi', 'bi-people');
+        playersIcon.setAttribute('aria-hidden', 'true');
+
+        const playersText = document.createElement('span');
+        playersText.textContent =
+            gameData.minPlayers === gameData.maxPlayers
+                ? `${gameData.minPlayers} joueur${gameData.minPlayers > 1 ? 's' : ''}`
+                : `${gameData.minPlayers}–${gameData.maxPlayers} joueurs`;
+
+        players.append(playersIcon, playersText);
+        information.append(players);
+    }
+
+    // Durée d'une partie.
+    if (gameData.duration) {
+        const duration = document.createElement('span');
+
+        const durationIcon = document.createElement('i');
+        durationIcon.classList.add('bi', 'bi-clock');
+        durationIcon.setAttribute('aria-hidden', 'true');
+
+        const durationText = document.createElement('span');
+        durationText.textContent = `${gameData.duration} min`;
+
+        duration.append(durationIcon, durationText);
+        information.append(duration);
+    }
+
+    content.append(title, information);
+
+    // Affiche les statuts sans modifier la ludothèque depuis le profil.
+    const statusContainer = document.createElement('div');
+    statusContainer.classList.add('ludotheque-card-status');
+
+    const ownership = document.createElement('span');
+    ownership.classList.add('ludotheque-checkbox');
+    ownership.textContent = gameData.owns
         ? 'Je possède ce jeu'
-        : 'Je connais ce jeu';
+        : 'Je ne possède pas ce jeu';
 
-    const rules = userGame.knowsRules
-        ? 'Règles maîtrisées'
-        : 'Règles à apprendre';
+    const rules = document.createElement('span');
+    rules.classList.add('ludotheque-checkbox');
+    rules.textContent = gameData.knowsRules
+        ? 'Je connais les règles'
+        : 'Je ne connais pas encore les règles';
 
-    status.textContent = `${ownership} • ${rules}`;
+    statusContainer.append(ownership, rules);
+    content.append(statusContainer);
 
-    content.append(title, status);
     card.append(imageContainer, content);
 
     return card;
+}
+
+/* ========================================
+   Slug d'un jeu
+   ======================================== */
+
+function createGameSlug(name) {
+    return String(name || 'jeu')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
 }
 
 /* ========================================
@@ -493,32 +626,10 @@ function getGameImage(game) {
             return game.image;
         }
 
-        return `http://127.0.0.1:8000${game.image}`;
+        return `http://127.0.0.1:8000${game.image.startsWith('/') ? '' : '/'}${game.image}`;
     }
 
     return '';
-}
-
-/* ========================================
-   Actions du profil
-   ======================================== */
-
-function createProfileActions(user) {
-    const section = document.createElement('section');
-    section.classList.add('profile-actions');
-
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.classList.add('profile-edit-button');
-    button.textContent = 'Modifier mon profil';
-
-    button.addEventListener('click', () => {
-        openProfileEditForm(user);
-    });
-
-    section.append(button);
-
-    return section;
 }
 
 /* ========================================
@@ -555,7 +666,6 @@ function openProfileEditForm(user) {
     picturePreview.src = getProfilePictureUrl(user.profilePicture);
     picturePreview.alt = 'Aperçu de votre photo de profil';
 
-    // Affiche la photo par défaut si l'image actuelle est inaccessible
     picturePreview.addEventListener('error', () => {
         picturePreview.src = DEFAULT_PROFILE_PICTURE;
     }, { once: true });
@@ -571,10 +681,8 @@ function openProfileEditForm(user) {
     pictureHelp.textContent =
         'JPEG, PNG, WebP ou GIF. Taille maximale : 2 Mo.';
 
-    // Permet de libérer l'URL temporaire de l'aperçu
     let temporaryPictureUrl = null;
 
-    // Nettoie l'aperçu temporaire lorsque le formulaire est retiré
     function releaseTemporaryPictureUrl() {
         if (temporaryPictureUrl) {
             URL.revokeObjectURL(temporaryPictureUrl);
@@ -740,7 +848,6 @@ function openProfileEditForm(user) {
             return;
         }
 
-        // Vérifie le format avant d'afficher l'aperçu
         if (!ALLOWED_PICTURE_TYPES.includes(file.type)) {
             pictureInput.value = '';
             formError.textContent =
@@ -749,7 +856,6 @@ function openProfileEditForm(user) {
             return;
         }
 
-        // Vérifie la taille avant l'envoi
         if (file.size > MAX_PICTURE_SIZE) {
             pictureInput.value = '';
             formError.textContent =
@@ -758,7 +864,6 @@ function openProfileEditForm(user) {
             return;
         }
 
-        // Libère l'URL précédente avant de créer un nouvel aperçu
         releaseTemporaryPictureUrl();
 
         temporaryPictureUrl = URL.createObjectURL(file);
@@ -812,11 +917,8 @@ function openProfileEditForm(user) {
             return;
         }
 
-        // Revérifie les caractéristiques du fichier avant l'envoi
         if (selectedPicture) {
-            if (
-                !ALLOWED_PICTURE_TYPES.includes(selectedPicture.type)
-            ) {
+            if (!ALLOWED_PICTURE_TYPES.includes(selectedPicture.type)) {
                 formError.textContent =
                     'Le format de l’image sélectionnée n’est pas autorisé.';
                 formError.hidden = false;
@@ -843,7 +945,6 @@ function openProfileEditForm(user) {
         saveButton.textContent = 'Enregistrement...';
 
         const data = {
-            // Conserve les valeurs du compte pour rester compatible avec l'API existante
             email: user.email,
             pseudo: user.pseudo,
             dateOfBirth: dateOfBirthInput.value,
@@ -853,18 +954,16 @@ function openProfileEditForm(user) {
         };
 
         try {
-            // Envoie la nouvelle photo uniquement si une image a été sélectionnée
+            // Envoie la photo uniquement si une nouvelle image est sélectionnée.
             if (selectedPicture) {
                 await updateProfilePicture(token, selectedPicture);
             }
 
-            // Enregistre les autres informations du profil
             await updateCurrentUser(token, data);
 
-            // Libère l'aperçu temporaire après l'enregistrement
             releaseTemporaryPictureUrl();
 
-            // Recharge les données depuis l'API après modification
+            // Recharge les données depuis l'API après modification.
             const [updatedUser, updatedGames] = await Promise.all([
                 getCurrentUser(token),
                 getMyGames(token)
@@ -872,8 +971,7 @@ function openProfileEditForm(user) {
 
             profileContent.replaceChildren(
                 createLibraryPreview(updatedGames),
-                createProfileInformation(updatedUser),
-                createProfileActions(updatedUser)
+                createProfileInformation(updatedUser)
             );
         } catch (error) {
             console.error(error);
