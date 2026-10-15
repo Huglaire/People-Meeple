@@ -311,3 +311,48 @@
         height: 190px;
     }
 }
+
+
+.player-library-message-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 0.5rem;
+    background-color: #b73535;
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.player-library-message-button:hover {
+    background-color: #922929;
+}
+
+.player-library-message-button:focus-visible {
+    outline: 3px solid #b73535;
+    outline-offset: 3px;
+}
+
+.player-library-message-button:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+.player-library-game-card[role="link"] {
+    cursor: pointer;
+}
+
+.player-library-game-card[role="link"]:focus-visible {
+    outline: 3px solid #b73535;
+    outline-offset: 3px;
+}
+
+.player-library-message-error {
+    margin-top: 0.75rem;
+    color: #b42318;
+}

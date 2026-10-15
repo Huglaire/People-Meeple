@@ -1,7 +1,9 @@
-
-// Crée la page complète de la ludothèque d'un joueur.
+/**
+ * Crée la page complète de la ludothèque d'un joueur.
+ */
 
 import { navigateTo } from '../router/router.js';
+import { createConversation } from '../api/messagingApi.js';
 
 import '../css/player-library.css';
 
@@ -21,7 +23,25 @@ function createPlayerSlug(pseudo, id) {
     return `${normalizedPseudo || 'joueur'}-${id}`;
 }
 
-// Intercepte les liens et boutons de ludothèque des profils.
+/**
+ * Crée un slug utilisable pour accéder à la page d'un jeu.
+ */
+function createGameSlug(name, id) {
+    const normalizedName = String(name || 'jeu')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
+    return id != null
+        ? `${normalizedName || 'jeu'}-${id}`
+        : (normalizedName || 'jeu');
+}
+
+/**
+ * Intercepte les liens et boutons de ludothèque des profils.
+ */
 document.addEventListener('click', (event) => {
     const target = event.target;
 
@@ -105,7 +125,15 @@ export function createPlayerLibraryPage(slug) {
     );
 
     searchContainer.append(searchIcon, searchInput);
-    heading.append(eyebrow, title, introduction, count, searchContainer);
+
+    // Le bouton de messagerie sera ajouté après identification du joueur.
+    heading.append(
+        eyebrow,
+        title,
+        introduction,
+        count,
+        searchContainer
+    );
 
     const status = document.createElement('p');
     status.classList.add('player-library-status');
@@ -118,7 +146,7 @@ export function createPlayerLibraryPage(slug) {
     container.append(backLink, heading, status, grid);
     page.append(container);
 
-    loadLibrary(slug, title, count, status, grid, searchInput);
+    loadLibrary(slug, title, count, status, grid, searchInput, heading);
 
     return page;
 }
@@ -132,7 +160,8 @@ async function loadLibrary(
     count,
     status,
     grid,
-    searchInput
+    searchInput,
+    heading
 ) {
     const token = localStorage.getItem('token');
 
@@ -182,6 +211,76 @@ async function loadLibrary(
         // Affiche le pseudo réel du joueur.
         title.textContent = `La ludothèque de ${player.pseudo || 'ce joueur'}`;
 
+        // Ajoute le bouton de messagerie une seule fois.
+        const messageButton = document.createElement('button');
+        messageButton.type = 'button';
+        messageButton.classList.add('player-library-message-button');
+        messageButton.textContent = 'Envoyer un message';
+
+        messageButton.addEventListener('click', async () => {
+            const playerId = Number(player.id);
+
+            if (!Number.isInteger(playerId) || playerId <= 0) {
+                showMessagingError(
+                    'Impossible d’identifier ce joueur.'
+                );
+                return;
+            }
+
+            messageButton.disabled = true;
+            messageButton.textContent = 'Ouverture...';
+
+            try {
+                let conversation;
+
+                try {
+                    conversation = await createConversation(playerId);
+                } catch (error) {
+                    // Une conversation existante peut être signalée par HTTP 409.
+                    if (
+                        error.status === 409
+                        && error.data?.conversationId
+                    ) {
+                        conversation = {
+                            id: error.data.conversationId
+                        };
+                    } else {
+                        throw error;
+                    }
+                }
+
+                const conversationId = Number(
+                    conversation?.id ?? conversation?.conversationId
+                );
+
+                if (
+                    !Number.isInteger(conversationId)
+                    || conversationId <= 0
+                ) {
+                    throw new Error(
+                        'Le serveur n’a pas retourné un identifiant de conversation valide.'
+                    );
+                }
+
+                navigateTo(`/discussions/${conversationId}`);
+            } catch (error) {
+                console.error(
+                    'Impossible d’ouvrir une conversation avec ce joueur.',
+                    error
+                );
+
+                showMessagingError(
+                    error.message
+                    || 'Impossible d’ouvrir cette conversation. Réessaie.'
+                );
+            } finally {
+                messageButton.disabled = false;
+                messageButton.textContent = 'Envoyer un message';
+            }
+        });
+
+        heading.append(messageButton);
+
         const games = Array.isArray(player.library)
             ? player.library
             : [];
@@ -208,6 +307,30 @@ async function loadLibrary(
         count.textContent = '';
         status.textContent =
             'Impossible de charger cette ludothèque pour le moment. Vérifie que le serveur est démarré puis réessaie.';
+    }
+}
+
+/**
+ * Affiche une erreur liée à l'ouverture d'une conversation.
+ */
+function showMessagingError(message) {
+    const existingMessage = document.querySelector(
+        '.player-library-message-error'
+    );
+
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+
+    const errorMessage = document.createElement('p');
+    errorMessage.classList.add('player-library-message-error');
+    errorMessage.setAttribute('role', 'alert');
+    errorMessage.textContent = message;
+
+    const heading = document.querySelector('.player-library-header');
+
+    if (heading) {
+        heading.append(errorMessage);
     }
 }
 
@@ -247,8 +370,8 @@ function renderGames(games, grid, search) {
         const empty = document.createElement('div');
         empty.classList.add('player-library-empty');
 
-        const title = document.createElement('h2');
-        title.textContent = games.length
+        const emptyTitle = document.createElement('h2');
+        emptyTitle.textContent = games.length
             ? 'Aucun jeu trouvé'
             : 'Ludothèque vide';
 
@@ -257,7 +380,7 @@ function renderGames(games, grid, search) {
             ? 'Essaie avec un autre nom de jeu.'
             : 'Les jeux ajoutés par ce joueur apparaîtront ici.';
 
-        empty.append(title, message);
+        empty.append(emptyTitle, message);
         grid.append(empty);
         return;
     }
@@ -268,11 +391,33 @@ function renderGames(games, grid, search) {
 }
 
 /**
- * Crée une carte de jeu avec ses caractéristiques et son statut.
+ * Crée une carte de jeu cliquable avec ses caractéristiques et son statut.
  */
 function createGameCard(game) {
     const card = document.createElement('article');
     card.classList.add('player-library-game-card');
+
+    // Utilise le slug fourni par l'API, sinon construit un slug de secours.
+    const gameSlug = game.slug || createGameSlug(game.name, game.id);
+
+    card.setAttribute('role', 'link');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute(
+        'aria-label',
+        `Voir la description de ${game.name || 'ce jeu'}`
+    );
+
+    card.addEventListener('click', () => {
+        navigateTo(`/jeux/${gameSlug}`);
+    });
+
+    // Permet également d'ouvrir la fiche du jeu au clavier.
+    card.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            navigateTo(`/jeux/${gameSlug}`);
+        }
+    });
 
     const imageContainer = document.createElement('div');
     imageContainer.classList.add('player-library-game-image');
