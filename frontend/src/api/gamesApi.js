@@ -42,7 +42,12 @@ export async function getGameById(id) {
 export async function getGameBySlug(slug) {
     const games = await getGames();
 
-    const game = games.find((item) => item.slug === slug);
+    // Retire le suffixe numérique final présent dans certaines URL.
+    const normalizedSlug = slug.replace(/-\d+$/, '');
+
+    const game = games.find(
+        (item) => item.slug === normalizedSlug
+    );
 
     if (!game) {
         throw new Error('Jeu introuvable.');
