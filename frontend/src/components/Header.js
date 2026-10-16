@@ -38,7 +38,8 @@ function createLogoutButton() {
 
     button.addEventListener('click', () => {
         logout();
-        navigateTo('/');
+        window.history.replaceState({}, '', '/');
+        window.dispatchEvent(new PopStateEvent('popstate'));
     });
 
     return button;
