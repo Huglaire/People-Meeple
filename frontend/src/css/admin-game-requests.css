@@ -1,0 +1,688 @@
+
+/* ========================================
+   Administration des demandes de jeux
+   People Meeple
+   ======================================== */
+
+.admin-game-requests-page {
+    min-height: 100vh;
+    padding: 48px 24px 72px;
+    background-color: var(--couleur-creme, #E7E1D8);
+    color: var(--couleur-bleu, #1F3556);
+}
+
+.admin-game-requests-container {
+    width: min(1440px, 100%);
+    margin: 0 auto;
+}
+
+/* En-tête de la page */
+
+.admin-game-requests-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.admin-game-requests-heading {
+    max-width: 760px;
+}
+
+.admin-game-requests-eyebrow {
+    margin: 0 0 10px;
+    color: var(--couleur-bordeaux, #7A1F2B);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.admin-game-requests-header h1 {
+    margin: 0;
+    color: var(--couleur-bleu, #1F3556);
+    font-family: 'Abril Fatface', serif;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 400;
+    line-height: 1.15;
+}
+
+.admin-game-requests-introduction {
+    max-width: 650px;
+    margin: 16px 0 0;
+    color: #596476;
+    font-family: 'Lato', sans-serif;
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+/* Barre d'outils */
+
+.admin-game-requests-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 20px 24px;
+    border: 1px solid rgba(31, 53, 86, 0.1);
+    border-radius: 16px;
+    background-color: #FFFFFF;
+    box-shadow: 0 8px 24px rgba(31, 53, 86, 0.05);
+}
+
+.admin-game-requests-filter {
+    display: flex;
+    flex: 1 1 240px;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 360px;
+    color: var(--couleur-bleu, #1F3556);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.admin-game-requests-filter select {
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 14px;
+    border: 1px solid #D7DCE3;
+    border-radius: 8px;
+    background-color: #FFFFFF;
+    color: var(--couleur-bleu, #1F3556);
+    font: inherit;
+    font-weight: 400;
+}
+
+.admin-game-requests-filter select:focus,
+.admin-game-request-form input:focus,
+.admin-game-request-form textarea:focus {
+    outline: 3px solid rgba(184, 149, 109, 0.28);
+    outline-offset: 2px;
+    border-color: var(--couleur-camel, #B8956D);
+}
+
+.admin-game-requests-refresh {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 11px 18px;
+    border: 1px solid var(--couleur-bleu, #1F3556);
+    border-radius: 8px;
+    background-color: #FFFFFF;
+    color: var(--couleur-bleu, #1F3556);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.admin-game-requests-refresh:hover {
+    background-color: var(--couleur-bleu, #1F3556);
+    color: #FFFFFF;
+}
+
+.admin-game-requests-refresh:active {
+    transform: translateY(1px);
+}
+
+.admin-game-requests-refresh:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Messages de retour */
+
+.admin-game-requests-feedback {
+    margin: 0 0 24px;
+    padding: 14px 18px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.admin-game-requests-feedback:empty {
+    display: none;
+}
+
+.admin-game-requests-feedback.is-success {
+    border-color: #A8D5B5;
+    background-color: #EDF8F0;
+    color: #205B35;
+}
+
+.admin-game-requests-feedback.is-error {
+    border-color: #E6B4B8;
+    background-color: #FFF0F0;
+    color: #8C2630;
+}
+
+.admin-game-requests-feedback.is-info {
+    border-color: #B8CBE2;
+    background-color: #EFF5FC;
+    color: #24496F;
+}
+
+/* Mise en page principale */
+
+.admin-game-requests-content {
+    display: grid;
+    grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.5fr);
+    align-items: start;
+    gap: 24px;
+}
+
+/* Liste des demandes */
+
+.admin-game-requests-list-panel,
+.admin-game-requests-detail-panel {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid rgba(31, 53, 86, 0.1);
+    border-radius: 16px;
+    background-color: #FFFFFF;
+    box-shadow: 0 8px 24px rgba(31, 53, 86, 0.05);
+}
+
+.admin-game-requests-panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 22px 24px;
+    border-bottom: 1px solid #E9EAF0;
+}
+
+.admin-game-requests-panel-heading h2 {
+    margin: 0;
+    color: var(--couleur-bleu, #1F3556);
+    font-family: 'Abril Fatface', serif;
+    font-size: 1.35rem;
+    font-weight: 400;
+}
+
+.admin-game-requests-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    min-height: 30px;
+    padding: 4px 9px;
+    border-radius: 20px;
+    background-color: #F1E7DA;
+    color: var(--couleur-bleu, #1F3556);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.admin-game-requests-list {
+    display: flex;
+    flex-direction: column;
+    max-height: 720px;
+    overflow-y: auto;
+}
+
+.admin-game-request-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    padding: 18px 24px;
+    border: 0;
+    border-bottom: 1px solid #ECEEF2;
+    border-left: 4px solid transparent;
+    background-color: #FFFFFF;
+    color: var(--couleur-bleu, #1F3556);
+    text-align: left;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.admin-game-request-item:last-child {
+    border-bottom: 0;
+}
+
+.admin-game-request-item:hover {
+    background-color: #FAF8F5;
+}
+
+.admin-game-request-item.is-selected {
+    border-left-color: var(--couleur-bordeaux, #7A1F2B);
+    background-color: #F8F1EB;
+}
+
+.admin-game-request-item:focus-visible {
+    position: relative;
+    outline: 3px solid var(--couleur-camel, #B8956D);
+    outline-offset: -3px;
+}
+
+.admin-game-request-item-title {
+    margin: 0;
+    font-family: 'Lato', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.admin-game-request-item-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    color: #687386;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+.admin-game-request-item-status {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.admin-game-request-item-status.is-pending {
+    background-color: #FFF2D8;
+    color: #815411;
+}
+
+.admin-game-request-item-status.is-accepted {
+    background-color: #E5F5E9;
+    color: #27643A;
+}
+
+.admin-game-request-item-status.is-rejected {
+    background-color: #FBE7E8;
+    color: #922E36;
+}
+
+.admin-game-requests-empty {
+    margin: 0;
+    padding: 28px 24px;
+    color: #687386;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* Détail d'une demande */
+
+.admin-game-requests-detail {
+    padding: 24px;
+}
+
+.admin-game-requests-detail-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 280px;
+    padding: 32px;
+    color: #687386;
+    text-align: center;
+}
+
+.admin-game-requests-detail-empty p {
+    max-width: 360px;
+    margin: 0;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+
+.admin-game-requests-detail-title {
+    margin: 0 0 10px;
+    color: var(--couleur-bleu, #1F3556);
+    font-family: 'Abril Fatface', serif;
+    font-size: 1.7rem;
+    font-weight: 400;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.admin-game-requests-detail-description {
+    margin: 0 0 24px;
+    color: #596476;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+/* Informations sur la demande */
+
+.admin-game-requests-metadata {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 0 0 28px;
+    padding: 20px;
+    border-radius: 12px;
+    background-color: #F8F6F2;
+}
+
+.admin-game-requests-metadata-item {
+    min-width: 0;
+}
+
+.admin-game-requests-metadata-item dt {
+    margin-bottom: 6px;
+    color: #687386;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.admin-game-requests-metadata-item dd {
+    margin: 0;
+    color: var(--couleur-bleu, #1F3556);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+/* Formulaire de création du jeu */
+
+.admin-game-request-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.admin-game-request-form-heading {
+    margin: 0;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #E9EAF0;
+    color: var(--couleur-bleu, #1F3556);
+    font-family: 'Abril Fatface', serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+}
+
+.admin-game-request-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.admin-game-request-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.admin-game-request-field.is-full-width {
+    grid-column: 1 / -1;
+}
+
+.admin-game-request-field label {
+    color: var(--couleur-bleu, #1F3556);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 800;
+}
+
+.admin-game-request-field input,
+.admin-game-request-field textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 12px 14px;
+    border: 1px solid #D7DCE3;
+    border-radius: 8px;
+    background-color: #FFFFFF;
+    color: var(--couleur-bleu, #1F3556);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.admin-game-request-field input {
+    min-height: 46px;
+}
+
+.admin-game-request-field textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.admin-game-request-field input:disabled,
+.admin-game-request-field textarea:disabled {
+    border-color: #E4E6EA;
+    background-color: #F4F5F6;
+    color: #687386;
+    cursor: not-allowed;
+    opacity: 1;
+}
+
+.admin-game-request-field-help {
+    margin: 0;
+    color: #687386;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+/* Actions sur la demande */
+
+.admin-game-request-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid #E9EAF0;
+}
+
+.admin-game-request-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 12px 20px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-align: center;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.admin-game-request-button:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.admin-game-request-button:focus-visible {
+    outline: 3px solid var(--couleur-camel, #B8956D);
+    outline-offset: 3px;
+}
+
+.admin-game-request-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.admin-game-request-button.is-accept {
+    background-color: var(--couleur-bordeaux, #7A1F2B);
+    color: #FFFFFF;
+}
+
+.admin-game-request-button.is-accept:hover:not(:disabled) {
+    background-color: #5E1721;
+}
+
+.admin-game-request-button.is-reject {
+    border-color: #D9A6AA;
+    background-color: #FFFFFF;
+    color: #922E36;
+}
+
+.admin-game-request-button.is-reject:hover:not(:disabled) {
+    border-color: #922E36;
+    background-color: #FBE7E8;
+}
+
+.admin-game-request-button.is-secondary {
+    border-color: #D7DCE3;
+    background-color: #FFFFFF;
+    color: var(--couleur-bleu, #1F3556);
+}
+
+.admin-game-request-button.is-secondary:hover:not(:disabled) {
+    background-color: #F1F3F6;
+}
+
+/* État de traitement */
+
+.admin-game-requests-loading {
+    padding: 32px 24px;
+    color: #687386;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* Adaptation aux écrans intermédiaires */
+
+@media (max-width: 1000px) {
+    .admin-game-requests-page {
+        padding: 36px 20px 56px;
+    }
+
+    .admin-game-requests-content {
+        grid-template-columns: minmax(240px, 0.85fr) minmax(0, 1.4fr);
+        gap: 18px;
+    }
+
+    .admin-game-requests-panel-heading,
+    .admin-game-requests-detail {
+        padding: 20px;
+    }
+
+    .admin-game-request-item {
+        padding: 16px 18px;
+    }
+
+    .admin-game-requests-metadata {
+        padding: 16px;
+    }
+}
+
+/* Adaptation mobile */
+
+@media (max-width: 760px) {
+    .admin-game-requests-page {
+        padding: 28px 16px 44px;
+    }
+
+    .admin-game-requests-header {
+        flex-direction: column;
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+
+    .admin-game-requests-header h1 {
+        font-size: clamp(1.9rem, 8vw, 2.6rem);
+    }
+
+    .admin-game-requests-introduction {
+        font-size: 0.95rem;
+    }
+
+    .admin-game-requests-toolbar {
+        align-items: stretch;
+        padding: 18px;
+    }
+
+    .admin-game-requests-filter {
+        max-width: none;
+    }
+
+    .admin-game-requests-refresh {
+        width: 100%;
+    }
+
+    .admin-game-requests-content {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-game-requests-list {
+        max-height: 360px;
+    }
+
+    .admin-game-requests-detail-empty {
+        min-height: 180px;
+    }
+
+    .admin-game-requests-metadata {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+    }
+
+    .admin-game-request-form-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+    }
+
+    .admin-game-request-field.is-full-width {
+        grid-column: auto;
+    }
+
+    .admin-game-request-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-game-request-button {
+        width: 100%;
+    }
+}
+
+/* Préserve la lisibilité lorsque l'utilisateur réduit les animations. */
+
+@media (prefers-reduced-motion: reduce) {
+    .admin-game-requests-refresh,
+    .admin-game-request-item,
+    .admin-game-request-field input,
+    .admin-game-request-field textarea,
+    .admin-game-request-button {
+        transition: none;
+    }
+}

@@ -18,6 +18,37 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final class AdminGameController extends AbstractController
 {
     /**
+     * Récupère tous les jeux, actifs ou désactivés.
+     */
+    #[Route('', name: 'api_admin_games_list', methods: ['GET'])]
+    #[OA\Get(
+        summary: 'Lister tous les jeux',
+        description: 'Récupère les jeux actifs et désactivés. Réservé aux administrateurs.'
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Liste complète des jeux.'
+    )]
+    #[OA\Response(
+        response: 403,
+        description: 'Accès réservé aux administrateurs.'
+    )]
+    public function list(EntityManagerInterface $entityManager): JsonResponse
+    {
+        $games = $entityManager
+            ->getRepository(Game::class)
+            ->findBy([], ['name' => 'ASC']);
+
+        $result = [];
+
+        foreach ($games as $game) {
+            $result[] = $this->serializeGame($game);
+        }
+
+        return new JsonResponse($result);
+    }
+
+    /**
      * Ajoute un nouveau jeu à la collection.
      */
     #[Route('', name: 'api_admin_games_create', methods: ['POST'])]
@@ -39,77 +70,33 @@ final class AdminGameController extends AbstractController
                 'duration'
             ],
             properties: [
-                new OA\Property(
-                    property: 'name',
-                    type: 'string',
-                    example: 'Azul'
-                ),
-                new OA\Property(
-                    property: 'image',
-                    type: 'string',
-                    example: '/images/games/azul.jpg'
-                ),
-                new OA\Property(
-                    property: 'description',
-                    type: 'string',
-                    example: 'Un jeu de placement de tuiles dans lequel les joueurs créent une mosaïque.'
-                ),
-                new OA\Property(
-                    property: 'publisher',
-                    type: 'string',
-                    example: 'Next Move'
-                ),
-                new OA\Property(
-                    property: 'minPlayers',
-                    type: 'integer',
-                    example: 2
-                ),
-                new OA\Property(
-                    property: 'maxPlayers',
-                    type: 'integer',
-                    example: 4
-                ),
-                new OA\Property(
-                    property: 'minimumAge',
-                    type: 'integer',
-                    example: 8
-                ),
-                new OA\Property(
-                    property: 'duration',
-                    type: 'integer',
-                    example: 45
-                )
+                new OA\Property(property: 'name', type: 'string', example: 'Azul'),
+                new OA\Property(property: 'image', type: 'string', example: '/images/games/azul.jpg'),
+                new OA\Property(property: 'description', type: 'string', example: 'Un jeu de placement de tuiles.'),
+                new OA\Property(property: 'publisher', type: 'string', example: 'Next Move'),
+                new OA\Property(property: 'minPlayers', type: 'integer', example: 2),
+                new OA\Property(property: 'maxPlayers', type: 'integer', example: 4),
+                new OA\Property(property: 'minimumAge', type: 'integer', example: 8),
+                new OA\Property(property: 'duration', type: 'integer', example: 45)
             ]
         )
     )]
-    #[OA\Response(
-        response: 201,
-        description: 'Jeu ajouté avec succès.'
-    )]
-    #[OA\Response(
-        response: 400,
-        description: 'Données invalides.'
-    )]
-    #[OA\Response(
-        response: 403,
-        description: 'Accès réservé aux administrateurs.'
-    )]
+    #[OA\Response(response: 201, description: 'Jeu ajouté avec succès.')]
+    #[OA\Response(response: 400, description: 'Données invalides.')]
+    #[OA\Response(response: 403, description: 'Accès réservé aux administrateurs.')]
     public function create(
         Request $request,
         EntityManagerInterface $entityManager,
         ValidatorInterface $validator
     ): JsonResponse {
-        // Lecture du JSON envoyé par le client
         $data = json_decode($request->getContent(), true);
 
-        // Vérification du format du JSON
         if (!is_array($data)) {
             return new JsonResponse([
                 'message' => 'Le corps de la requête doit être un objet JSON valide.'
             ], 400);
         }
 
-        // Vérification des champs obligatoires
         $requiredFields = [
             'name',
             'image',
@@ -129,40 +116,39 @@ final class AdminGameController extends AbstractController
             }
         }
 
-        // Vérification des types numériques
-        $numericFields = [
-            'minPlayers',
-            'maxPlayers',
-            'minimumAge',
-            'duration'
-        ];
-
-        foreach ($numericFields as $field) {
+        foreach (['minPlayers', 'maxPlayers', 'minimumAge', 'duration'] as $field) {
             if (!is_int($data[$field])) {
                 return new JsonResponse([
-                    'message' => sprintf(
-                        'Le champ "%s" doit être un entier.',
-                        $field
-                    )
+                    'message' => sprintf('Le champ "%s" doit être un entier.', $field)
                 ], 400);
             }
         }
 
-        // Vérification de la cohérence du nombre de joueurs
+        if ($data['minPlayers'] < 1 || $data['maxPlayers'] < 1) {
+            return new JsonResponse([
+                'message' => 'Le nombre de joueurs doit être supérieur ou égal à 1.'
+            ], 400);
+        }
+
         if ($data['minPlayers'] > $data['maxPlayers']) {
             return new JsonResponse([
                 'message' => 'Le nombre minimum de joueurs ne peut pas être supérieur au nombre maximum.'
             ], 400);
         }
 
-        // Création du jeu
+        if ($data['minimumAge'] < 0 || $data['duration'] < 1) {
+            return new JsonResponse([
+                'message' => 'L’âge minimum doit être positif ou nul et la durée doit être supérieure à zéro.'
+            ], 400);
+        }
+
         $game = new Game();
 
         $game
-            ->setName((string) $data['name'])
-            ->setImage((string) $data['image'])
-            ->setDescription((string) $data['description'])
-            ->setPublisher((string) $data['publisher'])
+            ->setName(trim((string) $data['name']))
+            ->setImage(trim((string) $data['image']))
+            ->setDescription(trim((string) $data['description']))
+            ->setPublisher(trim((string) $data['publisher']))
             ->setMinPlayers($data['minPlayers'])
             ->setMaxPlayers($data['maxPlayers'])
             ->setMinimumAge($data['minimumAge'])
@@ -171,7 +157,6 @@ final class AdminGameController extends AbstractController
             ->setCreatedAt(new \DateTimeImmutable())
             ->setUpdatedAt(null);
 
-        // Validation Symfony de l'entité
         $errors = $validator->validate($game);
 
         if (count($errors) > 0) {
@@ -187,26 +172,12 @@ final class AdminGameController extends AbstractController
             ], 400);
         }
 
-        // Enregistrement du jeu
         $entityManager->persist($game);
         $entityManager->flush();
 
         return new JsonResponse([
             'message' => 'Jeu ajouté avec succès.',
-            'game' => [
-                'id' => $game->getId(),
-                'name' => $game->getName(),
-                'image' => $game->getImage(),
-                'description' => $game->getDescription(),
-                'publisher' => $game->getPublisher(),
-                'minPlayers' => $game->getMinPlayers(),
-                'maxPlayers' => $game->getMaxPlayers(),
-                'minimumAge' => $game->getMinimumAge(),
-                'duration' => $game->getDuration(),
-                'isActive' => $game->isActive(),
-                'createdAt' => $game->getCreatedAt()?->format('Y-m-d H:i:s'),
-                'updatedAt' => $game->getUpdatedAt()?->format('Y-m-d H:i:s'),
-            ]
+            'game' => $this->serializeGame($game)
         ], 201);
     }
 
@@ -230,88 +201,34 @@ final class AdminGameController extends AbstractController
         required: true,
         content: new OA\JsonContent(
             properties: [
-                new OA\Property(
-                    property: 'name',
-                    type: 'string',
-                    example: 'Azul'
-                ),
-                new OA\Property(
-                    property: 'image',
-                    type: 'string',
-                    example: '/images/games/azul.jpg'
-                ),
-                new OA\Property(
-                    property: 'description',
-                    type: 'string',
-                    example: 'Description mise à jour du jeu.'
-                ),
-                new OA\Property(
-                    property: 'publisher',
-                    type: 'string',
-                    example: 'Next Move'
-                ),
-                new OA\Property(
-                    property: 'minPlayers',
-                    type: 'integer',
-                    example: 2
-                ),
-                new OA\Property(
-                    property: 'maxPlayers',
-                    type: 'integer',
-                    example: 4
-                ),
-                new OA\Property(
-                    property: 'minimumAge',
-                    type: 'integer',
-                    example: 8
-                ),
-                new OA\Property(
-                    property: 'duration',
-                    type: 'integer',
-                    example: 45
-                ),
-                new OA\Property(
-                    property: 'isActive',
-                    type: 'boolean',
-                    example: true
-                )
+                new OA\Property(property: 'name', type: 'string', example: 'Azul'),
+                new OA\Property(property: 'image', type: 'string', example: '/images/games/azul.jpg'),
+                new OA\Property(property: 'description', type: 'string', example: 'Description mise à jour.'),
+                new OA\Property(property: 'publisher', type: 'string', example: 'Next Move'),
+                new OA\Property(property: 'minPlayers', type: 'integer', example: 2),
+                new OA\Property(property: 'maxPlayers', type: 'integer', example: 4),
+                new OA\Property(property: 'minimumAge', type: 'integer', example: 8),
+                new OA\Property(property: 'duration', type: 'integer', example: 45),
+                new OA\Property(property: 'isActive', type: 'boolean', example: true)
             ]
         )
     )]
-    #[OA\Response(
-        response: 200,
-        description: 'Jeu modifié avec succès.'
-    )]
-    #[OA\Response(
-        response: 400,
-        description: 'Données invalides.'
-    )]
-    #[OA\Response(
-        response: 404,
-        description: 'Jeu introuvable.'
-    )]
-    #[OA\Response(
-        response: 403,
-        description: 'Accès réservé aux administrateurs.'
-    )]
+    #[OA\Response(response: 200, description: 'Jeu modifié avec succès.')]
+    #[OA\Response(response: 400, description: 'Données invalides.')]
+    #[OA\Response(response: 404, description: 'Jeu introuvable.')]
+    #[OA\Response(response: 403, description: 'Accès réservé aux administrateurs.')]
     public function update(
         int $id,
         Request $request,
         EntityManagerInterface $entityManager,
         ValidatorInterface $validator
     ): JsonResponse {
-        // Recherche du jeu
-        $game = $entityManager
-            ->getRepository(Game::class)
-            ->find($id);
+        $game = $entityManager->getRepository(Game::class)->find($id);
 
         if ($game === null) {
-            return new JsonResponse([
-                'message' => 'Jeu introuvable.'
-            ], 404);
+            return new JsonResponse(['message' => 'Jeu introuvable.'], 404);
         }
 
-        // Lecture du JSON envoyé par le client
         $data = json_decode($request->getContent(), true);
 
         if (!is_array($data)) {
@@ -320,61 +237,42 @@ final class AdminGameController extends AbstractController
             ], 400);
         }
 
-        // Mise à jour uniquement des champs transmis
-        if (array_key_exists('name', $data)) {
-            $game->setName((string) $data['name']);
+        foreach (['name', 'image', 'description', 'publisher'] as $field) {
+            if (array_key_exists($field, $data)) {
+                if (!is_string($data[$field])) {
+                    return new JsonResponse([
+                        'message' => sprintf('Le champ "%s" doit être une chaîne de caractères.', $field)
+                    ], 400);
+                }
+
+                $value = trim($data[$field]);
+
+                match ($field) {
+                    'name' => $game->setName($value),
+                    'image' => $game->setImage($value),
+                    'description' => $game->setDescription($value),
+                    'publisher' => $game->setPublisher($value),
+                };
+            }
         }
 
-        if (array_key_exists('image', $data)) {
-            $game->setImage((string) $data['image']);
-        }
+        foreach (['minPlayers', 'maxPlayers', 'minimumAge', 'duration'] as $field) {
+            if (!array_key_exists($field, $data)) {
+                continue;
+            }
 
-        if (array_key_exists('description', $data)) {
-            $game->setDescription((string) $data['description']);
-        }
-
-        if (array_key_exists('publisher', $data)) {
-            $game->setPublisher((string) $data['publisher']);
-        }
-
-        if (array_key_exists('minPlayers', $data)) {
-            if (!is_int($data['minPlayers'])) {
+            if (!is_int($data[$field])) {
                 return new JsonResponse([
-                    'message' => 'Le champ "minPlayers" doit être un entier.'
+                    'message' => sprintf('Le champ "%s" doit être un entier.', $field)
                 ], 400);
             }
 
-            $game->setMinPlayers($data['minPlayers']);
-        }
-
-        if (array_key_exists('maxPlayers', $data)) {
-            if (!is_int($data['maxPlayers'])) {
-                return new JsonResponse([
-                    'message' => 'Le champ "maxPlayers" doit être un entier.'
-                ], 400);
-            }
-
-            $game->setMaxPlayers($data['maxPlayers']);
-        }
-
-        if (array_key_exists('minimumAge', $data)) {
-            if (!is_int($data['minimumAge'])) {
-                return new JsonResponse([
-                    'message' => 'Le champ "minimumAge" doit être un entier.'
-                ], 400);
-            }
-
-            $game->setMinimumAge($data['minimumAge']);
-        }
-
-        if (array_key_exists('duration', $data)) {
-            if (!is_int($data['duration'])) {
-                return new JsonResponse([
-                    'message' => 'Le champ "duration" doit être un entier.'
-                ], 400);
-            }
-
-            $game->setDuration($data['duration']);
+            match ($field) {
+                'minPlayers' => $game->setMinPlayers($data[$field]),
+                'maxPlayers' => $game->setMaxPlayers($data[$field]),
+                'minimumAge' => $game->setMinimumAge($data[$field]),
+                'duration' => $game->setDuration($data[$field]),
+            };
         }
 
         if (array_key_exists('isActive', $data)) {
@@ -387,21 +285,26 @@ final class AdminGameController extends AbstractController
             $game->setIsActive($data['isActive']);
         }
 
-        // Vérification de la cohérence du nombre de joueurs
-        if (
-            $game->getMinPlayers() !== null &&
-            $game->getMaxPlayers() !== null &&
-            $game->getMinPlayers() > $game->getMaxPlayers()
-        ) {
+        if ($game->getMinPlayers() > $game->getMaxPlayers()) {
             return new JsonResponse([
                 'message' => 'Le nombre minimum de joueurs ne peut pas être supérieur au nombre maximum.'
             ], 400);
         }
 
-        // Mise à jour de la date de modification
+        if ($game->getMinPlayers() < 1 || $game->getMaxPlayers() < 1) {
+            return new JsonResponse([
+                'message' => 'Le nombre de joueurs doit être supérieur ou égal à 1.'
+            ], 400);
+        }
+
+        if ($game->getMinimumAge() < 0 || $game->getDuration() < 1) {
+            return new JsonResponse([
+                'message' => 'L’âge minimum doit être positif ou nul et la durée doit être supérieure à zéro.'
+            ], 400);
+        }
+
         $game->setUpdatedAt(new \DateTimeImmutable());
 
-        // Validation Symfony de l'entité
         $errors = $validator->validate($game);
 
         if (count($errors) > 0) {
@@ -417,35 +320,21 @@ final class AdminGameController extends AbstractController
             ], 400);
         }
 
-        // Enregistrement des modifications
         $entityManager->flush();
 
         return new JsonResponse([
             'message' => 'Jeu modifié avec succès.',
-            'game' => [
-                'id' => $game->getId(),
-                'name' => $game->getName(),
-                'image' => $game->getImage(),
-                'description' => $game->getDescription(),
-                'publisher' => $game->getPublisher(),
-                'minPlayers' => $game->getMinPlayers(),
-                'maxPlayers' => $game->getMaxPlayers(),
-                'minimumAge' => $game->getMinimumAge(),
-                'duration' => $game->getDuration(),
-                'isActive' => $game->isActive(),
-                'createdAt' => $game->getCreatedAt()?->format('Y-m-d H:i:s'),
-                'updatedAt' => $game->getUpdatedAt()?->format('Y-m-d H:i:s'),
-            ]
+            'game' => $this->serializeGame($game)
         ]);
     }
 
     /**
-     * Désactive un jeu sans le supprimer de la base de données.
+     * Réactive un jeu précédemment désactivé.
      */
-    #[Route('/{id}', name: 'api_admin_games_delete', methods: ['DELETE'])]
-    #[OA\Delete(
-        summary: 'Désactiver un jeu',
-        description: 'Désactive un jeu de la collection sans supprimer ses données de la base. Réservé aux administrateurs.'
+    #[Route('/{id}/reactivate', name: 'api_admin_games_reactivate', methods: ['PATCH'])]
+    #[OA\Patch(
+        summary: 'Réactiver un jeu',
+        description: 'Réactive un jeu précédemment désactivé. Réservé aux administrateurs.'
     )]
     #[OA\Parameter(
         name: 'id',
@@ -455,26 +344,14 @@ final class AdminGameController extends AbstractController
         schema: new OA\Schema(type: 'integer'),
         example: 1
     )]
-    #[OA\Response(
-        response: 200,
-        description: 'Jeu désactivé avec succès.'
-    )]
-    #[OA\Response(
-        response: 404,
-        description: 'Jeu introuvable.'
-    )]
-    #[OA\Response(
-        response: 403,
-        description: 'Accès réservé aux administrateurs.'
-    )]
-    public function delete(
+    #[OA\Response(response: 200, description: 'Jeu réactivé avec succès.')]
+    #[OA\Response(response: 404, description: 'Jeu introuvable.')]
+    #[OA\Response(response: 403, description: 'Accès réservé aux administrateurs.')]
+    public function reactivate(
         int $id,
         EntityManagerInterface $entityManager
     ): JsonResponse {
-        // Recherche du jeu
-        $game = $entityManager
-            ->getRepository(Game::class)
-            ->find($id);
+        $game = $entityManager->getRepository(Game::class)->find($id);
 
         if ($game === null) {
             return new JsonResponse([
@@ -482,7 +359,62 @@ final class AdminGameController extends AbstractController
             ], 404);
         }
 
-        // Désactivation logique du jeu
+        if ($game->isActive()) {
+            return new JsonResponse([
+                'message' => 'Ce jeu est déjà actif.',
+                'game' => $this->serializeGame($game)
+            ]);
+        }
+
+        $game
+            ->setIsActive(true)
+            ->setUpdatedAt(new \DateTimeImmutable());
+
+        $entityManager->flush();
+
+        return new JsonResponse([
+            'message' => 'Jeu réactivé avec succès.',
+            'game' => $this->serializeGame($game)
+        ]);
+    }
+
+    /**
+     * Désactive un jeu sans le supprimer de la base de données.
+     */
+    #[Route('/{id}', name: 'api_admin_games_delete', methods: ['DELETE'])]
+    #[OA\Delete(
+        summary: 'Désactiver un jeu',
+        description: 'Désactive un jeu sans supprimer ses données de la base. Réservé aux administrateurs.'
+    )]
+    #[OA\Parameter(
+        name: 'id',
+        description: 'Identifiant du jeu',
+        in: 'path',
+        required: true,
+        schema: new OA\Schema(type: 'integer'),
+        example: 1
+    )]
+    #[OA\Response(response: 200, description: 'Jeu désactivé avec succès.')]
+    #[OA\Response(response: 404, description: 'Jeu introuvable.')]
+    #[OA\Response(response: 403, description: 'Accès réservé aux administrateurs.')]
+    public function delete(
+        int $id,
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        $game = $entityManager->getRepository(Game::class)->find($id);
+
+        if ($game === null) {
+            return new JsonResponse([
+                'message' => 'Jeu introuvable.'
+            ], 404);
+        }
+
+        if (!$game->isActive()) {
+            return new JsonResponse([
+                'message' => 'Ce jeu est déjà désactivé.'
+            ]);
+        }
+
         $game
             ->setIsActive(false)
             ->setUpdatedAt(new \DateTimeImmutable());
@@ -492,5 +424,26 @@ final class AdminGameController extends AbstractController
         return new JsonResponse([
             'message' => 'Jeu désactivé avec succès.'
         ]);
+    }
+
+    /**
+     * Formate les données d'un jeu pour les réponses JSON.
+     */
+    private function serializeGame(Game $game): array
+    {
+        return [
+            'id' => $game->getId(),
+            'name' => $game->getName(),
+            'image' => $game->getImage(),
+            'description' => $game->getDescription(),
+            'publisher' => $game->getPublisher(),
+            'minPlayers' => $game->getMinPlayers(),
+            'maxPlayers' => $game->getMaxPlayers(),
+            'minimumAge' => $game->getMinimumAge(),
+            'duration' => $game->getDuration(),
+            'isActive' => $game->isActive(),
+            'createdAt' => $game->getCreatedAt()?->format('Y-m-d H:i:s'),
+            'updatedAt' => $game->getUpdatedAt()?->format('Y-m-d H:i:s'),
+        ];
     }
 }

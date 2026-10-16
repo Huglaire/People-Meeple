@@ -1,0 +1,198 @@
+/* Tableau de bord de l'administration */
+
+.admin-dashboard-page {
+    min-height: 70vh;
+    padding: 3rem 1.5rem 4rem;
+    background-color: var(--couleur-creme);
+}
+
+.admin-dashboard-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.admin-dashboard-header {
+    margin-bottom: 3rem;
+}
+
+.admin-dashboard-eyebrow {
+    margin-bottom: 0.75rem;
+    color: var(--couleur-bordeaux);
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.admin-dashboard-header h1 {
+    margin-bottom: 1rem;
+    color: var(--couleur-bleu);
+    font-family: 'Abril Fatface', serif;
+    font-size: clamp(2.2rem, 5vw, 3.5rem);
+}
+
+.admin-dashboard-introduction {
+    max-width: 700px;
+    margin: 0;
+    color: var(--couleur-bleu);
+    font-family: 'Lato', sans-serif;
+    font-size: 1.05rem;
+    line-height: 1.7;
+}
+
+.admin-dashboard-section-title {
+    margin-bottom: 1.5rem;
+    color: var(--couleur-bleu);
+    font-family: 'Abril Fatface', serif;
+    font-size: 1.6rem;
+}
+
+.admin-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+.admin-dashboard-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    min-width: 0;
+    padding: 1.75rem;
+    border: 1px solid rgba(31, 53, 86, 0.12);
+    border-radius: 16px;
+    background-color: var(--couleur-blanc);
+    box-shadow: 0 4px 16px rgba(31, 53, 86, 0.05);
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.admin-dashboard-card-available:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(31, 53, 86, 0.12);
+}
+
+.admin-dashboard-card-icon {
+    display: flex;
+    flex: 0 0 54px;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 13px;
+    background-color: var(--couleur-bleu);
+    color: var(--couleur-blanc);
+    font-size: 1.5rem;
+}
+
+.admin-dashboard-card-available .admin-dashboard-card-icon {
+    background-color: var(--couleur-bordeaux);
+}
+
+.admin-dashboard-card-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-dashboard-card-title {
+    margin: 0 0 0.75rem;
+    color: var(--couleur-bleu);
+    font-family: 'Raleway', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.admin-dashboard-card-description {
+    margin: 0 0 1.25rem;
+    color: #555;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.admin-dashboard-card-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--couleur-bordeaux);
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.admin-dashboard-card-link::after {
+    content: '→';
+    transition: transform 0.2s ease;
+}
+
+.admin-dashboard-card-link:hover {
+    color: var(--couleur-bleu);
+    text-decoration: underline;
+}
+
+.admin-dashboard-card-link:hover::after {
+    transform: translateX(3px);
+}
+
+.admin-dashboard-card-status {
+    display: inline-block;
+    padding: 0.4rem 0.7rem;
+    border-radius: 20px;
+    background-color: var(--couleur-creme);
+    color: var(--couleur-bleu);
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.admin-dashboard-error {
+    max-width: 700px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    border-left: 4px solid var(--couleur-bordeaux);
+    background-color: var(--couleur-blanc);
+    color: var(--couleur-bordeaux);
+    font-weight: 700;
+}
+
+@media (max-width: 768px) {
+    .admin-dashboard-page {
+        padding: 2rem 1rem 3rem;
+    }
+
+    .admin-dashboard-header {
+        margin-bottom: 2rem;
+    }
+
+    .admin-dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .admin-dashboard-card {
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+
+    .admin-dashboard-card-icon {
+        flex-basis: 46px;
+        width: 46px;
+        height: 46px;
+        font-size: 1.25rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .admin-dashboard-card,
+    .admin-dashboard-card-link::after {
+        transition: none;
+    }
+
+    .admin-dashboard-card-available:hover {
+        transform: none;
+    }
+}

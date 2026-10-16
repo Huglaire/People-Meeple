@@ -5,12 +5,13 @@ import lettragePath from '../assets/logos/lettrage.svg';
 
 import {
     isAuthenticated,
+    isAdmin,
     logout
 } from '../services/authService.js';
 
 import { navigateTo } from '../router/router.js';
 
-// Crée un lien de navigation
+// Crée un lien de navigation.
 function createNavigationLink(label, path) {
     const link = document.createElement('a');
 
@@ -26,7 +27,7 @@ function createNavigationLink(label, path) {
     return link;
 }
 
-// Crée un bouton de déconnexion
+// Crée un bouton de déconnexion.
 function createLogoutButton() {
     const button = document.createElement('button');
 
@@ -50,7 +51,7 @@ export function createHeader() {
     const container = document.createElement('div');
     container.classList.add('header-container');
 
-    // Crée le logo complet
+    // Crée le logo complet.
     const logoLink = document.createElement('a');
     logoLink.href = '/';
     logoLink.classList.add('header-logo');
@@ -67,7 +68,7 @@ export function createHeader() {
 
     logoLink.append(logo, lettrage);
 
-    // Crée le bouton du menu mobile
+    // Crée le bouton du menu mobile.
     const menuButton = document.createElement('button');
     menuButton.type = 'button';
     menuButton.classList.add('mobile-menu-button');
@@ -82,19 +83,19 @@ export function createHeader() {
 
     menuButton.append(menuIcon);
 
-    // Crée la navigation principale
+    // Crée la navigation principale.
     const navigation = document.createElement('nav');
     navigation.id = 'main-navigation';
     navigation.classList.add('header-navigation');
     navigation.setAttribute('aria-label', 'Navigation principale');
 
-    // Les liens publics sont visibles pour tous
+    // Les liens publics sont visibles pour tous.
     const navigationItems = [
         { label: 'Accueil', path: '/' },
         { label: 'Jeux', path: '/jeux' }
     ];
 
-    // Les liens communautaires sont réservés aux membres
+    // Les liens communautaires sont réservés aux membres.
     if (isAuthenticated()) {
         navigationItems.push(
             { label: 'Joueurs', path: '/joueurs' },
@@ -104,20 +105,28 @@ export function createHeader() {
         );
     }
 
+    // L'administration mène au dashboard, pas à une page spécifique.
+    if (isAuthenticated() && isAdmin()) {
+        navigationItems.push({
+            label: 'Administration',
+            path: '/admin'
+        });
+    }
+
     navigationItems.forEach((item) => {
         navigation.append(
             createNavigationLink(item.label, item.path)
         );
     });
 
-    // Prépare les actions de compte pour ordinateur
+    // Prépare les actions de compte pour ordinateur.
     const userActions = document.createElement('div');
     userActions.classList.add('header-actions');
 
     if (isAuthenticated()) {
         userActions.append(createLogoutButton());
     } else {
-        // Lien vers la connexion
+        // Lien vers la connexion.
         const loginLink = document.createElement('a');
         loginLink.href = '/connexion';
         loginLink.textContent = 'Connexion';
@@ -128,7 +137,7 @@ export function createHeader() {
             navigateTo('/connexion');
         });
 
-        // Lien vers l'inscription
+        // Lien vers l'inscription.
         const registerLink = document.createElement('a');
         registerLink.href = '/inscription';
         registerLink.textContent = 'Inscription';
@@ -142,22 +151,29 @@ export function createHeader() {
         userActions.append(loginLink, registerLink);
     }
 
-    // Ajoute les actions au menu déroulant mobile
+    // Ajoute les actions au menu déroulant mobile.
     const mobileActions = document.createElement('div');
     mobileActions.classList.add('mobile-menu-actions');
 
     if (isAuthenticated()) {
         mobileActions.append(createLogoutButton());
     } else {
-        const loginLink = createNavigationLink('Connexion', '/connexion');
-        const registerLink = createNavigationLink('Inscription', '/inscription');
+        const loginLink = createNavigationLink(
+            'Connexion',
+            '/connexion'
+        );
+
+        const registerLink = createNavigationLink(
+            'Inscription',
+            '/inscription'
+        );
 
         mobileActions.append(loginLink, registerLink);
     }
 
     navigation.append(mobileActions);
 
-    // Ouvre et ferme le menu mobile
+    // Ouvre et ferme le menu mobile.
     menuButton.addEventListener('click', () => {
         const menuIsOpen =
             menuButton.getAttribute('aria-expanded') === 'true';

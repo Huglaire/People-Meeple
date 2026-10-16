@@ -15,10 +15,16 @@ import { createProfilePage } from '../pages/Profile.js';
 import { createLayout } from '../components/Layout.js';
 import { createLudothequePage } from '../pages/Ludotheque.js';
 import { createPlayerLibraryPage } from '../pages/PlayerLibrary.js';
-import { createDiscussionsPage } from '../pages/Discussions.js';
-import { createConversationPage } from '../pages/Conversation.js';
 
-import { isAuthenticated } from '../services/authService.js';
+import { createAdminDashboardPage } from '../pages/AdminDashboard.js';
+import { createAdminGameRequestsPage } from '../pages/AdminGameRequests.js';
+import { createAdminGamesPage } from '../pages/AdminGames.js';
+
+import {
+    isAuthenticated,
+    isAdmin
+} from '../services/authService.js';
+
 import { createMobileNavigation } from '../components/MobileNavigation.js';
 
 // Définit les pages accessibles directement.
@@ -30,7 +36,11 @@ const routes = {
     '/joueurs': createPlayersPage,
     '/jeux': createGamesPage,
     '/profil': createProfilePage,
-    '/discussions': createDiscussionsPage
+
+    // Espace d'administration
+    '/admin': createAdminDashboardPage,
+    '/admin/jeux': createAdminGamesPage,
+    '/admin/demandes-jeux': createAdminGameRequestsPage
 };
 
 // Définit les chemins accessibles sans connexion.
@@ -44,6 +54,11 @@ function isPublicRoute(path) {
     );
 }
 
+// Indique si le chemin appartient à l'espace d'administration.
+function isAdminRoute(path) {
+    return path === '/admin' || path.startsWith('/admin/');
+}
+
 export function router() {
     let path = window.location.pathname;
 
@@ -53,10 +68,16 @@ export function router() {
         return;
     }
 
-    // Redirige les visiteurs qui tentent d'ouvrir une page privée.
+    // Redirige les visiteurs non connectés vers la connexion.
     if (!isPublicRoute(path) && !isAuthenticated()) {
         window.history.replaceState({}, '', '/connexion');
         path = '/connexion';
+    }
+
+    // Réserve toutes les routes d'administration aux administrateurs.
+    if (isAdminRoute(path) && !isAdmin()) {
+        window.history.replaceState({}, '', '/');
+        path = '/';
     }
 
     app.replaceChildren();
@@ -66,10 +87,6 @@ export function router() {
     // Charge une route connue.
     if (routes[path]) {
         page = routes[path]();
-    } else if (/^\/discussions\/\d+$/.test(path)) {
-        // Charge une conversation à partir de son identifiant.
-        const conversationId = Number(path.split('/')[2]);
-        page = createConversationPage(conversationId);
     } else if (/^\/joueurs\/[a-z0-9-]+\/ludotheque$/.test(path)) {
         // Charge la ludothèque d'un joueur.
         const slug = path.split('/')[2];
@@ -114,6 +131,10 @@ export function router() {
 
 // Gère les changements de page internes.
 export function navigateTo(path) {
+    if (window.location.pathname === path) {
+        return;
+    }
+
     window.history.pushState({}, '', path);
     router();
 }
