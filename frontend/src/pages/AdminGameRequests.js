@@ -15,12 +15,20 @@ const DEFAULT_GAME_VALUES = {
     name: '',
     publisher: '',
     description: '',
-    image: '',
     minPlayers: 1,
     maxPlayers: 4,
     minimumAge: 8,
     duration: 30
 };
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+const ALLOWED_IMAGE_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif'
+];
 
 const FILTERS = [
     { value: 'all', label: 'Toutes les demandes' },
@@ -49,6 +57,12 @@ export function createAdminGameRequestsPage() {
         'Consultez les propositions des joueurs et gérez les ajouts au catalogue.';
 
     heading.append(title, introduction);
+
+    // Initialise l'état avant de créer la barre de filtres qui l'utilise.
+    let requests = [];
+    let selectedRequestId = null;
+    let activeFilter = 'pending';
+    let isProcessing = false;
 
     const toolbar = createToolbar();
 
@@ -93,11 +107,6 @@ export function createAdminGameRequestsPage() {
     );
 
     page.append(container);
-
-    let requests = [];
-    let selectedRequestId = null;
-    let activeFilter = 'pending';
-    let isProcessing = false;
 
     const currentUser = getStoredUser();
 
@@ -454,13 +463,6 @@ export function createAdminGameRequestsPage() {
                 value: request.description
             },
             {
-                name: 'image',
-                label: 'Chemin ou URL de l’image',
-                type: 'text',
-                required: false,
-                value: DEFAULT_GAME_VALUES.image
-            },
-            {
                 name: 'minPlayers',
                 label: 'Nombre minimum de joueurs',
                 type: 'number',
@@ -499,6 +501,10 @@ export function createAdminGameRequestsPage() {
             form.append(fieldElement);
         });
 
+        // Le choix d'une image se fait depuis l'ordinateur de l'administrateur.
+        const imageField = createImageField(request.status !== 'pending');
+        form.append(imageField.wrapper);
+
         const actions = document.createElement('div');
         actions.classList.add('admin-game-requests-actions');
 
@@ -527,7 +533,12 @@ export function createAdminGameRequestsPage() {
 
             form.addEventListener('submit', (event) => {
                 event.preventDefault();
-                processAcceptance(request, form, acceptButton, rejectButton);
+                processAcceptance(
+                    request,
+                    form,
+                    acceptButton,
+                    rejectButton
+                );
             });
         } else {
             // Les demandes déjà traitées ne sont plus modifiables.
@@ -554,6 +565,129 @@ export function createAdminGameRequestsPage() {
             formTitle,
             form
         );
+
+        /**
+         * Crée le champ de sélection et l'aperçu de l'image.
+         */
+        function createImageField(isProcessed) {
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('admin-game-requests-field');
+
+            const label = document.createElement('label');
+            const inputId = 'admin-game-request-image';
+
+            label.htmlFor = inputId;
+            label.textContent = 'Image du jeu';
+
+            const input = document.createElement('input');
+            input.id = inputId;
+            input.name = 'imageFile';
+            input.type = 'file';
+            input.accept = 'image/jpeg,image/png,image/webp,image/gif';
+            input.disabled = isProcessed;
+            input.setAttribute(
+                'aria-describedby',
+                'admin-game-request-image-help admin-game-request-image-error'
+            );
+
+            const help = document.createElement('small');
+            help.id = 'admin-game-request-image-help';
+            help.textContent =
+                'Formats acceptés : JPG, PNG, WEBP ou GIF. Taille maximale : 5 Mo.';
+
+            const previewContainer = document.createElement('div');
+            previewContainer.classList.add(
+                'admin-game-requests-image-preview'
+            );
+
+            const preview = document.createElement('img');
+            preview.alt = 'Aperçu de l’image sélectionnée';
+            preview.hidden = true;
+
+            const emptyPreview = document.createElement('p');
+            emptyPreview.textContent = isProcessed
+                ? 'Demande déjà traitée.'
+                : 'Aucune image sélectionnée.';
+
+            previewContainer.append(preview, emptyPreview);
+
+            const error = document.createElement('p');
+            error.id = 'admin-game-request-image-error';
+            error.classList.add('admin-game-requests-image-error');
+            error.setAttribute('role', 'alert');
+            error.hidden = true;
+
+            let previewUrl = null;
+            let isValid = true;
+
+            input.addEventListener('change', () => {
+                error.textContent = '';
+                error.hidden = true;
+                isValid = true;
+
+                const file = input.files?.[0];
+
+                if (previewUrl) {
+                    URL.revokeObjectURL(previewUrl);
+                    previewUrl = null;
+                }
+
+                preview.removeAttribute('src');
+                preview.hidden = true;
+                emptyPreview.hidden = false;
+                emptyPreview.textContent = file
+                    ? ''
+                    : 'Aucune image sélectionnée.';
+
+                if (!file) {
+                    return;
+                }
+
+                if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+                    showImageError(
+                        'Le fichier doit être une image JPG, PNG, WEBP ou GIF.'
+                    );
+                    input.value = '';
+                    return;
+                }
+
+                if (file.size > MAX_IMAGE_SIZE) {
+                    showImageError(
+                        'L’image ne doit pas dépasser 5 Mo.'
+                    );
+                    input.value = '';
+                    return;
+                }
+
+                previewUrl = URL.createObjectURL(file);
+                preview.src = previewUrl;
+                preview.hidden = false;
+                emptyPreview.hidden = true;
+            });
+
+            function showImageError(message) {
+                isValid = false;
+                error.textContent = message;
+                error.hidden = false;
+                preview.hidden = true;
+                emptyPreview.hidden = false;
+                emptyPreview.textContent = 'Aucune image valide sélectionnée.';
+            }
+
+            wrapper.append(
+                label,
+                input,
+                help,
+                previewContainer,
+                error
+            );
+
+            return {
+                wrapper,
+                input,
+                isValid: () => isValid
+            };
+        }
     }
 
     /**
@@ -641,7 +775,7 @@ export function createAdminGameRequestsPage() {
             name: String(formData.get('name')).trim(),
             publisher: String(formData.get('publisher')).trim(),
             description: String(formData.get('description')).trim(),
-            image: String(formData.get('image') || '').trim(),
+            imageFile: formData.get('imageFile'),
             minPlayers: Number(formData.get('minPlayers')),
             maxPlayers: Number(formData.get('maxPlayers')),
             minimumAge: Number(formData.get('minimumAge')),
@@ -656,6 +790,29 @@ export function createAdminGameRequestsPage() {
         ) {
             setFeedback(
                 'Vérifiez les nombres de joueurs, l’âge minimum et la durée.',
+                'error'
+            );
+            return;
+        }
+
+        if (
+            gameData.imageFile instanceof File
+            && gameData.imageFile.size > 0
+            && !ALLOWED_IMAGE_TYPES.includes(gameData.imageFile.type)
+        ) {
+            setFeedback(
+                'Le fichier doit être une image JPG, PNG, WEBP ou GIF.',
+                'error'
+            );
+            return;
+        }
+
+        if (
+            gameData.imageFile instanceof File
+            && gameData.imageFile.size > MAX_IMAGE_SIZE
+        ) {
+            setFeedback(
+                'L’image ne doit pas dépasser 5 Mo.',
                 'error'
             );
             return;

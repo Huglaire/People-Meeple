@@ -7,6 +7,7 @@ use App\Entity\GameRequest;
 use Doctrine\ORM\EntityManagerInterface;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -18,13 +19,22 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[OA\Tag(name: 'Admin - Game Request')]
 final class AdminGameRequestController extends AbstractController
 {
+    private const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+    private const ALLOWED_IMAGE_MIME_TYPES = [
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/gif',
+    ];
+
     /**
      * Retourne toutes les demandes de jeux.
      */
     #[Route('', name: 'api_admin_game_requests_list', methods: ['GET'])]
     #[OA\Get(
         summary: 'Lister les demandes de jeux',
-        description: 'Retourne toutes les demandes de jeux. Réservé aux administrateurs.'
+        description: 'Retourne toutes les demandes de jeux. Les demandes en attente sont affichées en premier, de la plus ancienne à la plus récente. Les demandes traitées suivent, de la plus récente à la plus ancienne. Réservé aux administrateurs.'
     )]
     #[OA\Response(
         response: 200,
@@ -37,10 +47,49 @@ final class AdminGameRequestController extends AbstractController
     public function list(
         EntityManagerInterface $entityManager
     ): JsonResponse {
-        // Récupération des demandes les plus récentes en premier.
+        // Récupération de toutes les demandes avant de les trier.
         $gameRequests = $entityManager
             ->getRepository(GameRequest::class)
-            ->findBy([], ['createdAt' => 'DESC']);
+            ->findAll();
+
+        // Les demandes en attente apparaissent en premier, de la plus ancienne à la plus récente.
+        // Les demandes traitées apparaissent ensuite, de la plus récente à la plus ancienne.
+        usort($gameRequests, static function (
+            GameRequest $a,
+            GameRequest $b
+        ): int {
+            $aIsPending = $a->getStatus() === 'pending';
+            $bIsPending = $b->getStatus() === 'pending';
+
+            // Priorité aux demandes en attente.
+            if ($aIsPending !== $bIsPending) {
+                return $aIsPending ? -1 : 1;
+            }
+
+            $aCreatedAt = $a->getCreatedAt();
+            $bCreatedAt = $b->getCreatedAt();
+
+            // Les dates absentes sont placées après les dates renseignées.
+            if ($aCreatedAt === null && $bCreatedAt !== null) {
+                return 1;
+            }
+
+            if ($aCreatedAt !== null && $bCreatedAt === null) {
+                return -1;
+            }
+
+            if ($aCreatedAt === null && $bCreatedAt === null) {
+                return 0;
+            }
+
+            // En attente : ordre chronologique croissant.
+            if ($aIsPending) {
+                return $aCreatedAt <=> $bCreatedAt;
+            }
+
+            // Demandes traitées : ordre chronologique décroissant.
+            return $bCreatedAt <=> $aCreatedAt;
+        });
 
         // Préparation des données retournées par l'API.
         $result = [];
@@ -78,7 +127,7 @@ final class AdminGameRequestController extends AbstractController
     )]
     #[OA\Post(
         summary: 'Accepter une demande et créer le jeu',
-        description: 'Crée le jeu dans le catalogue puis accepte la demande dans une transaction. Réservé aux administrateurs.'
+        description: 'Crée le jeu dans le catalogue puis accepte la demande dans une transaction. Les données sont envoyées en multipart/form-data. Une image JPEG, PNG, WebP ou GIF de 5 Mo maximum peut être jointe. Réservé aux administrateurs.'
     )]
     #[OA\Parameter(
         name: 'id',
@@ -90,27 +139,30 @@ final class AdminGameRequestController extends AbstractController
     )]
     #[OA\RequestBody(
         required: true,
-        content: new OA\JsonContent(
-            required: [
-                'name',
-                'image',
-                'description',
-                'publisher',
-                'minPlayers',
-                'maxPlayers',
-                'minimumAge',
-                'duration'
-            ],
-            properties: [
-                new OA\Property(property: 'name', type: 'string', example: 'Sky Team'),
-                new OA\Property(property: 'image', type: 'string', example: '/images/games/sky-team.jpg'),
-                new OA\Property(property: 'description', type: 'string', example: 'Un jeu coopératif pour deux joueurs.'),
-                new OA\Property(property: 'publisher', type: 'string', example: 'Scorpion Masqué'),
-                new OA\Property(property: 'minPlayers', type: 'integer', example: 2),
-                new OA\Property(property: 'maxPlayers', type: 'integer', example: 2),
-                new OA\Property(property: 'minimumAge', type: 'integer', example: 12),
-                new OA\Property(property: 'duration', type: 'integer', example: 20)
-            ]
+        content: new OA\MediaType(
+            mediaType: 'multipart/form-data',
+            schema: new OA\Schema(
+                type: 'object',
+                required: [
+                    'name',
+                    'description',
+                    'publisher',
+                    'minPlayers',
+                    'maxPlayers',
+                    'minimumAge',
+                    'duration'
+                ],
+                properties: [
+                    new OA\Property(property: 'name', type: 'string', example: 'Sky Team'),
+                    new OA\Property(property: 'imageFile', type: 'string', format: 'binary', description: 'Image facultative : JPEG, PNG, WebP ou GIF, 5 Mo maximum.'),
+                    new OA\Property(property: 'description', type: 'string', example: 'Un jeu coopératif pour deux joueurs.'),
+                    new OA\Property(property: 'publisher', type: 'string', example: 'Scorpion Masqué'),
+                    new OA\Property(property: 'minPlayers', type: 'integer', example: 2),
+                    new OA\Property(property: 'maxPlayers', type: 'integer', example: 2),
+                    new OA\Property(property: 'minimumAge', type: 'integer', example: 12),
+                    new OA\Property(property: 'duration', type: 'integer', example: 20)
+                ]
+            )
         )
     )]
     #[OA\Response(response: 201, description: 'Jeu créé et demande acceptée.')]
@@ -141,18 +193,11 @@ final class AdminGameRequestController extends AbstractController
             ], 400);
         }
 
-        // Lecture et validation du JSON.
-        $data = json_decode($request->getContent(), true);
-
-        if (!is_array($data)) {
-            return new JsonResponse([
-                'message' => 'Le corps de la requête doit être un objet JSON valide.'
-            ], 400);
-        }
+        // Lecture des champs envoyés en multipart/form-data.
+        $data = $request->request->all();
 
         $requiredFields = [
             'name',
-            'image',
             'description',
             'publisher',
             'minPlayers',
@@ -169,8 +214,8 @@ final class AdminGameRequestController extends AbstractController
             }
         }
 
-        // Vérification des types et des champs textuels.
-        foreach (['name', 'image', 'description', 'publisher'] as $field) {
+        // Vérification des champs textuels.
+        foreach (['name', 'description', 'publisher'] as $field) {
             if (!is_string($data[$field]) || trim($data[$field]) === '') {
                 return new JsonResponse([
                     'message' => sprintf('Le champ "%s" doit être un texte non vide.', $field)
@@ -178,24 +223,95 @@ final class AdminGameRequestController extends AbstractController
             }
         }
 
-        foreach (['minPlayers', 'maxPlayers', 'minimumAge', 'duration'] as $field) {
-            if (!is_int($data[$field])) {
+        // Vérification des champs numériques transmis par FormData.
+        $numericFields = [
+            'minPlayers',
+            'maxPlayers',
+            'minimumAge',
+            'duration'
+        ];
+
+        $numericData = [];
+
+        foreach ($numericFields as $field) {
+            $value = $data[$field];
+
+            if (
+                !is_string($value)
+                || $value === ''
+                || filter_var($value, FILTER_VALIDATE_INT) === false
+            ) {
                 return new JsonResponse([
                     'message' => sprintf('Le champ "%s" doit être un entier.', $field)
                 ], 400);
             }
 
-            if ($data[$field] < 0) {
+            $numericData[$field] = (int) $value;
+
+            if ($numericData[$field] < 0) {
                 return new JsonResponse([
                     'message' => sprintf('Le champ "%s" ne peut pas être négatif.', $field)
                 ], 400);
             }
         }
 
-        if ($data['minPlayers'] < 1 || $data['minPlayers'] > $data['maxPlayers']) {
+        if (
+            $numericData['minPlayers'] < 1
+            || $numericData['minPlayers'] > $numericData['maxPlayers']
+        ) {
             return new JsonResponse([
                 'message' => 'Le nombre minimum de joueurs doit être supérieur ou égal à 1 et ne peut pas dépasser le maximum.'
             ], 400);
+        }
+
+        // Récupération et validation de l'image facultative.
+        $imageFile = $request->files->get('imageFile');
+
+        if ($imageFile !== null && !$imageFile instanceof UploadedFile) {
+            return new JsonResponse([
+                'message' => 'Le fichier image transmis est invalide.'
+            ], 400);
+        }
+
+        if ($imageFile instanceof UploadedFile) {
+            if (!$imageFile->isValid()) {
+                return new JsonResponse([
+                    'message' => 'Le transfert de l’image a échoué.'
+                ], 400);
+            }
+
+            if ($imageFile->getSize() > self::MAX_IMAGE_SIZE) {
+                return new JsonResponse([
+                    'message' => 'L’image ne doit pas dépasser 5 Mo.'
+                ], 400);
+            }
+
+            // Le type MIME est déterminé côté serveur, pas à partir du nom du fichier.
+            $mimeType = $imageFile->getMimeType();
+
+            if (!in_array($mimeType, self::ALLOWED_IMAGE_MIME_TYPES, true)) {
+                return new JsonResponse([
+                    'message' => 'Format d’image non accepté. Utilisez un fichier JPEG, PNG, WebP ou GIF.'
+                ], 400);
+            }
+        }
+
+        // Prépare le chemin de l'image sans déplacer le fichier avant la validation.
+        $imagePath = '/images/meeple-default.png';
+
+        if ($imageFile instanceof UploadedFile) {
+            $extensionByMimeType = [
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/webp' => 'webp',
+                'image/gif' => 'gif',
+            ];
+
+            $imageFilename = bin2hex(random_bytes(16))
+                . '.'
+                . $extensionByMimeType[$mimeType];
+
+            $imagePath = '/images/games/' . $imageFilename;
         }
 
         // Préparation du jeu à partir des informations du formulaire.
@@ -203,13 +319,13 @@ final class AdminGameRequestController extends AbstractController
 
         $game
             ->setName(trim($data['name']))
-            ->setImage(trim($data['image']))
+            ->setImage($imagePath)
             ->setDescription(trim($data['description']))
             ->setPublisher(trim($data['publisher']))
-            ->setMinPlayers($data['minPlayers'])
-            ->setMaxPlayers($data['maxPlayers'])
-            ->setMinimumAge($data['minimumAge'])
-            ->setDuration($data['duration'])
+            ->setMinPlayers($numericData['minPlayers'])
+            ->setMaxPlayers($numericData['maxPlayers'])
+            ->setMinimumAge($numericData['minimumAge'])
+            ->setDuration($numericData['duration'])
             ->setIsActive(true)
             ->setCreatedAt(new \DateTimeImmutable())
             ->setUpdatedAt(null);
@@ -230,11 +346,30 @@ final class AdminGameRequestController extends AbstractController
             ], 400);
         }
 
-        // La création du jeu et l'acceptation de la demande sont atomiques.
+        // Vérifie le dossier de destination avant de commencer la transaction.
+        $uploadDirectory = $this->getParameter('kernel.project_dir')
+            . '/public/images/games';
+
+        if (
+            $imageFile instanceof UploadedFile
+            && !is_dir($uploadDirectory)
+            && !mkdir($uploadDirectory, 0775, true)
+            && !is_dir($uploadDirectory)
+        ) {
+            return new JsonResponse([
+                'message' => 'Impossible de préparer le dossier de stockage des images.'
+            ], 500);
+        }
+
         $connection = $entityManager->getConnection();
         $connection->beginTransaction();
 
         try {
+            // Déplace la photo si une image a été sélectionnée.
+            if ($imageFile instanceof UploadedFile) {
+                $imageFile->move($uploadDirectory, $imageFilename);
+            }
+
             $entityManager->persist($game);
 
             // Première écriture : création du jeu.
@@ -250,16 +385,25 @@ final class AdminGameRequestController extends AbstractController
 
             $connection->commit();
         } catch (\Throwable $exception) {
-            // Annule les deux opérations si l'une d'elles échoue.
+            // Annule les écritures en base si une opération échoue.
             if ($connection->isTransactionActive()) {
                 $connection->rollBack();
+            }
+
+            // Supprime la photo si elle a été déplacée mais que la transaction échoue.
+            if (
+                $imageFile instanceof UploadedFile
+                && isset($imageFilename)
+                && is_file($uploadDirectory . '/' . $imageFilename)
+            ) {
+                unlink($uploadDirectory . '/' . $imageFilename);
             }
 
             // Réinitialise l'EntityManager après une erreur de persistance.
             $entityManager->clear();
 
             return new JsonResponse([
-                'message' => 'Impossible de créer le jeu et de traiter la demande. Aucune modification n’a été conservée.'
+                'message' => 'Impossible de créer le jeu et de traiter la demande. Aucune modification en base de données n’a été conservée.'
             ], 500);
         }
 
