@@ -12,6 +12,11 @@ security:
                 class: App\Entity\User
                 property: email
 
+    # Hiérarchie des rôles
+    role_hierarchy:
+        ROLE_EMPLOYEE: ROLE_USER
+        ROLE_ADMIN: ROLE_EMPLOYEE
+
     firewalls:
         # Désactive la sécurité sur les outils de développement Symfony
         dev:
@@ -55,6 +60,9 @@ security:
         # Consultation publique des jeux
         - { path: ^/api/games$, roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/api/games/\d+$, roles: PUBLIC_ACCESS, methods: [GET] }
+
+        # Routes d'administration réservées aux administrateurs
+        - { path: ^/api/admin, roles: ROLE_ADMIN }
 
         # Toutes les autres routes de l'API nécessitent une authentification
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

@@ -102,7 +102,7 @@ export function createAdminDashboardPage() {
     const introduction = document.createElement('p');
     introduction.classList.add('admin-dashboard-introduction');
     introduction.textContent =
-        'Gérez les jeux et les fonctionnalités de la plateforme depuis cet espace.';
+        'Gérez les jeux, les membres et les fonctionnalités de la plateforme depuis cet espace.';
 
     header.append(eyebrow, title, introduction);
 
@@ -139,8 +139,8 @@ export function createAdminDashboardPage() {
             description:
                 'Consultez les comptes des membres et gérez leur accès à la plateforme.',
             icon: 'bi-people',
-            path: '/admin/membres',
-            available: false
+            path: '/admin/utilisateurs',
+            available: true
         },
         {
             title: 'Statistiques',

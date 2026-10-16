@@ -19,6 +19,7 @@ import { createPlayerLibraryPage } from '../pages/PlayerLibrary.js';
 import { createAdminDashboardPage } from '../pages/AdminDashboard.js';
 import { createAdminGameRequestsPage } from '../pages/AdminGameRequests.js';
 import { createAdminGamesPage } from '../pages/AdminGames.js';
+import { createAdminUsersPage } from '../pages/AdminUsers.js';
 
 import {
     isAuthenticated,
@@ -40,7 +41,8 @@ const routes = {
     // Espace d'administration
     '/admin': createAdminDashboardPage,
     '/admin/jeux': createAdminGamesPage,
-    '/admin/demandes-jeux': createAdminGameRequestsPage
+    '/admin/demandes-jeux': createAdminGameRequestsPage,
+    '/admin/utilisateurs': createAdminUsersPage
 };
 
 // Définit les chemins accessibles sans connexion.
