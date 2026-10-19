@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Service\StatisticsTrackingService;
 use Doctrine\ORM\EntityManagerInterface;
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -91,7 +92,8 @@ final class AuthController
         Request $request,
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        StatisticsTrackingService $statisticsTrackingService
     ): JsonResponse {
         // Décodage du JSON envoyé par le client
         $data = json_decode($request->getContent(), true);
@@ -197,9 +199,13 @@ final class AuthController
             ], 400);
         }
 
-        // Enregistrement de l'utilisateur en base de données
+        // Enregistrement de l'utilisateur en base de données MySQL
         $entityManager->persist($user);
         $entityManager->flush();
+
+        // Suit l'inscription après confirmation de son enregistrement MySQL.
+        // Une erreur MongoDB ne doit pas annuler la création du compte.
+        $statisticsTrackingService->trackRegistration();
 
         return new JsonResponse([
             'message' => 'Utilisateur créé avec succès.'

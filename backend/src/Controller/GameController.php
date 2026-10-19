@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Game;
+use App\Service\StatisticsTrackingService;
 use Doctrine\ORM\EntityManagerInterface;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -81,7 +82,8 @@ final class GameController extends AbstractController
     )]
     public function show(
         int $id,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        StatisticsTrackingService $statisticsTrackingService
     ): JsonResponse {
         // Recherche du jeu par son identifiant
         $game = $entityManager
@@ -94,6 +96,9 @@ final class GameController extends AbstractController
                 'message' => 'Jeu introuvable.'
             ], 404);
         }
+
+        // Enregistre la consultation sans bloquer l'affichage en cas d'erreur MongoDB
+        $statisticsTrackingService->trackGameView($id);
 
         return new JsonResponse([
             'id' => $game->getId(),
