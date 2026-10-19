@@ -20,6 +20,7 @@ import { createAdminDashboardPage } from '../pages/AdminDashboard.js';
 import { createAdminGameRequestsPage } from '../pages/AdminGameRequests.js';
 import { createAdminGamesPage } from '../pages/AdminGames.js';
 import { createAdminUsersPage } from '../pages/AdminUsers.js';
+import { createStatisticsPage } from '../pages/Statistics.js';
 
 import {
     isAuthenticated,
@@ -42,7 +43,8 @@ const routes = {
     '/admin': createAdminDashboardPage,
     '/admin/jeux': createAdminGamesPage,
     '/admin/demandes-jeux': createAdminGameRequestsPage,
-    '/admin/utilisateurs': createAdminUsersPage
+    '/admin/utilisateurs': createAdminUsersPage,
+    '/statistics': createStatisticsPage
 };
 
 // Définit les chemins accessibles sans connexion.
@@ -58,7 +60,11 @@ function isPublicRoute(path) {
 
 // Indique si le chemin appartient à l'espace d'administration.
 function isAdminRoute(path) {
-    return path === '/admin' || path.startsWith('/admin/');
+    return (
+        path === '/admin'
+        || path.startsWith('/admin/')
+        || path === '/statistics'
+    );
 }
 
 export function router() {
