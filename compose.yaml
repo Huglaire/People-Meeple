@@ -11,6 +11,8 @@ services:
   backend:
     build:
       context: ./backend
+    volumes:
+      - ./backend/public/images:/var/www/html/public/images
     environment:
       APP_ENV: dev
       APP_DEBUG: "1"
