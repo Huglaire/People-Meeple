@@ -1,8 +1,9 @@
 // Crée la page de détail d'un jeu
 
 import { getGameBySlug } from '../api/gamesApi.js';
+import { addGameToLibrary } from '../api/userGamesApi.js';
 import { navigateTo } from '../router/router.js';
-import { isAuthenticated } from '../services/authService.js';
+import { getToken, isAuthenticated } from '../services/authService.js';
 
 import '../css/game-detail.css';
 
@@ -83,22 +84,17 @@ function createGameCard(game) {
     publisherLabel.textContent = 'Éditeur :';
 
     const publisherValue = document.createElement('strong');
-    publisherValue.textContent = game.publisher;
+    publisherValue.textContent = game.publisher || 'Non renseigné';
 
     publisher.append(publisherLabel, publisherValue);
 
     const informationBlock = createInformationBlock(game);
 
-    information.append(
-        title,
-        publisher,
-        informationBlock
-    );
+    information.append(title, publisher, informationBlock);
 
-    // Seuls les membres connectés peuvent modifier leur ludothèque
+    // Seuls les membres connectés peuvent modifier leur ludothèque.
     if (isAuthenticated()) {
-        const libraryMenu = createLibraryMenu();
-        information.append(libraryMenu);
+        information.append(createLibraryMenu(game));
     }
 
     card.append(imageContainer, information);
@@ -153,7 +149,7 @@ function createGameInformation(iconName, labelText, valueText) {
 }
 
 // Crée le menu permettant de choisir le statut du jeu
-function createLibraryMenu() {
+function createLibraryMenu(game) {
     const container = document.createElement('div');
     container.classList.add('game-detail-library-menu');
 
@@ -184,38 +180,53 @@ function createLibraryMenu() {
     menu.classList.add('game-detail-library-options');
     menu.hidden = true;
 
-    const successMessage = document.createElement('p');
-    successMessage.classList.add('game-detail-library-success');
-    successMessage.hidden = true;
+    const feedback = document.createElement('p');
+    feedback.classList.add('game-detail-library-success');
+    feedback.setAttribute('role', 'status');
+    feedback.setAttribute('aria-live', 'polite');
+    feedback.hidden = true;
 
-    const successIcon = document.createElement('i');
-    successIcon.classList.add('bi', 'bi-check-circle');
-    successIcon.setAttribute('aria-hidden', 'true');
+    const feedbackIcon = document.createElement('i');
+    feedbackIcon.setAttribute('aria-hidden', 'true');
 
-    const successText = document.createElement('span');
+    const feedbackText = document.createElement('span');
 
-    successMessage.append(successIcon, successText);
+    feedback.append(feedbackIcon, feedbackText);
 
     const options = [
-        'Je possède ce jeu',
-        'Je connais les règles du jeu',
-        'Je possède ce jeu + je connais les règles'
+        {
+            label: 'Je possède ce jeu',
+            owns: true,
+            knowsRules: false
+        },
+        {
+            label: 'Je connais les règles du jeu',
+            owns: false,
+            knowsRules: true
+        },
+        {
+            label: 'Je possède ce jeu + je connais les règles',
+            owns: true,
+            knowsRules: true
+        }
     ];
 
     let selectedOption = null;
+    let isSubmitting = false;
 
-    options.forEach((optionText) => {
+    options.forEach((optionData) => {
         const option = document.createElement('button');
         option.type = 'button';
         option.classList.add('game-detail-library-option');
-        option.textContent = optionText;
+        option.textContent = optionData.label;
 
         option.addEventListener('click', () => {
-            selectedOption = optionText;
-            buttonText.textContent = optionText;
+            selectedOption = optionData;
+            buttonText.textContent = optionData.label;
             validateButton.disabled = false;
 
-            successMessage.hidden = true;
+            feedback.hidden = true;
+            feedback.classList.remove('is-error', 'is-success');
 
             closeLibraryMenu();
         });
@@ -236,13 +247,68 @@ function createLibraryMenu() {
         container.classList.add('is-open');
     });
 
-    validateButton.addEventListener('click', () => {
-        if (!selectedOption) {
+    validateButton.addEventListener('click', async () => {
+        if (!selectedOption || isSubmitting) {
             return;
         }
 
-        successText.textContent = createSuccessMessage(selectedOption);
-        successMessage.hidden = false;
+        const token = getToken();
+
+        if (!token) {
+            navigateTo('/connexion');
+            return;
+        }
+
+        isSubmitting = true;
+        validateButton.disabled = true;
+        button.disabled = true;
+
+        feedback.hidden = true;
+        feedback.classList.remove('is-error', 'is-success');
+        validateButton.textContent = 'Enregistrement...';
+
+        try {
+            await addGameToLibrary(
+                token,
+                game.id,
+                selectedOption.owns,
+                selectedOption.knowsRules
+            );
+
+            feedbackIcon.className = 'bi bi-check-circle';
+            feedbackText.textContent =
+                'Le jeu a bien été ajouté à votre ludothèque.';
+            feedback.classList.add('is-success');
+            feedback.hidden = false;
+
+            // Empêche une seconde tentative d'ajout depuis cette fiche.
+            buttonText.textContent = 'Jeu ajouté à la ludothèque';
+            selectedOption = null;
+        } catch (error) {
+            console.error(
+                'Impossible d’ajouter le jeu à la ludothèque.',
+                error
+            );
+
+            feedbackIcon.className = 'bi bi-exclamation-circle';
+            feedbackText.textContent =
+                error.message ||
+                'Impossible d’ajouter ce jeu à votre ludothèque.';
+            feedback.classList.add('is-error');
+            feedback.hidden = false;
+
+            // Autorise une nouvelle tentative après un échec.
+            validateButton.disabled = false;
+        } finally {
+            isSubmitting = false;
+            button.disabled = false;
+            validateButton.textContent = 'Valider';
+
+            // Ne réactive la validation que si un choix reste disponible.
+            if (selectedOption) {
+                validateButton.disabled = false;
+            }
+        }
     });
 
     function closeLibraryMenu() {
@@ -252,22 +318,9 @@ function createLibraryMenu() {
     }
 
     actions.append(button, validateButton);
-    container.append(actions, menu, successMessage);
+    container.append(actions, menu, feedback);
 
     return container;
-}
-
-// Crée le message affiché après validation
-function createSuccessMessage(selectedOption) {
-    if (selectedOption === 'Ajouter à ma ludothèque') {
-        return 'Le jeu a bien été ajouté à votre ludothèque.';
-    }
-
-    if (selectedOption === 'Je connais les règles du jeu') {
-        return 'Vous connaissez maintenant les règles de ce jeu.';
-    }
-
-    return 'Le jeu a été ajouté à votre ludothèque et vous connaissez les règles.';
 }
 
 // Crée la description du jeu
@@ -279,7 +332,8 @@ function createDescriptionSection(game) {
     title.textContent = 'Description';
 
     const description = document.createElement('p');
-    description.textContent = game.description || 'Aucune description disponible.';
+    description.textContent =
+        game.description || 'Aucune description disponible.';
 
     section.append(title, description);
 
@@ -306,4 +360,4 @@ function createGameNotFoundContent() {
     container.append(title, link);
 
     return container;
-}
+    }
