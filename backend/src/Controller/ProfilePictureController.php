@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use OpenApi\Attributes as OA;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -27,7 +28,7 @@ final class ProfilePictureController extends AbstractController
     )]
     #[OA\Post(
         summary: 'Modifier ma photo de profil',
-        description: 'Permet à l’utilisateur authentifié de remplacer sa photo de profil. Les formats JPEG, PNG, WebP et GIF sont acceptés, dans la limite de 2 Mo.',
+        description: 'Permet à l’utilisateur authentifié de remplacer sa photo de profil. Les formats JPEG, PNG, WebP et GIF sont acceptés, dans la limite de 10 Mo.',
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\MediaType(
@@ -38,7 +39,7 @@ final class ProfilePictureController extends AbstractController
                     properties: [
                         new OA\Property(
                             property: 'profilePicture',
-                            description: 'Fichier image de la nouvelle photo de profil (2 Mo maximum).',
+                            description: 'Fichier image de la nouvelle photo de profil (10 Mo maximum).',
                             type: 'string',
                             format: 'binary'
                         )
@@ -100,7 +101,8 @@ final class ProfilePictureController extends AbstractController
         Request $request,
         #[CurrentUser] User $user,
         EntityManagerInterface $entityManager,
-        KernelInterface $kernel
+        KernelInterface $kernel,
+        LoggerInterface $logger
     ): JsonResponse {
         // Récupère le fichier envoyé dans le formulaire
         $file = $request->files->get('profilePicture');
@@ -113,15 +115,20 @@ final class ProfilePictureController extends AbstractController
 
         // Vérifie que le transfert du fichier s'est correctement déroulé
         if (!$file->isValid()) {
+            $logger->warning('Échec du transfert de la photo de profil.', [
+                'error' => $file->getError(),
+                'originalName' => $file->getClientOriginalName(),
+            ]);
+
             return new JsonResponse([
                 'message' => 'Le transfert de l’image a échoué.'
             ], 400);
         }
 
-        // Limite la taille de l'image à 2 Mo
-        if ($file->getSize() > 2 * 1024 * 1024) {
+        // Limite la taille de l'image à 10 Mo
+        if ($file->getSize() > 10 * 1024 * 1024) {
             return new JsonResponse([
-                'message' => 'L’image ne doit pas dépasser 2 Mo.'
+                'message' => 'L’image ne doit pas dépasser 10 Mo.'
             ], 400);
         }
 
@@ -149,6 +156,10 @@ final class ProfilePictureController extends AbstractController
             && !mkdir($uploadDirectory, 0755, true)
             && !is_dir($uploadDirectory)
         ) {
+            $logger->error('Impossible de créer le dossier des photos de profil.', [
+                'directory' => $uploadDirectory,
+            ]);
+
             return new JsonResponse([
                 'message' => 'Impossible de préparer le dossier des images.'
             ], 500);
@@ -162,7 +173,16 @@ final class ProfilePictureController extends AbstractController
         try {
             // Déplace l'image dans le dossier public
             $file->move($uploadDirectory, $fileName);
-        } catch (FileException) {
+        } catch (FileException $exception) {
+            // Enregistre le détail de l'erreur dans les logs Symfony
+            $logger->error('Échec du déplacement de la photo de profil.', [
+                'directory' => $uploadDirectory,
+                'fileName' => $fileName,
+                'fileSize' => $file->getSize(),
+                'mimeType' => $mimeType,
+                'exception' => $exception,
+            ]);
+
             return new JsonResponse([
                 'message' => 'Impossible d’enregistrer la nouvelle image.'
             ], 500);

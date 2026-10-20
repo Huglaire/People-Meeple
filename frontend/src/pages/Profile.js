@@ -10,12 +10,13 @@ import { getMyGames } from '../api/userGamesApi.js';
 import { getToken } from '../services/authService.js';
 import { navigateTo } from '../router/router.js';
 import ludothequeImage from '../assets/images/backgrounds/ludotheque.jpg';
+
 import '../css/profile.css';
 import '../css/games.css';
 import '../css/ludotheque.css';
 
 // Adresse du serveur backend pour les photos de profil
-const PROFILE_PICTURE_BASE_URL = '/images/avatars/';
+const PROFILE_PICTURE_BASE_URL = '/images/';
 
 // Photo affichée lorsqu'aucune photo personnalisée n'est disponible
 const DEFAULT_PROFILE_PICTURE =
@@ -29,8 +30,8 @@ const ALLOWED_PICTURE_TYPES = [
     'image/gif'
 ];
 
-// Taille maximale autorisée : 2 Mo
-const MAX_PICTURE_SIZE = 2 * 1024 * 1024;
+// Taille maximale autorisée : 10 Mo
+const MAX_PICTURE_SIZE = 10 * 1024 * 1024;
 
 /* ========================================
    Départements français
@@ -162,7 +163,7 @@ function getProfilePictureUrl(profilePicture) {
 
     // Prend en charge les chemins publics commençant par un slash.
     if (picturePath.startsWith('/')) {
-        return `${picturePath}`;
+        return picturePath;
     }
 
     if (picturePath.includes('/')) {
@@ -679,7 +680,7 @@ function openProfileEditForm(user) {
     const pictureHelp = document.createElement('p');
     pictureHelp.classList.add('profile-form-help');
     pictureHelp.textContent =
-        'JPEG, PNG, WebP ou GIF. Taille maximale : 2 Mo.';
+        'JPEG, PNG, WebP ou GIF. Taille maximale : 10 Mo.';
 
     let temporaryPictureUrl = null;
 
@@ -859,7 +860,7 @@ function openProfileEditForm(user) {
         if (file.size > MAX_PICTURE_SIZE) {
             pictureInput.value = '';
             formError.textContent =
-                'L’image ne doit pas dépasser 2 Mo.';
+                'L’image ne doit pas dépasser 10 Mo.';
             formError.hidden = false;
             return;
         }
@@ -927,7 +928,7 @@ function openProfileEditForm(user) {
 
             if (selectedPicture.size > MAX_PICTURE_SIZE) {
                 formError.textContent =
-                    'L’image ne doit pas dépasser 2 Mo.';
+                    'L’image ne doit pas dépasser 10 Mo.';
                 formError.hidden = false;
                 return;
             }

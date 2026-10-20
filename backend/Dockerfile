@@ -18,6 +18,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
+# Autoriser l'envoi de photos de profil jusqu'à 10 Mo.
+RUN printf "upload_max_filesize=10M\npost_max_size=12M\n" \
+    > /usr/local/etc/php/conf.d/uploads.ini
+
 # Installer Composer.
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -52,11 +56,10 @@ RUN composer install \
 # Copier le projet Symfony.
 COPY . .
 
-# Préparer les répertoires nécessaires à Symfony.
-RUN mkdir -p var/cache var/log \
-    && chown -R www-data:www-data var \
+# Préparer les répertoires nécessaires à Symfony et aux photos de profil.
+RUN mkdir -p var/cache var/log public/images \
+    && chown -R www-data:www-data var public/images \
+    && chmod -R u+rwX,g+rwX var public/images \
     && composer dump-autoload --optimize --no-scripts
 
 EXPOSE 80
-
-CMD ["apache2-foreground"]
