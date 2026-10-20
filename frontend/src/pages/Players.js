@@ -17,7 +17,7 @@ import profilFemme3Image from '../assets/images/profiles/profil femme 3.jpg';
 import '../css/players.css';
 
 // Adresse de l'API Symfony
-const API_URL = 'http://127.0.0.1:8000';
+const API_URL = '';
 
 // Les profils sont chargés depuis la base de données.
 let players = [];

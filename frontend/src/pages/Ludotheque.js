@@ -1202,7 +1202,7 @@ function getGameImage(game) {
             return game.image;
         }
 
-        return `http://127.0.0.1:8000${game.image}`;
+        return `${game.image}`;
     }
 
     return '';

@@ -2,7 +2,7 @@
 
 import { getToken } from '../services/authService.js';
 
-const API_URL = 'http://127.0.0.1:8000/api/admin/game-requests';
+const API_URL = '/api/admin/game-requests';
 
 /**
  * Récupère la liste des demandes d'ajout de jeux.

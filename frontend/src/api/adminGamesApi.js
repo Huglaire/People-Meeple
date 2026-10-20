@@ -2,7 +2,7 @@
 
 import { getToken } from '../services/authService.js';
 
-const API_URL = 'http://127.0.0.1:8000/api/admin/games';
+const API_URL = '/api/admin/games';
 
 /**
  * Récupère tous les jeux, actifs et désactivés.

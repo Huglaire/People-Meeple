@@ -7,7 +7,7 @@ import { createConversation } from '../api/messagingApi.js';
 
 import '../css/player-library.css';
 
-const API_URL = 'http://127.0.0.1:8000';
+const API_URL = '';
 
 /**
  * Construit un slug identique à celui utilisé dans Players.js.

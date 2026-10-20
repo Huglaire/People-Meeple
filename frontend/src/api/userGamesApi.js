@@ -1,6 +1,6 @@
 // Gère les appels à l'API liés à la ludothèque de l'utilisateur
 
-const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = '/api';
 
 /**
  * Récupère la ludothèque de l'utilisateur connecté.

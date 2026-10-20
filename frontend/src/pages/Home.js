@@ -9,7 +9,7 @@ import { navigateTo } from '../router/router.js';
 
 import ludothequeImage from '../assets/images/backgrounds/ludotheque.jpg';
 
-const API_URL = 'http://127.0.0.1:8000';
+const API_URL = '';
 const DEFAULT_PROFILE_PICTURE = `${API_URL}/images/meeple-default.png`;
 
 export function createHomePage() {

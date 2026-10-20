@@ -1,7 +1,7 @@
 
  // Gère les appels à l'API liés à l'authentification
 
-const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = '/api';
 
 /**
  * Connecte un utilisateur et retourne le JWT.

@@ -4,7 +4,7 @@
 
 import { getToken } from '../services/authService.js';
 
-const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = '/api';
 
 /**
  * Effectue une requête authentifiée vers l'API de messagerie.

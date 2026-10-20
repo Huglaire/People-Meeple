@@ -15,7 +15,7 @@ import '../css/games.css';
 import '../css/ludotheque.css';
 
 // Adresse du serveur backend pour les photos de profil
-const PROFILE_PICTURE_BASE_URL = 'http://127.0.0.1:8000/images/avatars/';
+const PROFILE_PICTURE_BASE_URL = '/images/avatars/';
 
 // Photo affichée lorsqu'aucune photo personnalisée n'est disponible
 const DEFAULT_PROFILE_PICTURE =
@@ -162,11 +162,11 @@ function getProfilePictureUrl(profilePicture) {
 
     // Prend en charge les chemins publics commençant par un slash.
     if (picturePath.startsWith('/')) {
-        return `http://127.0.0.1:8000${picturePath}`;
+        return `${picturePath}`;
     }
 
     if (picturePath.includes('/')) {
-        return `http://127.0.0.1:8000/${picturePath}`;
+        return `/${picturePath}`;
     }
 
     // Si l'API renvoie uniquement un nom de fichier, utilise /images/.
@@ -626,7 +626,7 @@ function getGameImage(game) {
             return game.image;
         }
 
-        return `http://127.0.0.1:8000${game.image.startsWith('/') ? '' : '/'}${game.image}`;
+        return `${game.image.startsWith('/') ? '' : '/'}${game.image}`;
     }
 
     return '';

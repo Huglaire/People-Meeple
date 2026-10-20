@@ -1,6 +1,6 @@
 // Gère les appels à l'API des demandes de jeux
 
-const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = '/api';
 
 /**
  * Envoie une demande d'ajout de jeu.

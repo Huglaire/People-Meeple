@@ -1,7 +1,6 @@
 // Gère les appels à l'API publique des jeux
 
-const API_URL = 'http://127.0.0.1:8000/api';
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_URL = '/api';
 
 /**
  * Récupère la liste des jeux actifs.
@@ -84,16 +83,19 @@ function createSlug(name) {
 }
 
 /**
- * Transforme le chemin d'image retourné par l'API en URL complète.
+ * Normalise le chemin d'image retourné par l'API.
  */
 function createImageUrl(image) {
     if (!image) {
         return '';
     }
 
+    // Conserve les URL absolues déjà fournies par l'API.
     if (image.startsWith('http://') || image.startsWith('https://')) {
         return image;
     }
 
-    return new URL(image, API_BASE_URL).href;
+    // Les chemins relatifs à la racine fonctionnent en développement
+    // comme dans Docker, puisque le frontend et l'API partagent l'origine.
+    return image.startsWith('/') ? image : `/${image}`;
 }
