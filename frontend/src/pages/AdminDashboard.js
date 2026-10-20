@@ -145,17 +145,9 @@ export function createAdminDashboardPage() {
         {
             title: 'Statistiques',
             description:
-                'Consultez les jeux les plus consultés et l’évolution des inscriptions.',
+                'Retrouvez les principales données d’activité de People Meeple.',
             icon: 'bi-bar-chart-line',
-            path: '/statistics',
-            available: true
-        },
-        {
-            title: 'Paramètres',
-            description:
-                'Retrouvez ici les futurs paramètres de l’administration.',
-            icon: 'bi-gear',
-            path: '/admin/parametres',
+            path: '/admin/statistiques',
             available: false
         }
     ];
