@@ -117,6 +117,8 @@ export function createAdminDashboardPage() {
     const cards = document.createElement('div');
     cards.classList.add('admin-dashboard-grid');
 
+    // Les paramètres ont été retirés du tableau de bord.
+    // La carte Statistiques reste accessible.
     const cardDefinitions = [
         {
             title: 'Gestion des jeux',
@@ -147,8 +149,8 @@ export function createAdminDashboardPage() {
             description:
                 'Retrouvez les principales données d’activité de People Meeple.',
             icon: 'bi-bar-chart-line',
-            path: '/admin/statistiques',
-            available: false
+            path: '/statistics',
+            available: true
         }
     ];
 
