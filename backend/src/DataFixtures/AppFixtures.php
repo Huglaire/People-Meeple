@@ -23,7 +23,7 @@ class AppFixtures extends Fixture
         $faker = Factory::create('fr_FR');
         $now = new DateTimeImmutable();
 
-        // Recherche les avatars téléchargés dans le dossier public.
+        // Recherche les avatars disponibles dans le dossier public.
         $avatarDirectory = dirname(__DIR__, 2) . '/public/images/avatars';
         $profilePictures = [];
 
@@ -48,7 +48,7 @@ class AppFixtures extends Fixture
         /*
          * Création du compte administrateur.
          */
-        $admin = $this->createUser(
+        $this->createUser(
             $manager,
             'admin@mail.fr',
             'AdminMeeple',
@@ -252,90 +252,92 @@ class AppFixtures extends Fixture
         }
 
         /*
-         * Crée dix profils fictifs pour chaque département répertorié.
+         * Création de 20 profils fictifs répartis aléatoirement
+         * entre les départements et les villes répertoriés.
          */
         $fakerUsers = [];
-        $profileNumber = 1;
+        $departments = array_keys($departmentCities);
 
-        foreach ($departmentCities as $department => $cities) {
-            for ($i = 0; $i < 10; $i++) {
-                $user = new User();
+        for ($profileNumber = 1; $profileNumber <= 20; $profileNumber++) {
+            $user = new User();
 
-                // Génère un prénom et un nom français plausibles.
-                $firstName = $faker->firstName();
-                $lastName = $faker->lastName();
+            // Génère un prénom et un nom français plausibles.
+            $firstName = $faker->firstName();
+            $lastName = $faker->lastName();
 
-                // Construit un pseudo lisible et une adresse e-mail unique.
-                $pseudo = $firstName . ' ' . $lastName;
+            // Construit un pseudo lisible.
+            $pseudo = $firstName . ' ' . $lastName;
 
-                // Normalise les noms pour les rendre compatibles avec une adresse e-mail.
-                $emailFirstName = iconv(
-                    'UTF-8',
-                    'ASCII//TRANSLIT//IGNORE',
-                    $firstName
-                );
+            // Normalise les noms pour construire une adresse e-mail.
+            $emailFirstName = iconv(
+                'UTF-8',
+                'ASCII//TRANSLIT//IGNORE',
+                $firstName
+            );
 
-                $emailLastName = iconv(
-                    'UTF-8',
-                    'ASCII//TRANSLIT//IGNORE',
-                    $lastName
-                );
+            $emailLastName = iconv(
+                'UTF-8',
+                'ASCII//TRANSLIT//IGNORE',
+                $lastName
+            );
 
-                $emailFirstName = strtolower(
-                    preg_replace(
-                        '/[^a-zA-Z0-9]+/',
-                        '',
-                        $emailFirstName ?: 'joueur'
-                    )
-                );
+            $emailFirstName = strtolower(
+                preg_replace(
+                    '/[^a-zA-Z0-9]+/',
+                    '',
+                    $emailFirstName ?: 'joueur'
+                )
+            );
 
-                $emailLastName = strtolower(
-                    preg_replace(
-                        '/[^a-zA-Z0-9]+/',
-                        '',
-                        $emailLastName ?: 'meeple'
-                    )
-                );
+            $emailLastName = strtolower(
+                preg_replace(
+                    '/[^a-zA-Z0-9]+/',
+                    '',
+                    $emailLastName ?: 'meeple'
+                )
+            );
 
-                // Ajoute le numéro du profil pour garantir l'unicité de l'adresse.
-                $email = $emailFirstName
-                    . '.'
-                    . $emailLastName
-                    . '.'
-                    . str_pad(
-                        (string) $profileNumber,
-                        4,
-                        '0',
-                        STR_PAD_LEFT
-                    )
-                    . '@example.com';
+            // Le numéro garantit l'unicité des adresses générées.
+            $email = $emailFirstName
+                . '.'
+                . $emailLastName
+                . '.'
+                . str_pad(
+                    (string) $profileNumber,
+                    4,
+                    '0',
+                    STR_PAD_LEFT
+                )
+                . '@example.com';
 
-                $user->setEmail($email);
-                $user->setRoles(['ROLE_USER']);
-                $user->setPassword(
-                    $this->passwordHasher->hashPassword($user, 'password')
-                );
-                $user->setPseudo($pseudo);
-                $user->setProfilePicture(
-                    $faker->randomElement($profilePictures)
-                );
-                $user->setDateOfBirth(
-                    DateTimeImmutable::createFromMutable(
-                        $faker->dateTimeBetween('-60 years', '-18 years')
-                    )
-                );
-                $user->setDepartment($department);
-                $user->setCity($faker->randomElement($cities));
-                $user->setCityVisible($faker->boolean(80));
-                $user->setIsActive(true);
-                $user->setRole('USER');
-                $user->setCreatedAt($now);
-                $user->setUpdatedAt($now);
+            // Choisit un département, puis une ville de ce département.
+            $department = $faker->randomElement($departments);
+            $city = $faker->randomElement($departmentCities[$department]);
 
-                $manager->persist($user);
-                $fakerUsers[] = $user;
-                $profileNumber++;
-            }
+            $user->setEmail($email);
+            $user->setRoles(['ROLE_USER']);
+            $user->setPassword(
+                $this->passwordHasher->hashPassword($user, 'password')
+            );
+            $user->setPseudo($pseudo);
+            $user->setProfilePicture(
+                $faker->randomElement($profilePictures)
+            );
+            $user->setDateOfBirth(
+                DateTimeImmutable::createFromMutable(
+                    $faker->dateTimeBetween('-60 years', '-18 years')
+                )
+            );
+            $user->setDepartment($department);
+            $user->setCity($city);
+            $user->setCityVisible($faker->boolean(80));
+            $user->setIsActive(true);
+            $user->setRole('USER');
+            $user->setCreatedAt($now);
+            $user->setUpdatedAt($now);
+
+            $manager->persist($user);
+            $fakerUsers[] = $user;
         }
 
         /*
@@ -345,7 +347,7 @@ class AppFixtures extends Fixture
 
         /*
          * Le compte administrateur ne reçoit pas de ludothèque.
-         * Les deux comptes de test et tous les profils fictifs en reçoivent une.
+         * Les deux comptes de test et les 20 profils fictifs en reçoivent une.
          */
         $players = [
             $testUser,
@@ -354,10 +356,10 @@ class AppFixtures extends Fixture
         ];
 
         foreach ($players as $user) {
-            // Chaque joueur reçoit entre 1 et 12 jeux distincts.
+            // Chaque joueur reçoit entre 6 et 14 jeux distincts.
             $numberOfGames = $faker->numberBetween(
-                1,
-                min(12, count($games))
+                6,
+                min(14, count($games))
             );
 
             $randomGames = $faker->randomElements(
