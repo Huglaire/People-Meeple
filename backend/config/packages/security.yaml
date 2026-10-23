@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=../vendor/symfony/security-bundle/Resources/config/security.schema.json
+
+security:
+    # Configuration du hashage des mots de passe
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+    # Fournisseur permettant de retrouver un utilisateur par son email
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
+    # Hiérarchie des rôles
+    role_hierarchy:
+        ROLE_EMPLOYEE: ROLE_USER
+        ROLE_ADMIN: ROLE_EMPLOYEE
+
+    firewalls:
+        # Désactive la sécurité sur les outils de développement Symfony
+        dev:
+            pattern: ^/(_profiler|_wdt|assets|build)/
+            security: false
+
+        # Firewall dédié à la connexion et à la génération du JWT
+        login:
+            pattern: ^/api/login
+            stateless: true
+            user_checker: App\Security\UserChecker
+            json_login:
+                check_path: /api/login
+                username_path: email
+                password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+
+        # Firewall protégeant les routes de l'API avec un JWT
+        api:
+            pattern: ^/api
+            stateless: true
+            user_checker: App\Security\UserChecker
+            jwt: ~
+
+        # Firewall principal de Symfony
+        main:
+            lazy: true
+            provider: app_user_provider
+
+    access_control:
+        # Documentation Swagger accessible sans authentification
+        - { path: ^/api/doc$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/doc\.json$, roles: PUBLIC_ACCESS }
+
+        # Routes publiques de l'API
+        - { path: ^/api/register$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/reactivate$, roles: PUBLIC_ACCESS }
+
+        # Consultation publique des jeux
+        - { path: ^/api/games$, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/games/\d+$, roles: PUBLIC_ACCESS, methods: [GET] }
+
+        # Routes d'administration réservées aux administrateurs
+        - { path: ^/api/admin, roles: ROLE_ADMIN }
+
+        # Toutes les autres routes de l'API nécessitent une authentification
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

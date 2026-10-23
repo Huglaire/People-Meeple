@@ -1,0 +1,777 @@
+/* ========================================
+   Administration du catalogue de jeux
+   People Meeple
+   ======================================== */
+
+.admin-games-page {
+    min-height: 100vh;
+    padding: 36px 5%;
+    background-color: var(--couleur-creme, #E7E1D8);
+    color: var(--couleur-bleu, #1F3556);
+    font-family: var(--police-texte, 'Lato', sans-serif);
+    box-sizing: border-box;
+}
+
+.admin-games-page *,
+.admin-games-modal-overlay * {
+    box-sizing: border-box;
+}
+
+/* ========================================
+   En-tête
+   ======================================== */
+
+.admin-games-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin: 0 auto 30px;
+    max-width: 1400px;
+}
+
+.admin-games-header h1 {
+    margin: 0 0 10px;
+    color: var(--couleur-bleu, #1F3556);
+    font-family: var(--police-titre, 'Abril Fatface', serif);
+    font-size: clamp(28px, 3vw, 38px);
+    font-weight: 400;
+    line-height: 1.2;
+}
+
+.admin-games-header p {
+    margin: 0;
+    color: #5c6570;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.admin-games-back-button {
+    flex-shrink: 0;
+    padding: 11px 18px;
+    border: 1px solid var(--couleur-bleu, #1F3556);
+    border-radius: 5px;
+    background-color: transparent;
+    color: var(--couleur-bleu, #1F3556);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.admin-games-back-button:hover {
+    background-color: var(--couleur-bleu, #1F3556);
+    color: #fff;
+}
+
+/* ========================================
+   Barre de recherche et filtres
+   ======================================== */
+
+.admin-games-toolbar {
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto 30px;
+    padding: 22px 24px;
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0 2px 10px rgb(31 53 86 / 5%);
+}
+
+.admin-games-search {
+    display: flex;
+    flex: 1 1 340px;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.admin-games-search label,
+.admin-games-filters label {
+    color: var(--couleur-bleu, #1F3556);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.admin-games-search input {
+    width: 100%;
+    min-height: 44px;
+    padding: 11px 14px;
+    border: 1px solid #d1d6dc;
+    border-radius: 6px;
+    outline: none;
+    background-color: #fff;
+    color: var(--couleur-bleu, #1F3556);
+    font: inherit;
+    font-size: 14px;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.admin-games-search input:focus,
+.admin-games-form input:focus,
+.admin-games-form textarea:focus,
+.admin-games-filters select:focus {
+    border-color: var(--couleur-camel, #B8956D);
+    box-shadow: 0 0 0 3px rgb(184 149 109 / 18%);
+    outline: none;
+}
+
+.admin-games-filters {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 165px;
+}
+
+.admin-games-filters select {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 32px 10px 12px;
+    border: 1px solid #d1d6dc;
+    border-radius: 6px;
+    background-color: #fff;
+    color: var(--couleur-bleu, #1F3556);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.admin-games-add-button {
+    flex-shrink: 0;
+    min-height: 44px;
+    padding: 11px 20px;
+    border: 1px solid var(--couleur-bordeaux, #7A1F2B);
+    border-radius: 5px;
+    background-color: var(--couleur-bordeaux, #7A1F2B);
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.admin-games-add-button:hover {
+    background-color: #601721;
+    transform: translateY(-1px);
+}
+
+/* ========================================
+   Messages
+   ======================================== */
+
+.admin-games-feedback {
+    display: none;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto 20px;
+    padding: 0;
+    font-size: 14px;
+}
+
+.admin-games-feedback:not(:empty) {
+    display: block;
+}
+
+.admin-games-feedback-success {
+    padding: 13px 16px;
+    border: 1px solid #b7d9c1;
+    border-radius: 6px;
+    background-color: #edf7ef;
+    color: #245c34;
+}
+
+.admin-games-feedback-error {
+    padding: 13px 16px;
+    border: 1px solid #e2b8bc;
+    border-radius: 6px;
+    background-color: #fff0f1;
+    color: #842029;
+}
+
+.admin-games-loading,
+.admin-games-empty,
+.admin-games-error,
+.admin-games-message {
+    margin: 20px auto;
+    padding: 24px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+.admin-games-error {
+    color: #842029;
+}
+
+.admin-games-message {
+    max-width: 700px;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+/* ========================================
+   Liste des jeux
+   ======================================== */
+
+.admin-games-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 22px;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* ========================================
+   Carte d'un jeu
+   ======================================== */
+
+.admin-game-card {
+    display: grid;
+    grid-template-columns: 155px minmax(0, 1fr);
+    gap: 0;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid rgb(31 53 86 / 8%);
+    border-radius: 9px;
+    background-color: #fff;
+    box-shadow: 0 3px 12px rgb(31 53 86 / 7%);
+    transition:
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.admin-game-card:hover {
+    box-shadow: 0 6px 18px rgb(31 53 86 / 12%);
+    transform: translateY(-2px);
+}
+
+.admin-game-card-inactive {
+    opacity: 0.78;
+}
+
+.admin-game-card-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 190px;
+    padding: 12px;
+    overflow: hidden;
+    background-color: #f3f0eb;
+}
+
+.admin-game-card-image img {
+    display: block;
+    width: 100%;
+    height: 165px;
+    object-fit: contain;
+    object-position: center;
+}
+
+.admin-game-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 9px;
+    min-width: 0;
+    padding: 18px;
+}
+
+.admin-game-card-content h2 {
+    margin: 0;
+    color: var(--couleur-bleu, #1F3556);
+    font-family: var(--police-titre, 'Abril Fatface', serif);
+    font-size: 23px;
+    font-weight: 400;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.admin-game-publisher {
+    margin: 0;
+    color: #656d77;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.admin-game-details {
+    margin: 2px 0;
+    color: var(--couleur-bleu, #1F3556);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.admin-game-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.admin-game-status-active {
+    background-color: #e7f4e9;
+    color: #276738;
+}
+
+.admin-game-status-inactive {
+    background-color: #fbe8e9;
+    color: #8a2931;
+}
+
+/* ========================================
+   Boutons des cartes
+   ======================================== */
+
+.admin-game-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+    margin-top: auto;
+    padding-top: 8px;
+}
+
+.admin-game-actions button {
+    min-height: 36px;
+    padding: 8px 12px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.admin-game-edit-button {
+    border-color: var(--couleur-bleu, #1F3556) !important;
+    background-color: var(--couleur-bleu, #1F3556);
+    color: #fff;
+}
+
+.admin-game-edit-button:hover {
+    background-color: #152640;
+}
+
+.admin-game-deactivate-button {
+    border-color: #d7a9ad !important;
+    background-color: #fff;
+    color: var(--couleur-bordeaux, #7A1F2B);
+}
+
+.admin-game-deactivate-button:hover {
+    background-color: #fff0f1;
+}
+
+.admin-games-reactivate-button {
+    border-color: #a8ceb0 !important;
+    background-color: #edf7ef;
+    color: #245c34;
+}
+
+.admin-games-reactivate-button:hover {
+    background-color: #dcefe0;
+}
+
+/* ========================================
+   Fenêtre modale
+   ======================================== */
+
+.admin-games-modal-overlay {
+    position: fixed;
+    z-index: 10000;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow-y: auto;
+    background-color: rgb(16 27 43 / 65%);
+    backdrop-filter: blur(3px);
+}
+
+.admin-games-modal {
+    width: 100%;
+    max-width: 760px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0 15px 50px rgb(0 0 0 / 25%);
+}
+
+.admin-games-modal-header {
+    position: sticky;
+    z-index: 2;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px 26px;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #fff;
+}
+
+.admin-games-modal-header h2 {
+    margin: 0;
+    color: var(--couleur-bleu, #1F3556);
+    font-family: var(--police-titre, 'Abril Fatface', serif);
+    font-size: 26px;
+    font-weight: 400;
+}
+
+.admin-games-modal-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background-color: #f0ede8;
+    color: var(--couleur-bleu, #1F3556);
+    font-family: Arial, sans-serif;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.admin-games-modal-close:hover {
+    background-color: #e4ddd3;
+}
+
+/* ========================================
+   Formulaire
+   ======================================== */
+
+.admin-games-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px 26px 28px;
+}
+
+.admin-games-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.admin-games-form-group label {
+    color: var(--couleur-bleu, #1F3556);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.admin-games-form input:not([type="file"]),
+.admin-games-form textarea {
+    width: 100%;
+    min-height: 43px;
+    padding: 11px 12px;
+    border: 1px solid #d1d6dc;
+    border-radius: 5px;
+    background-color: #fff;
+    color: var(--couleur-bleu, #1F3556);
+    font: inherit;
+    font-size: 14px;
+}
+
+.admin-games-form textarea {
+    min-height: 130px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.admin-games-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.admin-games-form-feedback {
+    margin: 0;
+    color: #842029;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.admin-games-form-feedback:empty {
+    display: none;
+}
+
+/* ========================================
+   Sélection et aperçu de la photo
+   ======================================== */
+
+.admin-games-image-help {
+    margin: 0;
+    color: #69717c;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.admin-games-form input[type="file"] {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    border: 1px dashed #c6b8a7;
+    border-radius: 6px;
+    background-color: #faf8f5;
+    color: var(--couleur-bleu, #1F3556);
+    font: inherit;
+    font-size: 13px;
+}
+
+.admin-games-form input[type="file"]::file-selector-button {
+    margin-right: 12px;
+    padding: 9px 13px;
+    border: none;
+    border-radius: 4px;
+    background-color: var(--couleur-bleu, #1F3556);
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.admin-games-form input[type="file"]::file-selector-button:hover {
+    background-color: #152640;
+}
+
+.admin-games-image-preview-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.admin-games-image-preview {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: 190px;
+    object-fit: contain;
+    border: 1px solid #e4e0da;
+    border-radius: 6px;
+    background-color: #f6f3ef;
+}
+
+.admin-games-image-preview[hidden],
+.admin-games-image-remove-button[hidden] {
+    display: none;
+}
+
+.admin-games-image-preview-message {
+    margin: 0;
+    color: #69717c;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.admin-games-image-remove-button {
+    align-self: flex-start;
+    padding: 8px 12px;
+    border: 1px solid #d7a9ad;
+    border-radius: 5px;
+    background-color: #fff;
+    color: var(--couleur-bordeaux, #7A1F2B);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.admin-games-image-remove-button:hover {
+    background-color: #fff0f1;
+}
+
+/* ========================================
+   Actions du formulaire
+   ======================================== */
+
+.admin-games-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 8px;
+    border-top: 1px solid #e8e5e0;
+}
+
+.admin-games-form-actions button {
+    min-height: 42px;
+    padding: 11px 18px;
+    border-radius: 5px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.admin-games-form-cancel {
+    border: 1px solid #cbd0d6;
+    background-color: #fff;
+    color: var(--couleur-bleu, #1F3556);
+}
+
+.admin-games-form-cancel:hover {
+    background-color: #f2f3f5;
+}
+
+.admin-games-form-submit {
+    border: 1px solid var(--couleur-bordeaux, #7A1F2B);
+    background-color: var(--couleur-bordeaux, #7A1F2B);
+    color: #fff;
+}
+
+.admin-games-form-submit:hover {
+    background-color: #601721;
+}
+
+.admin-games-form-actions button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* ========================================
+   Responsive : tablette
+   ======================================== */
+
+@media (max-width: 1050px) {
+    .admin-games-list {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-game-card {
+        grid-template-columns: 165px minmax(0, 1fr);
+    }
+
+    .admin-games-toolbar {
+        flex-wrap: wrap;
+    }
+
+    .admin-games-search {
+        flex-basis: 100%;
+    }
+
+    .admin-games-filters {
+        flex: 1 1 180px;
+    }
+}
+
+/* ========================================
+   Responsive : mobile
+   ======================================== */
+
+@media (max-width: 600px) {
+    .admin-games-page {
+        padding: 24px 16px;
+    }
+
+    .admin-games-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 22px;
+    }
+
+    .admin-games-header h1 {
+        font-size: 29px;
+    }
+
+    .admin-games-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 18px;
+        padding: 18px;
+        margin-bottom: 22px;
+    }
+
+    .admin-games-search,
+    .admin-games-filters {
+        flex-basis: auto;
+        width: 100%;
+    }
+
+    .admin-games-add-button {
+        width: 100%;
+    }
+
+    .admin-game-card {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-game-card-image {
+        min-height: 180px;
+    }
+
+    .admin-game-card-image img {
+        height: 160px;
+    }
+
+    .admin-game-card-content {
+        padding: 18px;
+    }
+
+    .admin-game-card-content h2 {
+        font-size: 22px;
+    }
+
+    .admin-games-modal-overlay {
+        align-items: flex-start;
+        padding: 12px;
+    }
+
+    .admin-games-modal {
+        max-height: calc(100vh - 24px);
+    }
+
+    .admin-games-modal-header {
+        padding: 18px;
+    }
+
+    .admin-games-modal-header h2 {
+        font-size: 22px;
+    }
+
+    .admin-games-form {
+        gap: 18px;
+        padding: 18px;
+    }
+
+    .admin-games-form-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .admin-games-form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .admin-games-form-actions button {
+        width: 100%;
+    }
+}

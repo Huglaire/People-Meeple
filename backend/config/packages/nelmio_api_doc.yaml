@@ -1,0 +1,49 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: 'People Meeple API'
+            description: 'API de l''application People Meeple'
+            version: '1.0.0'
+
+        # Configuration de l'authentification JWT pour Swagger
+        components:
+            securitySchemes:
+                Bearer:
+                    type: http
+                    scheme: bearer
+                    bearerFormat: JWT
+
+        # Authentification JWT utilisée par défaut pour les routes documentées
+        security:
+            - Bearer: []
+
+    areas:
+        default:
+            path_patterns:
+                - '^/api(?!/doc$)'
+            host_patterns: { }
+            name_patterns: { }
+
+            # Toutes les routes avec des attributs OpenAPI sont documentées
+            with_attribute: false
+
+            disable_default_routes: false
+            documentation: { }
+
+    type_info: true
+    use_validation_groups: false
+    operation_id_generation: !php/enum Nelmio\ApiDocBundle\Describer\OperationIdGeneration::ALWAYS_PREPEND
+
+    media_types:
+        - json
+
+    html_config:
+        assets_mode: cdn
+        swagger_ui_config: { }
+        redocly_config: { }
+        scalar_config: { }
+        stoplight_config: { }
+
+    models:
+        use_jms: false
+        names: { }

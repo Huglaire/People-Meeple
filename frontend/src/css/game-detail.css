@@ -1,0 +1,443 @@
+/* Styles de la page de détail d'un jeu */
+
+.game-detail-page {
+    min-height: 100vh;
+    padding: 30px 0 50px;
+    background-color: var(--couleur-creme);
+}
+
+.game-detail-container {
+    width: calc(100% - 11%);
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* ========================================
+   Retour aux jeux
+   ======================================== */
+
+.game-detail-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    color: var(--couleur-bordeaux);
+    font-family: var(--police-texte);
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.game-detail-back::before {
+    content: '←';
+    font-size: 20px;
+}
+
+.game-detail-back:hover {
+    color: var(--couleur-bleu);
+}
+
+/* ========================================
+   Carte principale
+   ======================================== */
+
+.game-detail-card {
+    display: grid;
+    grid-template-columns: 42% 58%;
+    overflow: hidden;
+    background-color: var(--couleur-blanc);
+    border-radius: 6px;
+    box-shadow: 0 3px 12px rgba(31, 53, 86, 0.10);
+}
+
+.game-detail-image {
+    min-height: 480px;
+    padding: 35px;
+    background-color: var(--couleur-creme);
+}
+
+.game-detail-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.game-detail-information {
+    display: flex;
+    flex-direction: column;
+    padding: 40px 45px;
+}
+
+.game-detail-information h1 {
+    margin: 0 0 8px;
+    color: var(--couleur-bleu);
+    font-family: var(--police-titre);
+    font-size: clamp(38px, 4vw, 52px);
+    font-weight: 400;
+    line-height: 1;
+}
+
+.game-detail-publisher {
+    display: flex;
+    gap: 5px;
+    margin: 0 0 28px;
+    color: #666;
+    font-family: var(--police-texte);
+    font-size: 14px;
+}
+
+.game-detail-publisher strong {
+    color: var(--couleur-bleu);
+    font-weight: 500;
+}
+
+/* ========================================
+   Informations du jeu
+   ======================================== */
+
+.game-detail-info-block {
+    margin-bottom: 30px;
+}
+
+.game-detail-info-block h2,
+.game-detail-description h2 {
+    margin: 0 0 16px;
+    color: var(--couleur-bleu);
+    font-family: var(--police-texte);
+    font-size: 21px;
+    font-weight: 700;
+}
+
+.game-detail-info-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 25px;
+}
+
+.game-detail-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--couleur-bleu);
+}
+
+.game-detail-info > i {
+    width: 25px;
+    color: var(--couleur-bordeaux);
+    font-size: 21px;
+    text-align: center;
+}
+
+.game-detail-info div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.game-detail-info span {
+    color: #777;
+    font-family: var(--police-texte);
+    font-size: 11px;
+}
+
+.game-detail-info strong {
+    font-family: var(--police-texte);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* ========================================
+   Actions de ludothèque
+   ======================================== */
+
+.game-detail-library-menu {
+    position: relative;
+    align-self: flex-start;
+    margin-top: auto;
+}
+
+.game-detail-library-actions {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.game-detail-library-button,
+.game-detail-library-validate {
+    min-height: 38px;
+    border-radius: 4px;
+    font-family: var(--police-texte);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.game-detail-library-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-width: 225px;
+    padding: 0 16px;
+    color: var(--couleur-blanc);
+    background-color: var(--couleur-bordeaux);
+    border: 1px solid var(--couleur-bordeaux);
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.game-detail-library-button:hover,
+.game-detail-library-menu.is-open .game-detail-library-button {
+    background-color: var(--couleur-bleu);
+    border-color: var(--couleur-bleu);
+}
+
+.game-detail-library-button > i {
+    font-size: 10px;
+    transition: transform 0.2s ease;
+}
+
+.game-detail-library-menu.is-open .game-detail-library-button > i {
+    transform: rotate(180deg);
+}
+
+.game-detail-library-validate {
+    padding: 0 17px;
+    color: var(--couleur-blanc);
+    background-color: var(--couleur-bordeaux);
+    border: 1px solid var(--couleur-bordeaux);
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.game-detail-library-validate:not(:disabled):hover {
+    background-color: var(--couleur-bleu);
+    border-color: var(--couleur-bleu);
+}
+
+.game-detail-library-validate:disabled {
+    color: #999;
+    background-color: #e4e1dd;
+    border-color: #e4e1dd;
+    cursor: not-allowed;
+}
+
+/* ========================================
+   Menu des choix
+   ======================================== */
+
+.game-detail-library-options {
+    position: absolute;
+    z-index: 10;
+    bottom: calc(100% + 7px);
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    width: 285px;
+    overflow: hidden;
+    background-color: var(--couleur-blanc);
+    border: 1px solid #ded9d2;
+    border-radius: 5px;
+    box-shadow: 0 4px 12px rgba(31, 53, 86, 0.15);
+}
+
+.game-detail-library-option {
+    padding: 11px 13px;
+    color: var(--couleur-bleu);
+    font-family: var(--police-texte);
+    font-size: 11px;
+    text-align: left;
+    background-color: var(--couleur-blanc);
+    border: 0;
+    border-bottom: 1px solid #e8e3dc;
+    cursor: pointer;
+}
+
+.game-detail-library-option:last-child {
+    border-bottom: 0;
+}
+
+.game-detail-library-option:hover {
+    color: var(--couleur-bordeaux);
+    background-color: var(--couleur-creme);
+}
+
+/* ========================================
+   Message de succès
+   ======================================== */
+
+.game-detail-library-success {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 10px 0 0;
+    color: #48734f;
+    font-family: var(--police-texte);
+    font-size: 12px;
+}
+
+.game-detail-library-success i {
+    font-size: 15px;
+}
+
+/* ========================================
+   Description
+   ======================================== */
+
+.game-detail-description {
+    margin-top: 28px;
+    padding: 28px 35px;
+    background-color: var(--couleur-blanc);
+    border-radius: 6px;
+    box-shadow: 0 3px 12px rgba(31, 53, 86, 0.08);
+}
+
+.game-detail-description h2 {
+    margin-bottom: 10px;
+}
+
+.game-detail-description p {
+    max-width: 850px;
+    margin: 0;
+    color: #666;
+    font-family: var(--police-texte);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* ========================================
+   Mobile
+   ======================================== */
+
+@media (max-width: 768px) {
+    .game-detail-page {
+        padding: 15px 0 80px;
+    }
+
+    .game-detail-container {
+        width: calc(100% - 34px);
+    }
+
+    .game-detail-back {
+        margin-bottom: 12px;
+        font-size: 11px;
+    }
+
+    .game-detail-back::before {
+        font-size: 18px;
+    }
+
+    .game-detail-card {
+        display: flex;
+        flex-direction: column;
+        border-radius: 5px;
+    }
+
+    .game-detail-image {
+        width: 100%;
+        min-height: 0;
+        height: 280px;
+        padding: 20px;
+    }
+
+    .game-detail-information {
+        padding: 22px 20px 20px;
+    }
+
+    .game-detail-information h1 {
+        margin-bottom: 7px;
+        font-size: 32px;
+    }
+
+    .game-detail-publisher {
+        margin-bottom: 23px;
+        font-size: 12px;
+    }
+
+    .game-detail-info-block {
+        margin-bottom: 25px;
+    }
+
+    .game-detail-info-block h2,
+    .game-detail-description h2 {
+        margin-bottom: 13px;
+        font-size: 19px;
+    }
+
+    .game-detail-info-list {
+        grid-template-columns: 1fr 1fr;
+        gap: 16px 12px;
+    }
+
+    .game-detail-info {
+        gap: 8px;
+    }
+
+    .game-detail-info > i {
+        width: 21px;
+        font-size: 18px;
+    }
+
+    .game-detail-info span {
+        font-size: 10px;
+    }
+
+    .game-detail-info strong {
+        font-size: 12px;
+    }
+
+    .game-detail-library-menu {
+        width: 100%;
+        margin-top: 4px;
+    }
+
+    .game-detail-library-actions {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 7px;
+        width: 100%;
+    }
+
+    .game-detail-library-button {
+        width: 100%;
+        min-width: 0;
+        min-height: 36px;
+        font-size: 11px;
+    }
+
+    .game-detail-library-validate {
+        min-height: 36px;
+        padding: 0 15px;
+        font-size: 11px;
+    }
+
+    .game-detail-library-options {
+        bottom: auto;
+        top: calc(100% + 7px);
+        width: 100%;
+    }
+
+    .game-detail-library-option {
+        padding: 12px;
+        font-size: 11px;
+    }
+
+    .game-detail-library-success {
+        font-size: 11px;
+    }
+
+    .game-detail-description {
+        margin-top: 15px;
+        padding: 20px;
+        border-radius: 5px;
+    }
+
+    .game-detail-description p {
+        font-size: 13px;
+        line-height: 1.45;
+    }
+}

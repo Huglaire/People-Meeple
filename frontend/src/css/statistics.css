@@ -1,0 +1,307 @@
+/* Page des statistiques d'administration */
+
+.statistics-page {
+    min-height: 70vh;
+    padding: 3rem 1.5rem 4rem;
+    background-color: var(--couleur-creme);
+}
+
+.statistics-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.statistics-header {
+    margin-bottom: 1.5rem;
+}
+
+.statistics-eyebrow {
+    margin: 0 0 0.75rem;
+    color: var(--couleur-bordeaux);
+    font-family: var(--police-navigation);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.statistics-header h1 {
+    margin: 0 0 1rem;
+    color: var(--couleur-bleu);
+    font-family: var(--police-titre);
+    font-size: clamp(2.2rem, 5vw, 3.5rem);
+    font-weight: 400;
+}
+
+.statistics-introduction {
+    max-width: 760px;
+    margin: 0;
+    color: var(--couleur-bleu);
+    font-size: 1.05rem;
+    line-height: 1.7;
+}
+
+.statistics-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1.5rem;
+}
+
+.statistics-refresh-button {
+    min-height: 42px;
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--couleur-bordeaux);
+    border-radius: 6px;
+    background-color: var(--couleur-bordeaux);
+    color: var(--couleur-blanc);
+    font-family: var(--police-navigation);
+    font-size: 0.9rem;
+    font-weight: 700;
+    transition: background-color 0.2s ease;
+}
+
+.statistics-refresh-button:hover:not(:disabled) {
+    border-color: var(--couleur-bleu);
+    background-color: var(--couleur-bleu);
+}
+
+.statistics-refresh-button:disabled {
+    cursor: wait;
+    opacity: 0.7;
+}
+
+.statistics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 1.5rem;
+}
+
+.statistics-card {
+    min-width: 0;
+    padding: 1.5rem;
+    border: 1px solid rgba(31, 53, 86, 0.12);
+    border-radius: 16px;
+    background-color: var(--couleur-blanc);
+    box-shadow: 0 4px 16px rgba(31, 53, 86, 0.05);
+}
+
+.statistics-card-header {
+    margin-bottom: 1.5rem;
+}
+
+.statistics-card-title {
+    margin: 0 0 0.6rem;
+    color: var(--couleur-bleu);
+    font-family: var(--police-navigation);
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.statistics-card-description {
+    margin: 0;
+    color: #555;
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+.statistics-card-content {
+    min-width: 0;
+}
+
+.statistics-message {
+    margin: 0;
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: var(--couleur-creme);
+    color: var(--couleur-bleu);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.statistics-message-error {
+    border-left: 4px solid var(--couleur-bordeaux);
+    background-color: #fff7f7;
+    color: var(--couleur-bordeaux);
+}
+
+/* Graphique horizontal des consultations de jeux */
+
+.statistics-bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.statistics-bar-row {
+    display: grid;
+    grid-template-columns:
+        minmax(90px, 0.85fr)
+        minmax(50px, 1.5fr)
+        minmax(90px, auto);
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.statistics-bar-label {
+    overflow-wrap: anywhere;
+    color: var(--couleur-bleu);
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.statistics-bar-track {
+    width: 100%;
+    height: 14px;
+    overflow: hidden;
+    border-radius: 999px;
+    background-color: var(--couleur-creme);
+}
+
+.statistics-bar {
+    height: 100%;
+    border-radius: inherit;
+    transition: width 0.35s ease;
+}
+
+.statistics-bar-games {
+    background-color: var(--couleur-bordeaux);
+}
+
+.statistics-bar-value {
+    color: var(--couleur-bleu);
+    font-size: 0.8rem;
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* Graphique vertical des inscriptions par semaine */
+
+.statistics-week-chart {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: end;
+    gap: 0.45rem;
+    min-height: 280px;
+    padding-top: 0.5rem;
+}
+
+.statistics-week-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    min-width: 0;
+    height: 100%;
+}
+
+.statistics-week-value {
+    min-height: 1rem;
+    color: var(--couleur-bleu);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.statistics-week-track {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    width: 100%;
+    height: 190px;
+    overflow: hidden;
+    border-radius: 6px 6px 0 0;
+    background-color: var(--couleur-creme);
+}
+
+.statistics-week-bar {
+    width: 100%;
+    min-height: 0;
+    border-radius: 6px 6px 0 0;
+    background-color: var(--couleur-camel);
+    transition: height 0.35s ease;
+}
+
+.statistics-week-label {
+    max-width: 100%;
+    color: var(--couleur-bleu);
+    font-size: 0.68rem;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+/* Adaptation aux écrans de tablette */
+
+@media (max-width: 900px) {
+    .statistics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .statistics-week-chart {
+        min-height: 250px;
+        gap: 0.6rem;
+    }
+
+    .statistics-week-track {
+        height: 170px;
+    }
+}
+
+/* Adaptation aux écrans mobiles */
+
+@media (max-width: 600px) {
+    .statistics-page {
+        padding: 2rem 1rem 3rem;
+    }
+
+    .statistics-card {
+        padding: 1.1rem;
+    }
+
+    .statistics-card-title {
+        font-size: 1.1rem;
+    }
+
+    .statistics-bar-row {
+        grid-template-columns:
+            minmax(75px, 0.9fr)
+            minmax(35px, 1fr);
+        gap: 0.5rem;
+    }
+
+    .statistics-bar-value {
+        grid-column: 2;
+        margin-top: -0.35rem;
+        font-size: 0.75rem;
+        text-align: left;
+    }
+
+    .statistics-week-chart {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        row-gap: 1.25rem;
+    }
+
+    .statistics-week-track {
+        height: 100px;
+    }
+
+    .statistics-week-label {
+        font-size: 0.72rem;
+    }
+
+    .statistics-refresh-button {
+        width: 100%;
+    }
+}
+
+/* Respecte les préférences de réduction des animations */
+
+@media (prefers-reduced-motion: reduce) {
+    .statistics-refresh-button,
+    .statistics-bar,
+    .statistics-week-bar {
+        transition: none;
+    }
+}
