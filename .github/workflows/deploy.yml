@@ -1,0 +1,95 @@
+name: Déploiement People Meeple sur Alwaysdata
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Construire et déployer
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Installer les dépendances frontend
+        working-directory: frontend
+        run: npm ci
+
+      - name: Construire le frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Configurer la connexion SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Vérifier les secrets SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          test -n "$DEPLOY_HOST" || { echo "Secret DEPLOY_HOST manquant"; exit 1; }
+          test -n "$DEPLOY_USER" || { echo "Secret DEPLOY_USER manquant"; exit 1; }
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" \
+            'test -d "$HOME/People-Meeple/backend"'
+
+      - name: Déployer le backend
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          rsync -az \
+            --exclude='.env*' \
+            --exclude='vendor/' \
+            --exclude='var/' \
+            --exclude='public/' \
+            --exclude='mongodb-8.4.so' \
+            --exclude='config/reference.php' \
+            backend/ \
+            "$DEPLOY_USER@$DEPLOY_HOST:~/People-Meeple/backend/"
+
+      - name: Déployer les fichiers frontend
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          rsync -az \
+            --exclude='index.php' \
+            --exclude='.htaccess' \
+            --exclude='images/' \
+            frontend/dist/ \
+            "$DEPLOY_USER@$DEPLOY_HOST:~/People-Meeple/backend/public/"
+
+      - name: Installer les dépendances PHP de production
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" \
+            'cd "$HOME/People-Meeple/backend" &&
+             APP_ENV=prod APP_DEBUG=0 composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader'
+
+      - name: Vider le cache Symfony de production
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" \
+            'cd "$HOME/People-Meeple/backend" &&
+             APP_ENV=prod APP_DEBUG=0 php bin/console cache:clear'
