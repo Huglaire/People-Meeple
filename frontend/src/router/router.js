@@ -26,6 +26,11 @@ import { createAdminUsersPage } from '../pages/AdminUsers.js';
 import { createStatisticsPage } from '../pages/Statistics.js';
 
 import {
+    createContactPage,
+    createLegalNoticePage
+} from '../pages/StaticPages.js';
+
+import {
     isAuthenticated,
     isAdmin
 } from '../services/authService.js';
@@ -42,6 +47,8 @@ const routes = {
     '/jeux': createGamesPage,
     '/profil': createProfilePage,
     '/discussions': createDiscussionsPage,
+    '/contact': createContactPage,
+    '/mentions-legales': createLegalNoticePage,
 
     // Espace d'administration.
     '/admin': createAdminDashboardPage,
@@ -59,6 +66,8 @@ function isPublicRoute(path) {
         || path === '/inscription'
         || path === '/jeux'
         || path.startsWith('/jeux/')
+        || path === '/contact'
+        || path === '/mentions-legales'
     );
 }
 
